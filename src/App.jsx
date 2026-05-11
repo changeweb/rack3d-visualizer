@@ -20,15 +20,15 @@ const RACK_A = {
 };
 
 const RACK_B = {
-  name: 'RACK-B', units: 12,
+  name: 'RACK-B', units: 14,
   rackTemp: 52, pduCapacity: 4000, pduLoad: 3800,
   devices: [
     { id: 'b1', name: 'Load Balancer', type: 'loadbal',
       startUnit: 1, heightUnits: 1, watts: 200,
-      imageUrl: '/images/cisco-router.jpg', // optional front-panel image
-      status:   'up',                       // 'up' ▲  'down' ▼  'warn' ⚠
-      ip:       '10.0.0.1',                 // shown in label + 2D view
-      fields: [                             // arbitrary custom rows
+      imageUrl: '/images/cisco-router.jpg',
+      status:   'up',
+      ip:       '10.0.0.1',
+      fields: [
         { icon: '🏷',  label: 'Model',  value: 'ASR-1001-X' },
         { icon: '📡',  label: 'VLAN',   value: '100' }
       ],
@@ -41,6 +41,10 @@ const RACK_B = {
     { id: 'b3', name: 'App Server 02', type: 'server',  startUnit: 4, heightUnits: 2, watts: 620 },
     { id: 'b4', name: 'NAS Storage',   type: 'storage', startUnit: 6, heightUnits: 3, watts: 290 },
     { id: 'b5', name: 'PDU-B',         type: 'pdu',     startUnit: 9, heightUnits: 1, watts: 30  },
+    // Half-width demo: two patch panels sharing unit 10
+    { id: 'b6', name: 'Patch-L',   type: 'patch',  startUnit: 10, heightUnits: 1, watts: 0, halfWidth: 'left'  },
+    { id: 'b7', name: 'Patch-R',   type: 'patch',  startUnit: 10, heightUnits: 1, watts: 0, halfWidth: 'right' },
+    { id: 'b8', name: 'KVM Switch', type: 'kvm',   startUnit: 11, heightUnits: 1, watts: 45 },
   ],
 };
 

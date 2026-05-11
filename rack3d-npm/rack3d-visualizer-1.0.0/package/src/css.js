@@ -162,10 +162,29 @@ export function buildCSS(scope, theme, opts) {
 
 /* ── 2D MODE ── */
 #${scope} .r3-2d-rack { display:flex; flex-direction:column; align-items:stretch; border:2px solid var(--r3-border); border-radius:3px; overflow:hidden; font-family:'Share Tech Mono',monospace; }
-#${scope} .r3-2d-unit { display:flex; align-items:center; height:22px; border-bottom:1px solid ${c.bg}; position:relative; }
+#${scope} .r3-2d-unit { display:flex; align-items:center; height:26px; border-bottom:1px solid ${c.bg}; position:relative; transition:background .1s; }
+#${scope} .r3-2d-unit.r3-2d-half-row { align-items:stretch; }
 #${scope} .r3-2d-unit:last-child { border-bottom:none; }
-#${scope} .r3-2d-num  { width:28px; text-align:right; font-size:11px; color:var(--r3-dim); padding-right:5px; flex-shrink:0; }
+#${scope} .r3-2d-num  { width:32px; text-align:right; font-size:10px; color:var(--r3-dim); padding-right:5px; flex-shrink:0; }
 #${scope} .r3-2d-bar  { flex:1; display:flex; align-items:center; padding:0 6px; font-size:11px; font-weight:600; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
-#${scope} .r3-2d-wrap { flex:1; overflow:hidden; display:flex; align-items:flex-start; justify-content:center; padding:20px; background:${c.bg}; }
+#${scope} .r3-2d-half { transition:background .1s; }
+#${scope} .r3-2d-empty{ background:transparent !important; }
+#${scope} .r3-2d-wrap { flex:1; overflow:auto; display:flex; align-items:flex-start; justify-content:center; padding:20px; background:${c.bg}; }
+#${scope} .r3-dh      { background:${c.accent}22 !important; outline:1px dashed ${c.accent}88; }
+#${scope} .r3-2d-tb   { display:flex; align-items:center; gap:8px; padding:6px 14px; border-bottom:1px solid var(--r3-border); background:${c.panel}; flex-shrink:0; }
+
+/* ── CATALOG ── */
+#${scope} .r3-cat-list { display:flex; flex-direction:column; gap:2px; }
+#${scope} .r3-cat-item { cursor:grab; }
+#${scope} .r3-cat-item:active { cursor:grabbing; }
+
+/* ── ZOOM BUTTONS ── */
+#${scope} .r3-zoom-btns { position:absolute; bottom:44px; right:12px; display:flex; flex-direction:column; gap:4px; z-index:6; }
+#${scope} .r3-zoom-btn  { width:30px; height:30px; background:var(--r3-panel); border:1px solid var(--r3-border); color:var(--r3-text); border-radius:4px; cursor:pointer; font-size:18px; line-height:1; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+#${scope} .r3-zoom-btn:hover { border-color:var(--r3-accent); color:var(--r3-accent); background:var(--r3-accent)11; }
+
+/* ── LABEL TOGGLE ── */
+#${scope} .r3-ltoggle { pointer-events:all !important; }
 `;
+
 }
