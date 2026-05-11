@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rack3D — Theme Switcher Example</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #060a10; font-family: 'Courier New', monospace; display: flex; flex-direction: column; height: 100vh; }
+    .toolbar {
+      display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+      background: #0b1120; border-bottom: 1px solid #1e2d45; flex-shrink: 0;
+    }
+    .toolbar span { color: #00d4ff; font-size: 11px; letter-spacing: 2px; font-weight: bold; margin-right: 8px; }
+    .tbtn {
+      padding: 4px 12px; border-radius: 3px; border: 1px solid #2a3a55; background: transparent;
+      color: #8b949e; cursor: pointer; font-size: 10px; font-family: inherit; letter-spacing: 1px; transition: all .2s;
+    }
+    .tbtn:hover  { border-color: #00d4ff88; color: #00d4ff88; }
+    .tbtn.active { border-color: #00d4ff;   color: #00d4ff;   background: #00d4ff11; }
+    .sep { width: 1px; height: 18px; background: #1e2d45; margin: 0 4px; }
+    #container { flex: 1; min-height: 0; }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <span>RACK3D</span>
+    <button class="tbtn active" onclick="switchTheme('dark')">Dark</button>
+    <button class="tbtn" onclick="switchTheme('light')">Light</button>
+    <button class="tbtn" onclick="switchTheme('oled')">OLED</button>
+    <button class="tbtn" onclick="switchTheme('warm')">Warm</button>
+    <button class="tbtn" onclick="switchTheme('matrix')">Matrix</button>
+    <div class="sep"></div>
+    <button class="tbtn" onclick="viz.setMode('3d')" id="btn3d">3D View</button>
+    <button class="tbtn" onclick="viz.setMode('2d')" id="btn2d">2D View</button>
+    <div class="sep"></div>
+    <button class="tbtn" onclick="viz.setCameraAngle(Math.PI, 0.15)">Front</button>
+    <button class="tbtn" onclick="viz.setCameraAngle(Math.PI*0.65, 0.3)">Isometric</button>
+    <button class="tbtn" onclick="viz.setOptions({view:{autoRotate:true}})">Auto-Rotate</button>
+    <button class="tbtn" onclick="viz.setOptions({view:{autoRotate:false}})">Stop</button>
+  </div>
+  <div id="container"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="../../dist/rack3d-visualizer.umd.js"></script>
+  <script>
+    const { Rack3DVisualizer } = Rack3D;
+
+    const rackData = {
+      name: 'PROD-RACK-01', units: 24,
+      rackTemp: 41, pduCapacity: 8000, pduLoad: 4250,
+      devices: [
+        { id: 'd1', name: 'Core Router',   type: 'router',   startUnit: 1,  heightUnits: 2, watts: 450 },
+        { id: 'd2', name: 'Firewall',      type: 'firewall', startUnit: 3,  heightUnits: 2, watts: 320 },
+        { id: 'd3', name: 'Patch-A',       type: 'patch',    startUnit: 5,  heightUnits: 1, watts: 0   },
+        { id: 'd4', name: 'Core Switch',   type: 'switch',   startUnit: 6,  heightUnits: 1, watts: 180 },
+        { id: 'd5', name: 'App Server 01', type: 'server',   startUnit: 7,  heightUnits: 2, watts: 620 },
+        { id: 'd6', name: 'DB Primary',    type: 'server',   startUnit: 9,  heightUnits: 4, watts: 950 },
+        { id: 'd7', name: 'SAN Storage',   type: 'storage',  startUnit: 14, heightUnits: 3, watts: 310 },
+        { id: 'd8', name: 'WAF Appliance', type: 'security', startUnit: 18, heightUnits: 2, watts: 145 },
+        { id: 'd9', name: 'Backup Node',   type: 'server',   startUnit: 21, heightUnits: 2, watts: 410 },
+        { id: 'd10',name: 'PDU-A',         type: 'pdu',      startUnit: 23, heightUnits: 1, watts: 30  },
+      ]
+    };
+
+    const viz = new Rack3DVisualizer('#container', {
+      theme: 'dark',
+      camera: { azimuth: Math.PI, elevation: 0.15, distance: 'auto' },
+      lighting: { overheadIntensity: 9, frontIntensity: 10, exposure: 2.8 },
+      room: { enabled: true },
+      labels: { enabled: true, side: 'auto' },
+    });
+    viz.setData(rackData);
+
+    function switchTheme(name) {
+      viz.setTheme(name);
+      document.querySelectorAll('.tbtn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>

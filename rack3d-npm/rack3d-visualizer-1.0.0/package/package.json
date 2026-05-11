@@ -1,0 +1,59 @@
+{
+  "name": "rack3d-visualizer",
+  "version": "1.0.0",
+  "description": "A fully featured 3D/2D server rack visualizer — JSON-driven, themeable, drag-and-drop, datacenter environment, five built-in themes.",
+  "type": "module",
+  "main": "dist/rack3d-visualizer.cjs.js",
+  "module": "dist/rack3d-visualizer.esm.js",
+  "browser": "dist/rack3d-visualizer.umd.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/rack3d-visualizer.esm.js",
+      "require": "./dist/rack3d-visualizer.cjs.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "rollup -c rollup.config.js",
+    "dev": "rollup -c rollup.config.js --watch",
+    "serve": "node examples/serve.cjs",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "rack",
+    "server-rack",
+    "3d",
+    "datacenter",
+    "three.js",
+    "visualization",
+    "network",
+    "infrastructure",
+    "server-room",
+    "webgl"
+  ],
+  "author": "rack3d-visualizer contributors",
+  "license": "MIT",
+  "peerDependencies": {
+    "three": ">=0.128.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.8",
+    "@rollup/plugin-node-resolve": "^15.3.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "rollup": "^3.30.0",
+    "rollup-plugin-visualizer": "^7.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/rack3d-visualizer"
+  },
+  "homepage": "https://your-org.github.io/rack3d-visualizer",
+  "bugs": {
+    "url": "https://github.com/your-org/rack3d-visualizer/issues"
+  }
+}

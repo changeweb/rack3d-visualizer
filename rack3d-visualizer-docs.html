@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>rack3d-visualizer — Documentation</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700&family=IBM+Plex+Mono:wght@300;400;600&family=Inter:wght@300;400;500;600&display=swap');
+:root{
+  --bg:#070c14; --panel:#0b1120; --border:#1e2d45;
+  --accent:#00d4ff; --green:#00ff88; --amber:#ffaa00; --red:#ff3344;
+  --text:#c8d8e8; --dim:#4a6278; --heading:#e6f0ff;
+  --code-bg:#040810; --code-text:#7ee787;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:100;background:#060a12ee;backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;height:52px;gap:24px}
+.nav-logo{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--accent);letter-spacing:3px;margin-right:16px}
+.nav-link{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;padding:4px 0;border-bottom:2px solid transparent;transition:all .2s}
+.nav-link:hover{color:var(--accent);text-decoration:none;border-bottom-color:var(--accent)55}
+.nav-badge{margin-left:auto;padding:3px 10px;background:var(--green)18;border:1px solid var(--green)44;color:var(--green);border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px}
+
+/* ── LAYOUT ── */
+.container{max-width:1100px;margin:0 auto;padding:0 32px}
+
+/* ── HERO ── */
+.hero{padding:80px 0 60px;text-align:center;border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 50% at 50% 0%,#00d4ff0a,transparent)}
+.hero-title{font-family:'Orbitron',monospace;font-size:42px;font-weight:700;color:var(--heading);letter-spacing:4px;margin-bottom:12px}
+.hero-title span{color:var(--accent)}
+.hero-sub{font-size:17px;color:var(--dim);max-width:600px;margin:0 auto 32px;line-height:1.6}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-primary{padding:10px 28px;background:var(--accent);color:#070c14;border-radius:3px;font-weight:600;font-family:'Share Tech Mono',monospace;letter-spacing:1px;font-size:12px;text-transform:uppercase;transition:all .2s}
+.btn-primary:hover{background:#33ddff;text-decoration:none}
+.btn-secondary{padding:10px 28px;background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:3px;font-weight:600;font-family:'Share Tech Mono',monospace;letter-spacing:1px;font-size:12px;text-transform:uppercase;transition:all .2s}
+.btn-secondary:hover{background:var(--accent)11;text-decoration:none}
+.hero-meta{margin-top:24px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.pill{padding:4px 12px;border-radius:20px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.5px;border:1px solid}
+
+/* ── SCREENSHOT GRID ── */
+.screenshots{padding:60px 0;border-bottom:1px solid var(--border)}
+.ss-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-top:32px}
+.ss-card{border:1px solid var(--border);border-radius:6px;overflow:hidden;background:var(--panel)}
+.ss-preview{width:100%;height:220px;position:relative;overflow:hidden;background:var(--bg)}
+.ss-caption{padding:12px 14px;border-top:1px solid var(--border)}
+.ss-caption strong{color:var(--heading);font-size:12px;font-family:'Share Tech Mono',monospace;letter-spacing:.5px;display:block;margin-bottom:2px}
+.ss-caption span{color:var(--dim);font-size:11px}
+
+/* Inline SVG screenshots */
+.mock-rack{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;padding:16px;gap:3px}
+.mock-unit{display:flex;align-items:center;border-radius:2px;padding:0 8px;font-family:'Share Tech Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.5px}
+.mock-label{position:absolute;font-family:'Share Tech Mono',monospace;font-size:8px;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.mock-2d{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;padding:20px}
+.mock-2d-rack{border:2px solid #1e2d45;border-radius:3px;overflow:hidden;width:100%;max-width:280px}
+.mock-2d-row{height:20px;display:flex;align-items:center;padding:0 6px;font-family:'Share Tech Mono',monospace;font-size:8px;border-bottom:1px solid #0d1525}
+
+/* ── SECTIONS ── */
+section{padding:60px 0;border-bottom:1px solid var(--border)}
+h2{font-family:'Orbitron',monospace;font-size:20px;font-weight:700;color:var(--heading);letter-spacing:2px;margin-bottom:8px}
+h3{font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--accent);letter-spacing:1px;margin:28px 0 10px}
+h4{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--amber);letter-spacing:.5px;margin:20px 0 8px}
+p{color:var(--text);margin-bottom:12px;max-width:800px}
+.section-sub{color:var(--dim);font-size:13px;margin-bottom:32px;max-width:600px}
+
+/* ── CODE BLOCKS ── */
+pre{background:var(--code-bg);border:1px solid var(--border);border-radius:4px;padding:20px 24px;overflow-x:auto;margin:12px 0 20px;position:relative}
+pre code{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--code-text);line-height:1.7}
+.code-label{position:absolute;top:8px;right:12px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase}
+.kw{color:#ff7b72} .fn{color:#d2a8ff} .str{color:#a5d6ff} .cmt{color:#4a6278;font-style:italic} .num{color:#79c0ff} .prop{color:#ffa657}
+
+/* ── OPTIONS TABLE ── */
+.opts-table{width:100%;border-collapse:collapse;margin:12px 0 24px;font-size:12px}
+.opts-table th{text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--dim);text-transform:uppercase}
+.opts-table td{padding:8px 12px;border-bottom:1px solid var(--border)55;vertical-align:top}
+.opts-table tr:hover td{background:#0d1525}
+.t-name{font-family:'Share Tech Mono',monospace;color:var(--accent);white-space:nowrap}
+.t-type{font-family:'Share Tech Mono',monospace;color:var(--amber);white-space:nowrap}
+.t-default{font-family:'Share Tech Mono',monospace;color:var(--green);white-space:nowrap}
+.t-desc{color:var(--text);line-height:1.5}
+
+/* ── THEME SWATCHES ── */
+.theme-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0}
+.theme-card{border-radius:5px;overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:transform .2s}
+.theme-card:hover{transform:translateY(-2px)}
+.theme-preview{height:70px;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;font-weight:700}
+.theme-name{padding:7px 10px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.5px}
+.theme-colors{display:flex;gap:3px;padding:0 10px 8px}
+.tc{width:12px;height:12px;border-radius:2px}
+
+/* ── DEVICE TYPE TABLE ── */
+.dtype-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin:12px 0}
+.dtype-card{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.dtype-icon{font-size:18px;width:28px;text-align:center}
+.dtype-swatch{width:10px;height:10px;border-radius:1px;flex-shrink:0}
+.dtype-info{flex:1}
+.dtype-key{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--accent);margin-bottom:1px}
+.dtype-label{font-size:11px;color:var(--dim)}
+
+/* ── SIDEBAR NOTE ── */
+.note{background:var(--accent)0d;border:1px solid var(--accent)33;border-radius:4px;padding:14px 18px;margin:16px 0;font-size:13px;color:var(--text)}
+.note strong{color:var(--accent)}
+.warn{background:var(--amber)0d;border-color:var(--amber)33}
+.warn strong{color:var(--amber)}
+
+/* ── FOOTER ── */
+footer{padding:40px 0;text-align:center;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px}
+footer a{color:var(--dim)}
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-logo">RACK3D</span>
+  <a class="nav-link" href="#install">Install</a>
+  <a class="nav-link" href="#quickstart">Quickstart</a>
+  <a class="nav-link" href="#options">Options</a>
+  <a class="nav-link" href="#themes">Themes</a>
+  <a class="nav-link" href="#devices">Devices</a>
+  <a class="nav-link" href="#api">API</a>
+  <a class="nav-link" href="#json">JSON Schema</a>
+  <a class="nav-link" href="#react">React</a>
+  <span class="nav-badge">v1.0.0</span>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="container">
+    <h1 class="hero-title">RACK<span>3D</span></h1>
+    <p class="hero-sub">A fully featured 3D/2D server rack visualizer. JSON-driven, themeable, zero-framework dependency. Drag-and-drop, live labels, datacenter environments and deep lighting control.</p>
+    <div class="hero-btns">
+      <a class="btn-primary" href="#quickstart">Get Started →</a>
+      <a class="btn-secondary" href="#options">View All Options</a>
+    </div>
+    <div class="hero-meta">
+      <span class="pill" style="color:#00ff88;border-color:#00ff8844;background:#00ff8811">Three.js r128+</span>
+      <span class="pill" style="color:#00d4ff;border-color:#00d4ff44;background:#00d4ff11">ESM · CJS · UMD</span>
+      <span class="pill" style="color:#d2a8ff;border-color:#d2a8ff44;background:#d2a8ff11">TypeScript</span>
+      <span class="pill" style="color:#ffaa00;border-color:#ffaa0044;background:#ffaa0011">5 Built-in Themes</span>
+      <span class="pill" style="color:#ff55cc;border-color:#ff55cc44;background:#ff55cc11">MIT License</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREENSHOTS ── -->
+<div class="screenshots">
+  <div class="container">
+    <h2>Screenshots</h2>
+    <p class="section-sub">All renders are live Three.js WebGL — no canvas images, no pre-baked sprites.</p>
+    <div class="ss-grid">
+
+      <!-- Dark Theme 3D -->
+      <div class="ss-card">
+        <div class="ss-preview" style="background:#070c14">
+          <div class="mock-rack">
+            <div style="color:#00d4ff;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;margin-bottom:6px;opacity:.6">DC-RACK-01 · 24U</div>
+            <!-- Simulated rack units -->
+            <div style="width:200px;display:flex;flex-direction:column;border:1px solid #1e2d45;border-radius:3px;overflow:hidden;position:relative">
+              <div style="height:2px;background:linear-gradient(90deg,transparent,#00d4ff44,transparent)"></div>
+              <div class="mock-unit" style="height:28px;background:#2288ff22;border-left:3px solid #2288ff;color:#2288ff">▣ Core Router</div>
+              <div class="mock-unit" style="height:28px;background:#ff334422;border-left:3px solid #ff3344;color:#ff3344">⬡ Firewall FW-1</div>
+              <div class="mock-unit" style="height:14px;background:#88888822;border-left:3px solid #888;color:#888;font-size:8px">⊞ Patch Panel</div>
+              <div class="mock-unit" style="height:14px;background:#ffaa0022;border-left:3px solid #ffaa00;color:#ffaa00;font-size:8px">⬢ Switch 48p</div>
+              <div class="mock-unit" style="height:28px;background:#2288ff22;border-left:3px solid #2288ff;color:#2288ff">▣ Web Server 01</div>
+              <div class="mock-unit" style="height:56px;background:#2288ff22;border-left:3px solid #2288ff;color:#2288ff">▣ DB Server</div>
+              <div class="mock-unit" style="height:42px;background:#9966ff22;border-left:3px solid #9966ff;color:#9966ff">▤ NAS Storage</div>
+              <div class="mock-unit" style="height:14px;background:#ff55cc22;border-left:3px solid #ff55cc;color:#ff55cc;font-size:8px">◆ IDS Sensor</div>
+              <div class="mock-unit" style="height:28px;background:#2288ff22;border-left:3px solid #2288ff;color:#2288ff">▣ Backup Server</div>
+              <div class="mock-unit" style="height:14px;background:#00ddcc22;border-left:3px solid #00ddcc;color:#00ddcc;font-size:8px">⚡ PDU-A</div>
+              <div style="height:24px;background:#070c14;border-left:3px solid #1e2d45"></div>
+            </div>
+            <div style="color:#4a6278;font-family:'Share Tech Mono',monospace;font-size:8px;margin-top:6px;letter-spacing:1px">DARK THEME · 3D MODE</div>
+          </div>
+        </div>
+        <div class="ss-caption">
+          <strong>Dark Theme — 3D Mode (Default)</strong>
+          <span>Hollow Oracle/Cisco-style rack frame · Fluorescent datacenter environment · Type-colored device panels</span>
+        </div>
+      </div>
+
+      <!-- Light Theme -->
+      <div class="ss-card">
+        <div class="ss-preview" style="background:#f0f4f8">
+          <div class="mock-rack" style="background:#f0f4f8">
+            <div style="color:#0066cc;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;margin-bottom:6px;opacity:.7">CLEAN ROOM</div>
+            <div style="width:200px;display:flex;flex-direction:column;border:2px solid #d0dae6;border-radius:3px;overflow:hidden">
+              <div class="mock-unit" style="height:28px;background:#2288ff18;border-left:3px solid #2288ff;color:#2288ff">▣ Core Router</div>
+              <div class="mock-unit" style="height:28px;background:#ff334418;border-left:3px solid #ff3344;color:#ff3344">⬡ Firewall</div>
+              <div class="mock-unit" style="height:14px;background:#ffaa0018;border-left:3px solid #ffaa00;color:#cc8800;font-size:8px">⬢ Switch</div>
+              <div class="mock-unit" style="height:56px;background:#2288ff18;border-left:3px solid #2288ff;color:#2288ff">▣ DB Server</div>
+              <div class="mock-unit" style="height:42px;background:#9966ff18;border-left:3px solid #9966ff;color:#9966ff">▤ Storage</div>
+              <div class="mock-unit" style="height:28px;background:#2288ff18;border-left:3px solid #2288ff;color:#2288ff">▣ App Server</div>
+              <div style="height:20px;background:#f0f4f8;border-left:2px solid #d0dae6"></div>
+            </div>
+            <div style="color:#6a7a8a;font-family:'Share Tech Mono',monospace;font-size:8px;margin-top:6px;letter-spacing:1px">LIGHT THEME · CLEAN ROOM</div>
+          </div>
+        </div>
+        <div class="ss-caption">
+          <strong>Light Theme — Bright Clean Room</strong>
+          <span>Inverted palette · High contrast panel colors · Professional presentation mode</span>
+        </div>
+      </div>
+
+      <!-- 2D Mode -->
+      <div class="ss-card">
+        <div class="ss-preview" style="background:#070c14">
+          <div class="mock-2d">
+            <div style="color:#4a6278;font-family:'Share Tech Mono',monospace;font-size:8px;margin-bottom:8px;letter-spacing:1px">2D SCHEMATIC MODE</div>
+            <div class="mock-2d-rack">
+              <div style="background:#0b1120;padding:4px 8px;font-family:'Share Tech Mono',monospace;font-size:9px;color:#00d4ff;border-bottom:1px solid #1e2d45;letter-spacing:1px">DC-RACK-01 · 24U</div>
+              <div class="mock-2d-row" style="background:#2288ff22;border-left:3px solid #2288ff;color:#2288ff">▣ Core Router · U1-2 · 450W</div>
+              <div class="mock-2d-row" style="background:#ff334422;border-left:3px solid #ff3344;color:#ff3344">⬡ Firewall · U3-4 · 320W</div>
+              <div class="mock-2d-row" style="background:#88888822;border-left:3px solid #888;color:#888">⊞ Patch Panel · U5</div>
+              <div class="mock-2d-row" style="background:#ffaa0022;border-left:3px solid #ffaa00;color:#ffaa00">⬢ Switch 48p · U6 · 180W</div>
+              <div class="mock-2d-row" style="background:#2288ff22;border-left:3px solid #2288ff;color:#2288ff">▣ Web Server · U7-8 · 620W</div>
+              <div class="mock-2d-row" style="height:56px;background:#2288ff22;border-left:3px solid #2288ff;color:#2288ff;align-items:flex-start;padding-top:4px">▣ DB Server · U9-12 · 850W</div>
+              <div class="mock-2d-row" style="height:42px;background:#9966ff22;border-left:3px solid #9966ff;color:#9966ff;align-items:flex-start;padding-top:4px">▤ NAS Storage · U14-16 · 290W</div>
+            </div>
+          </div>
+        </div>
+        <div class="ss-caption">
+          <strong>2D Schematic Mode</strong>
+          <span>Flat rack diagram with device labels, unit positions, and wattage — toggle with ⊞ 2D button</span>
+        </div>
+      </div>
+
+      <!-- Matrix Theme -->
+      <div class="ss-card">
+        <div class="ss-preview" style="background:#000d00">
+          <div class="mock-rack" style="background:#000d00">
+            <div style="color:#00ff44;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;margin-bottom:6px;text-shadow:0 0 8px #00ff44">MATRIX</div>
+            <div style="width:200px;display:flex;flex-direction:column;border:1px solid #004400;border-radius:2px;overflow:hidden">
+              <div class="mock-unit" style="height:28px;background:#00ff4415;border-left:3px solid #00ff44;color:#00ff44">▣ Core Router</div>
+              <div class="mock-unit" style="height:28px;background:#00ff4415;border-left:3px solid #00ff44;color:#00cc33;opacity:.8">⬡ Firewall</div>
+              <div class="mock-unit" style="height:14px;background:#00ff4410;border-left:3px solid #00aa22;color:#00aa22;font-size:8px">⬢ Switch</div>
+              <div class="mock-unit" style="height:56px;background:#00ff4415;border-left:3px solid #00ff44;color:#00ff44">▣ DB Server</div>
+              <div class="mock-unit" style="height:42px;background:#00ff4415;border-left:3px solid #00dd33;color:#00dd33">▤ Storage</div>
+              <div class="mock-unit" style="height:14px;background:#00ff4408;border-left:3px solid #004400;color:#226622;font-size:8px">◆ IDS Sensor</div>
+              <div style="height:20px;background:#001a00;border-left:2px solid #003300"></div>
+            </div>
+            <div style="color:#226622;font-family:'Share Tech Mono',monospace;font-size:8px;margin-top:6px;letter-spacing:1px">MATRIX THEME · TERMINAL</div>
+          </div>
+        </div>
+        <div class="ss-caption">
+          <strong>Matrix Theme — Terminal Green</strong>
+          <span>All-green monochrome palette inspired by classic CRT terminals · OLED-optimized</span>
+        </div>
+      </div>
+
+      <!-- Labels closeup -->
+      <div class="ss-card">
+        <div class="ss-preview" style="background:#070c14;display:flex;align-items:center;justify-content:center">
+          <div style="position:relative;width:280px;height:180px">
+            <!-- Rack spine -->
+            <div style="position:absolute;left:130px;top:10px;width:20px;height:160px;background:#1c2535;border:1px solid #2a3550;border-radius:2px"></div>
+            <!-- Left labels -->
+            <div style="position:absolute;top:22px;right:160px;display:flex;align-items:center;gap:0">
+              <div style="padding:2px 6px;background:#070c14f0;border:1px solid #2288ff55;border-radius:2px;font-family:'Share Tech Mono',monospace;font-size:8px;color:#2288ff">▣ Core Router <span style="opacity:.5">·</span> 450W</div>
+              <div style="height:1px;width:24px;background:linear-gradient(270deg,transparent,#2288ff)"></div>
+              <div style="width:5px;height:5px;border-radius:50%;border:1px solid #2288ff;background:#070c14"></div>
+            </div>
+            <!-- Right labels -->
+            <div style="position:absolute;top:54px;left:155px;display:flex;align-items:center;gap:0">
+              <div style="width:5px;height:5px;border-radius:50%;border:1px solid #ff3344;background:#070c14"></div>
+              <div style="height:1px;width:24px;background:linear-gradient(90deg,transparent,#ff3344)"></div>
+              <div style="padding:2px 6px;background:#070c14f0;border:1px solid #ff334455;border-radius:2px;font-family:'Share Tech Mono',monospace;font-size:8px;color:#ff3344">⬡ Firewall <span style="opacity:.5">·</span> U3-4</div>
+            </div>
+            <div style="position:absolute;top:86px;right:160px;display:flex;align-items:center;gap:0">
+              <div style="padding:2px 6px;background:#070c14f0;border:1px solid #ffaa0055;border-radius:2px;font-family:'Share Tech Mono',monospace;font-size:8px;color:#ffaa00">⬢ Switch <span style="opacity:.5">·</span> 180W</div>
+              <div style="height:1px;width:24px;background:linear-gradient(270deg,transparent,#ffaa00)"></div>
+              <div style="width:5px;height:5px;border-radius:50%;border:1px solid #ffaa00;background:#070c14"></div>
+            </div>
+            <div style="position:absolute;top:118px;left:155px;display:flex;align-items:center;gap:0">
+              <div style="width:5px;height:5px;border-radius:50%;border:1px solid #9966ff;background:#070c14"></div>
+              <div style="height:1px;width:24px;background:linear-gradient(90deg,transparent,#9966ff)"></div>
+              <div style="padding:2px 6px;background:#070c14f0;border:1px solid #9966ff55;border-radius:2px;font-family:'Share Tech Mono',monospace;font-size:8px;color:#9966ff">▤ NAS Storage</div>
+            </div>
+          </div>
+        </div>
+        <div class="ss-caption">
+          <strong>Alternating Left / Right Labels</strong>
+          <span>Floating CSS labels anchored to 3D world positions · Connector dot + line · Toggle with ◈ LABELS</span>
+        </div>
+      </div>
+
+      <!-- OLED + Warm -->
+      <div class="ss-card">
+        <div class="ss-preview" style="background:#000;display:flex;gap:2px">
+          <div style="flex:1;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;border-right:1px solid #111">
+            <div style="color:#00ffcc;font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;margin-bottom:6px;text-shadow:0 0 6px #00ffcc">OLED</div>
+            <div style="width:90px;display:flex;flex-direction:column;border:1px solid #222;border-radius:2px;overflow:hidden">
+              <div style="height:16px;background:#00ffcc18;border-left:2px solid #00ffcc;font-family:'Share Tech Mono',monospace;font-size:7px;color:#00ffcc;padding:0 4px;display:flex;align-items:center">▣ Server</div>
+              <div style="height:16px;background:#00ffcc10;border-left:2px solid #00aaaa;font-family:'Share Tech Mono',monospace;font-size:7px;color:#00aaaa;padding:0 4px;display:flex;align-items:center">⬡ FW</div>
+              <div style="height:32px;background:#00ffcc18;border-left:2px solid #00ffcc;font-family:'Share Tech Mono',monospace;font-size:7px;color:#00ffcc;padding:0 4px;display:flex;align-items:center">▤ Storage</div>
+              <div style="height:12px;background:#000;border-left:2px solid #222"></div>
+            </div>
+          </div>
+          <div style="flex:1;background:#140d08;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px">
+            <div style="color:#ff9933;font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;margin-bottom:6px;text-shadow:0 0 6px #ff993388">WARM</div>
+            <div style="width:90px;display:flex;flex-direction:column;border:1px solid #3a2a18;border-radius:2px;overflow:hidden">
+              <div style="height:16px;background:#ff993318;border-left:2px solid #ff9933;font-family:'Share Tech Mono',monospace;font-size:7px;color:#ff9933;padding:0 4px;display:flex;align-items:center">▣ Server</div>
+              <div style="height:16px;background:#ff441118;border-left:2px solid #ff4411;font-family:'Share Tech Mono',monospace;font-size:7px;color:#ff4411;padding:0 4px;display:flex;align-items:center">⬡ FW</div>
+              <div style="height:32px;background:#88aa4418;border-left:2px solid #88aa44;font-family:'Share Tech Mono',monospace;font-size:7px;color:#88aa44;padding:0 4px;display:flex;align-items:center">▤ Storage</div>
+              <div style="height:12px;background:#140d08;border-left:2px solid #3a2a18"></div>
+            </div>
+          </div>
+        </div>
+        <div class="ss-caption">
+          <strong>OLED Black & Warm Industrial Themes</strong>
+          <span>OLED: maximum contrast for AMOLED displays · Warm: amber-toned data-hall aesthetic</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── INSTALL ── -->
+<section id="install">
+  <div class="container">
+    <h2>Installation</h2>
+    <p class="section-sub">Three.js is a peer dependency — install it alongside rack3d-visualizer.</p>
+
+    <h3>NPM / Yarn</h3>
+    <pre><code><span class="cmt"># npm</span>
+npm install rack3d-visualizer three
+
+<span class="cmt"># yarn</span>
+yarn add rack3d-visualizer three
+
+<span class="cmt"># pnpm</span>
+pnpm add rack3d-visualizer three</code></pre>
+
+    <h3>CDN (no build step)</h3>
+    <pre><code><span class="cmt">&lt;!-- Three.js peer dep (must load first) --&gt;</span>
+<span class="kw">&lt;script</span> src=<span class="str">"https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"</span><span class="kw">&gt;&lt;/script&gt;</span>
+
+<span class="cmt">&lt;!-- Rack3D UMD bundle --&gt;</span>
+<span class="kw">&lt;script</span> src=<span class="str">"https://cdn.jsdelivr.net/npm/rack3d-visualizer/dist/rack3d-visualizer.umd.js"</span><span class="kw">&gt;&lt;/script&gt;</span>
+
+<span class="cmt">&lt;!-- Global: window.Rack3D.Rack3DVisualizer --&gt;</span></code></pre>
+  </div>
+</section>
+
+<!-- ── QUICKSTART ── -->
+<section id="quickstart">
+  <div class="container">
+    <h2>Quickstart</h2>
+    <p class="section-sub">Three steps: define your container, build your rack JSON, instantiate.</p>
+
+    <h3>1 — HTML</h3>
+    <pre><code><span class="cmt">&lt;!-- Give the visualizer a sized container --&gt;</span>
+<span class="kw">&lt;div</span> id=<span class="str">"my-rack"</span> style=<span class="str">"width:100%;height:100vh"</span><span class="kw">&gt;&lt;/div&gt;</span></code></pre>
+
+    <h3>2 — ESM (bundler)</h3>
+    <pre><code><span class="kw">import</span> { <span class="fn">Rack3DVisualizer</span> } <span class="kw">from</span> <span class="str">'rack3d-visualizer'</span>;
+
+<span class="kw">const</span> <span class="prop">rackData</span> = {
+  <span class="prop">name</span>: <span class="str">'PROD-RACK-01'</span>,
+  <span class="prop">units</span>: <span class="num">24</span>,
+  <span class="prop">rackTemp</span>: <span class="num">38</span>,          <span class="cmt">// °C  — rack-level sensor</span>
+  <span class="prop">pduCapacity</span>: <span class="num">6400</span>,     <span class="cmt">// W   — PDU rated capacity</span>
+  <span class="prop">pduLoad</span>: <span class="num">3215</span>,          <span class="cmt">// W   — current draw</span>
+  <span class="prop">devices</span>: [
+    { <span class="prop">id</span>:<span class="str">'d1'</span>, <span class="prop">name</span>:<span class="str">'Core Router'</span>,  <span class="prop">type</span>:<span class="str">'router'</span>,   <span class="prop">startUnit</span>:<span class="num">1</span>,  <span class="prop">heightUnits</span>:<span class="num">2</span>, <span class="prop">watts</span>:<span class="num">450</span> },
+    { <span class="prop">id</span>:<span class="str">'d2'</span>, <span class="prop">name</span>:<span class="str">'Firewall FW-1'</span>, <span class="prop">type</span>:<span class="str">'firewall'</span>, <span class="prop">startUnit</span>:<span class="num">3</span>,  <span class="prop">heightUnits</span>:<span class="num">2</span>, <span class="prop">watts</span>:<span class="num">320</span> },
+    { <span class="prop">id</span>:<span class="str">'d3'</span>, <span class="prop">name</span>:<span class="str">'Switch 48p'</span>,    <span class="prop">type</span>:<span class="str">'switch'</span>,   <span class="prop">startUnit</span>:<span class="num">5</span>,  <span class="prop">heightUnits</span>:<span class="num">1</span>, <span class="prop">watts</span>:<span class="num">180</span> },
+    { <span class="prop">id</span>:<span class="str">'d4'</span>, <span class="prop">name</span>:<span class="str">'Web Server'</span>,    <span class="prop">type</span>:<span class="str">'server'</span>,   <span class="prop">startUnit</span>:<span class="num">6</span>,  <span class="prop">heightUnits</span>:<span class="num">2</span>, <span class="prop">watts</span>:<span class="num">620</span> },
+    { <span class="prop">id</span>:<span class="str">'d5'</span>, <span class="prop">name</span>:<span class="str">'DB Server'</span>,     <span class="prop">type</span>:<span class="str">'server'</span>,   <span class="prop">startUnit</span>:<span class="num">8</span>,  <span class="prop">heightUnits</span>:<span class="num">4</span>, <span class="prop">watts</span>:<span class="num">850</span> },
+    { <span class="prop">id</span>:<span class="str">'d6'</span>, <span class="prop">name</span>:<span class="str">'NAS Storage'</span>,   <span class="prop">type</span>:<span class="str">'storage'</span>,  <span class="prop">startUnit</span>:<span class="num">13</span>, <span class="prop">heightUnits</span>:<span class="num">3</span>, <span class="prop">watts</span>:<span class="num">290</span> },
+  ]
+};
+
+<span class="kw">const</span> <span class="prop">viz</span> = <span class="kw">new</span> <span class="fn">Rack3DVisualizer</span>(<span class="str">'#my-rack'</span>, {
+  <span class="prop">theme</span>: <span class="str">'dark'</span>,
+  <span class="prop">camera</span>: { <span class="prop">azimuth</span>: Math.<span class="fn">PI</span>, <span class="prop">elevation</span>: <span class="num">0.15</span> },
+  <span class="prop">onSelect</span>: (<span class="prop">device</span>) => console.<span class="fn">log</span>(<span class="str">'Selected:'</span>, device),
+  <span class="prop">onChange</span>: (<span class="prop">data</span>)   => console.<span class="fn">log</span>(<span class="str">'Changed'</span>, data.rack.name),
+});
+
+viz.<span class="fn">setData</span>(rackData);
+</code><span class="code-label">ESM</span></pre>
+
+    <h3>3 — CDN (no bundler)</h3>
+    <pre><code><span class="kw">const</span> { <span class="fn">Rack3DVisualizer</span> } = Rack3D;  <span class="cmt">// UMD global</span>
+<span class="kw">const</span> <span class="prop">viz</span> = <span class="kw">new</span> <span class="fn">Rack3DVisualizer</span>(<span class="str">'#my-rack'</span>, { <span class="prop">theme</span>: <span class="str">'dark'</span> });
+viz.<span class="fn">setData</span>(rackData);
+</code><span class="code-label">UMD</span></pre>
+  </div>
+</section>
+
+<!-- ── OPTIONS ── -->
+<section id="options">
+  <div class="container">
+    <h2>Options Reference</h2>
+    <p class="section-sub">All options are optional and deeply merged over defaults. Pass them as the second argument to the constructor or call <code>viz.setOptions()</code> at any time.</p>
+
+    <div class="note"><strong>Tip:</strong> All options can be updated at runtime via <code>viz.setOptions({ ... })</code> — the scene re-renders immediately.</div>
+
+    <h3>Top-level</h3>
+    <table class="opts-table">
+      <tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr>
+      <tr><td class="t-name">theme</td><td class="t-type">string | Object</td><td class="t-default">'dark'</td><td class="t-desc">Theme name (<code>'dark'</code>, <code>'light'</code>, <code>'oled'</code>, <code>'warm'</code>, <code>'matrix'</code>) or a partial theme object merged with dark as base.</td></tr>
+      <tr><td class="t-name">deviceTypes</td><td class="t-type">Object</td><td class="t-default">{}</td><td class="t-desc">Merge custom device types into the registry. Each entry: <code>{ color, hex, label, icon }</code>.</td></tr>
+      <tr><td class="t-name">onSelect</td><td class="t-type">Function</td><td class="t-default">null</td><td class="t-desc">Called with the clicked <code>RackDevice</code> object when a device is selected in 3D.</td></tr>
+      <tr><td class="t-name">onChange</td><td class="t-type">Function</td><td class="t-default">null</td><td class="t-desc">Called with <code>{ rack }</code> after any mutation (device add/edit/remove, name change, etc).</td></tr>
+      <tr><td class="t-name">onReady</td><td class="t-type">Function</td><td class="t-default">null</td><td class="t-desc">Called with the <code>Rack3DVisualizer</code> instance once Three.js has fully initialised.</td></tr>
+    </table>
+
+    <h3>view</h3>
+    <table class="opts-table">
+      <tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr>
+      <tr><td class="t-name">mode</td><td class="t-type">'3d' | '2d'</td><td class="t-default">'3d'</td><td class="t-desc">Start in full 3D render or flat 2D schematic diagram mode.</td></tr>
+      <tr><td class="t-name">wireframe</td><td class="t-type">boolean</td><td class="t-default">false</td><td class="t-desc">Render all geometry in wireframe on load.</td></tr>
+      <tr><td class="t-name">showLabels</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Show floating device labels on startup.</td></tr>
+      <tr><td class="t-name">autoRotate</td><td class="t-type">boolean</td><td class="t-default">false</td><td class="t-desc">Slowly orbit the camera around the rack.</td></tr>
+      <tr><td class="t-name">autoRotateSpeed</td><td class="t-type">number</td><td class="t-default">0.003</td><td class="t-desc">Radians per frame when autoRotate is enabled.</td></tr>
+      <tr><td class="t-name">showToolbar</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Show the top header toolbar with mode/label/wire buttons.</td></tr>
+      <tr><td class="t-name">allowDragDrop</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Enable dragging devices in the unit map to reposition them.</td></tr>
+      <tr><td class="t-name">allowEdit</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Allow clicking devices to open the inline editor.</td></tr>
+      <tr><td class="t-name">allowAddRemove</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Show add-device buttons and per-device remove button.</td></tr>
+      <tr><td class="t-name">allowJsonEdit</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Show the JSON editor panel button in the toolbar.</td></tr>
+    </table>
+
+    <h3>camera</h3>
+    <table class="opts-table">
+      <tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr>
+      <tr><td class="t-name">fov</td><td class="t-type">number</td><td class="t-default">44</td><td class="t-desc">Perspective field-of-view in degrees.</td></tr>
+      <tr><td class="t-name">azimuth</td><td class="t-type">number</td><td class="t-default">Math.PI</td><td class="t-desc">Initial horizontal orbit angle (radians). <code>Math.PI</code> points at the rack's front face.</td></tr>
+      <tr><td class="t-name">elevation</td><td class="t-type">number</td><td class="t-default">0.15</td><td class="t-desc">Initial vertical orbit angle (radians). 0 = level, 1.4 = top-down.</td></tr>
+      <tr><td class="t-name">distance</td><td class="t-type">number | 'auto'</td><td class="t-default">'auto'</td><td class="t-desc"><code>'auto'</code> = rack-height × 2.2. Pass a number for explicit distance.</td></tr>
+      <tr><td class="t-name">minDistance</td><td class="t-type">number</td><td class="t-default">4</td><td class="t-desc">Closest zoom-in distance (scroll wheel limit).</td></tr>
+      <tr><td class="t-name">maxDistance</td><td class="t-type">number</td><td class="t-default">80</td><td class="t-desc">Furthest zoom-out distance.</td></tr>
+      <tr><td class="t-name">orbitSpeed</td><td class="t-type">number</td><td class="t-default">0.0045</td><td class="t-desc">Mouse drag orbit sensitivity.</td></tr>
+      <tr><td class="t-name">zoomSpeed</td><td class="t-type">number</td><td class="t-default">0.035</td><td class="t-desc">Scroll wheel zoom sensitivity.</td></tr>
+    </table>
+
+    <h3>lighting</h3>
+    <table class="opts-table">
+      <tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr>
+      <tr><td class="t-name">ambientIntensity</td><td class="t-type">number</td><td class="t-default">6.0</td><td class="t-desc">Scene-wide ambient light intensity. Higher = no shadows anywhere.</td></tr>
+      <tr><td class="t-name">ambientColor</td><td class="t-type">number</td><td class="t-default">0xd0e8ff</td><td class="t-desc">Hex colour for ambient light (cool blue by default).</td></tr>
+      <tr><td class="t-name">overheadIntensity</td><td class="t-type">number</td><td class="t-default">9.0</td><td class="t-desc">Per-light intensity of overhead directional banks.</td></tr>
+      <tr><td class="t-name">overheadCount</td><td class="t-type">number</td><td class="t-default">6</td><td class="t-desc">Number of overhead light fixtures (2–12). More = uniform light.</td></tr>
+      <tr><td class="t-name">frontIntensity</td><td class="t-type">number</td><td class="t-default">10.0</td><td class="t-desc">Key light facing the rack front — illuminates device panels directly.</td></tr>
+      <tr><td class="t-name">fillIntensity</td><td class="t-type">number</td><td class="t-default">6.0</td><td class="t-desc">Left and right side fill lights.</td></tr>
+      <tr><td class="t-name">rackGlowIntensity</td><td class="t-type">number</td><td class="t-default">6.0</td><td class="t-desc">Internal rack PointLight that adds blue glow between devices.</td></tr>
+      <tr><td class="t-name">exposure</td><td class="t-type">number</td><td class="t-default">2.8</td><td class="t-desc">ACES tone-mapping exposure multiplier. Higher = brighter overall.</td></tr>
+      <tr><td class="t-name">shadows</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Enable PCF soft shadow maps (small GPU cost).</td></tr>
+    </table>
+
+    <h3>room</h3>
+    <table class="opts-table">
+      <tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr>
+      <tr><td class="t-name">enabled</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Render the server room (walls, floor, ceiling, fixtures). Set false for a plain background.</td></tr>
+      <tr><td class="t-name">width / depth / height</td><td class="t-type">number</td><td class="t-default">26 / 20 / 14</td><td class="t-desc">Room dimensions in Three.js units (≈ metres).</td></tr>
+      <tr><td class="t-name">floorTiles</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Raised floor tile grid (0.6m standard datacenter tiles).</td></tr>
+      <tr><td class="t-name">ceilingGrid</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Drop ceiling T-bar grid.</td></tr>
+      <tr><td class="t-name">stripLights</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Emissive fluorescent strip light geometry on ceiling.</td></tr>
+      <tr><td class="t-name">baseboardLights</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Blue LED accent strips at floor level on walls.</td></tr>
+      <tr><td class="t-name">exitSign</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Green exit sign on the rear wall corner.</td></tr>
+      <tr><td class="t-name">fogNear / fogFar</td><td class="t-type">number</td><td class="t-default">22 / 55</td><td class="t-desc">Linear fog distances. Keeps far room walls visible without infinite void.</td></tr>
+    </table>
+
+    <h3>labels</h3>
+    <table class="opts-table">
+      <tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr>
+      <tr><td class="t-name">enabled</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Show floating labels anchored to each device's 3D position.</td></tr>
+      <tr><td class="t-name">side</td><td class="t-type">'auto'|'left'|'right'</td><td class="t-default">'auto'</td><td class="t-desc"><code>'auto'</code> alternates left/right by device index for clean layout. Force all labels to one side.</td></tr>
+      <tr><td class="t-name">connectorLength</td><td class="t-type">number</td><td class="t-default">38</td><td class="t-desc">Length in px of the horizontal connector line between label and rack.</td></tr>
+      <tr><td class="t-name">showWatts / showUnits / showType / showIcon</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Toggle individual label metadata fields.</td></tr>
+    </table>
+
+    <h3>sidebar</h3>
+    <table class="opts-table">
+      <tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr>
+      <tr><td class="t-name">enabled</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Show the control sidebar. Set false for pure 3D-only embed.</td></tr>
+      <tr><td class="t-name">position</td><td class="t-type">'left'|'right'</td><td class="t-default">'left'</td><td class="t-desc">Dock the sidebar on the left or right of the canvas.</td></tr>
+      <tr><td class="t-name">width</td><td class="t-type">number</td><td class="t-default">248</td><td class="t-desc">Sidebar width in pixels.</td></tr>
+      <tr><td class="t-name">showRackConfig</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Show rack name / units / temp / PDU input fields.</td></tr>
+      <tr><td class="t-name">showStats</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">PDU load bar and rack temperature bar.</td></tr>
+      <tr><td class="t-name">showDeviceList</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Scrollable per-device list with select / remove.</td></tr>
+      <tr><td class="t-name">showUnitMap</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Unit-by-unit strip map with drag-and-drop reordering.</td></tr>
+      <tr><td class="t-name">showLegend</td><td class="t-type">boolean</td><td class="t-default">true</td><td class="t-desc">Device type colour legend at the bottom of the sidebar.</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ── THEMES ── -->
+<section id="themes">
+  <div class="container">
+    <h2>Themes</h2>
+    <p class="section-sub">Five built-in themes. Apply by name at construction or switch live with <code>viz.setTheme()</code>. Create custom themes by passing a partial object.</p>
+
+    <div class="theme-grid">
+      <div class="theme-card">
+        <div class="theme-preview" style="background:#070c14;color:#00d4ff">DARK</div>
+        <div class="theme-name" style="background:#0b1120;color:#c8d8e8">Default · Datacenter blue</div>
+        <div class="theme-colors" style="background:#0b1120">
+          <div class="tc" style="background:#070c14;border:1px solid #1e2d45"></div>
+          <div class="tc" style="background:#00d4ff"></div>
+          <div class="tc" style="background:#00ff88"></div>
+          <div class="tc" style="background:#ffaa00"></div>
+          <div class="tc" style="background:#ff3344"></div>
+        </div>
+      </div>
+      <div class="theme-card">
+        <div class="theme-preview" style="background:#f0f4f8;color:#0066cc">LIGHT</div>
+        <div class="theme-name" style="background:#fff;color:#1a2a3a">Clean room · Bright</div>
+        <div class="theme-colors" style="background:#fff">
+          <div class="tc" style="background:#f0f4f8;border:1px solid #d0dae6"></div>
+          <div class="tc" style="background:#0066cc"></div>
+          <div class="tc" style="background:#00aa55"></div>
+          <div class="tc" style="background:#cc8800"></div>
+          <div class="tc" style="background:#cc2233"></div>
+        </div>
+      </div>
+      <div class="theme-card">
+        <div class="theme-preview" style="background:#000;color:#00ffcc;text-shadow:0 0 8px #00ffcc">OLED</div>
+        <div class="theme-name" style="background:#0a0a0a;color:#e0e0e0">AMOLED · Max contrast</div>
+        <div class="theme-colors" style="background:#0a0a0a">
+          <div class="tc" style="background:#000;border:1px solid #222"></div>
+          <div class="tc" style="background:#00ffcc"></div>
+          <div class="tc" style="background:#00ffaa"></div>
+          <div class="tc" style="background:#ffcc00"></div>
+          <div class="tc" style="background:#ff2244"></div>
+        </div>
+      </div>
+      <div class="theme-card">
+        <div class="theme-preview" style="background:#140d08;color:#ff9933;text-shadow:0 0 6px #ff993366">WARM</div>
+        <div class="theme-name" style="background:#1e1208;color:#e8d8c0">Industrial · Amber glow</div>
+        <div class="theme-colors" style="background:#1e1208">
+          <div class="tc" style="background:#140d08;border:1px solid #3a2a18"></div>
+          <div class="tc" style="background:#ff9933"></div>
+          <div class="tc" style="background:#88cc44"></div>
+          <div class="tc" style="background:#ffaa22"></div>
+          <div class="tc" style="background:#ff4422"></div>
+        </div>
+      </div>
+      <div class="theme-card">
+        <div class="theme-preview" style="background:#000d00;color:#00ff44;text-shadow:0 0 8px #00ff44">MATRIX</div>
+        <div class="theme-name" style="background:#001400;color:#88ff88">Terminal · All green</div>
+        <div class="theme-colors" style="background:#001400">
+          <div class="tc" style="background:#000d00;border:1px solid #004400"></div>
+          <div class="tc" style="background:#00ff44"></div>
+          <div class="tc" style="background:#00ff88"></div>
+          <div class="tc" style="background:#88ff00"></div>
+          <div class="tc" style="background:#ff4400"></div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Custom Theme</h3>
+    <p>Pass a partial theme object — it is deep-merged with the <code>dark</code> base theme.</p>
+    <pre><code><span class="kw">const</span> <span class="prop">myTheme</span> = {
+  <span class="prop">css</span>: {
+    <span class="prop">bg</span>:     <span class="str">'#0d0018'</span>,
+    <span class="prop">accent</span>: <span class="str">'#cc44ff'</span>,
+    <span class="prop">panel</span>:  <span class="str">'#110020'</span>,
+    <span class="prop">border</span>: <span class="str">'#2a1040'</span>,
+    <span class="prop">green</span>:  <span class="str">'#aa44ff'</span>,
+  },
+  <span class="prop">scene</span>: {
+    <span class="prop">clearColor</span>:       <span class="num">0x0a0015</span>,
+    <span class="prop">ambientColor</span>:     <span class="num">0xcc88ff</span>,
+    <span class="prop">baseboardColor</span>:   <span class="num">0x8800ff</span>,
+    <span class="prop">stripEmissive</span>:    <span class="num">18</span>,
+  },
+  <span class="prop">rack</span>: {
+    <span class="prop">frameColor</span>: <span class="num">0x1a0030</span>,
+    <span class="prop">postColor</span>:  <span class="num">0x2a0050</span>,
+  }
+};
+
+viz.<span class="fn">setTheme</span>(myTheme);</code></pre>
+  </div>
+</section>
+
+<!-- ── DEVICE TYPES ── -->
+<section id="devices">
+  <div class="container">
+    <h2>Device Types</h2>
+    <p class="section-sub">Eight built-in types. Register custom types via <code>options.deviceTypes</code>.</p>
+
+    <div class="dtype-grid">
+      <div class="dtype-card"><span class="dtype-icon">▣</span><div class="dtype-swatch" style="background:#2288ff;box-shadow:0 0 4px #2288ff88"></div><div class="dtype-info"><div class="dtype-key">'server'</div><div class="dtype-label">Server — blue</div></div></div>
+      <div class="dtype-card"><span class="dtype-icon">⬡</span><div class="dtype-swatch" style="background:#ff3344;box-shadow:0 0 4px #ff334488"></div><div class="dtype-info"><div class="dtype-key">'firewall'</div><div class="dtype-label">Firewall — red</div></div></div>
+      <div class="dtype-card"><span class="dtype-icon">◈</span><div class="dtype-swatch" style="background:#00cc77;box-shadow:0 0 4px #00cc7788"></div><div class="dtype-info"><div class="dtype-key">'router'</div><div class="dtype-label">Router — green</div></div></div>
+      <div class="dtype-card"><span class="dtype-icon">⬢</span><div class="dtype-swatch" style="background:#ffaa00;box-shadow:0 0 4px #ffaa0088"></div><div class="dtype-info"><div class="dtype-key">'switch'</div><div class="dtype-label">Switch — amber</div></div></div>
+      <div class="dtype-card"><span class="dtype-icon">◆</span><div class="dtype-swatch" style="background:#ff55cc;box-shadow:0 0 4px #ff55cc88"></div><div class="dtype-info"><div class="dtype-key">'security'</div><div class="dtype-label">Security — pink</div></div></div>
+      <div class="dtype-card"><span class="dtype-icon">▤</span><div class="dtype-swatch" style="background:#9966ff;box-shadow:0 0 4px #9966ff88"></div><div class="dtype-info"><div class="dtype-key">'storage'</div><div class="dtype-label">Storage — purple</div></div></div>
+      <div class="dtype-card"><span class="dtype-icon">⚡</span><div class="dtype-swatch" style="background:#00ddcc;box-shadow:0 0 4px #00ddcc88"></div><div class="dtype-info"><div class="dtype-key">'pdu'</div><div class="dtype-label">PDU — teal</div></div></div>
+      <div class="dtype-card"><span class="dtype-icon">⊞</span><div class="dtype-swatch" style="background:#888888;box-shadow:0 0 4px #88888888"></div><div class="dtype-info"><div class="dtype-key">'patch'</div><div class="dtype-label">Patch Panel — grey</div></div></div>
+      <div class="dtype-card"><span class="dtype-icon">🔋</span><div class="dtype-swatch" style="background:#ff8800;box-shadow:0 0 4px #ff880088"></div><div class="dtype-info"><div class="dtype-key">'ups'</div><div class="dtype-label">UPS — orange</div></div></div>
+      <div class="dtype-card"><span class="dtype-icon">⌨</span><div class="dtype-swatch" style="background:#44aaff;box-shadow:0 0 4px #44aaff88"></div><div class="dtype-info"><div class="dtype-key">'kvm'</div><div class="dtype-label">KVM — sky blue</div></div></div>
+      <div class="dtype-card"><span class="dtype-icon">⚖</span><div class="dtype-swatch" style="background:#cc44ff;box-shadow:0 0 4px #cc44ff88"></div><div class="dtype-info"><div class="dtype-key">'loadbal'</div><div class="dtype-label">Load Balancer — violet</div></div></div>
+    </div>
+
+    <h3>Registering Custom Types</h3>
+    <pre><code><span class="kw">const</span> <span class="prop">viz</span> = <span class="kw">new</span> <span class="fn">Rack3DVisualizer</span>(<span class="str">'#rack'</span>, {
+  <span class="prop">deviceTypes</span>: {
+    <span class="prop">gpu_node</span>: { <span class="prop">color</span>: <span class="str">'#22ff88'</span>, <span class="prop">hex</span>: <span class="num">0x22ff88</span>, <span class="prop">label</span>: <span class="str">'GPU Node'</span>, <span class="prop">icon</span>: <span class="str">'◉'</span> },
+    <span class="prop">tape_lib</span>: { <span class="prop">color</span>: <span class="str">'#cc6600'</span>, <span class="prop">hex</span>: <span class="num">0xcc6600</span>, <span class="prop">label</span>: <span class="str">'Tape Library'</span>, <span class="prop">icon</span>: <span class="str">'⏭'</span> },
+  }
+});
+
+<span class="cmt">// Now use them in device data:</span>
+<span class="prop">devices</span>: [
+  { <span class="prop">id</span>:<span class="str">'g1'</span>, <span class="prop">type</span>:<span class="str">'gpu_node'</span>, <span class="prop">name</span>:<span class="str">'A100 x8'</span>, <span class="prop">startUnit</span>:<span class="num">1</span>, <span class="prop">heightUnits</span>:<span class="num">4</span>, <span class="prop">watts</span>:<span class="num">3200</span> }
+]</code></pre>
+  </div>
+</section>
+
+<!-- ── API ── -->
+<section id="api">
+  <div class="container">
+    <h2>Public API</h2>
+    <p class="section-sub">All mutating methods return <code>this</code> for chaining.</p>
+
+    <h3>Data</h3>
+    <table class="opts-table">
+      <tr><th>Method</th><th>Returns</th><th>Description</th></tr>
+      <tr><td class="t-name">setData(rackData)</td><td class="t-type">this</td><td class="t-desc">Load or replace all rack data. Triggers a full 3D rebuild.</td></tr>
+      <tr><td class="t-name">getData()</td><td class="t-type">RackData</td><td class="t-desc">Deep copy of the current rack state as a plain object.</td></tr>
+    </table>
+
+    <h3>Runtime mutations</h3>
+    <table class="opts-table">
+      <tr><th>Method</th><th>Returns</th><th>Description</th></tr>
+      <tr><td class="t-name">setTheme(theme)</td><td class="t-type">this</td><td class="t-desc">Apply a theme by name string or partial theme object. Re-injects CSS and rebuilds scene.</td></tr>
+      <tr><td class="t-name">setOptions(partial)</td><td class="t-type">this</td><td class="t-desc">Deep-merge any subset of options at runtime.</td></tr>
+      <tr><td class="t-name">setMode('3d'|'2d')</td><td class="t-type">this</td><td class="t-desc">Switch render mode. 2D shows a flat unit-map diagram instead of Three.js.</td></tr>
+      <tr><td class="t-name">setWireframe(bool)</td><td class="t-type">this</td><td class="t-desc">Toggle wireframe on all rack and device geometry.</td></tr>
+      <tr><td class="t-name">setLabels(bool)</td><td class="t-type">this</td><td class="t-desc">Show or hide floating device labels without rebuilding the scene.</td></tr>
+    </table>
+
+    <h3>Camera</h3>
+    <table class="opts-table">
+      <tr><th>Method</th><th>Returns</th><th>Description</th></tr>
+      <tr><td class="t-name">setCameraAngle(az?, el?, dist?)</td><td class="t-type">this</td><td class="t-desc">Animate camera to azimuth/elevation/distance. Pass <code>undefined</code> to leave unchanged.</td></tr>
+      <tr><td class="t-name">resetCamera()</td><td class="t-type">this</td><td class="t-desc">Return camera to defaults from <code>options.camera</code>.</td></tr>
+    </table>
+
+    <h3>Toolbar toggles</h3>
+    <table class="opts-table">
+      <tr><th>Method</th><th>Description</th></tr>
+      <tr><td class="t-name">toggleLabels()</td><td class="t-desc">Toggle floating label visibility + button state.</td></tr>
+      <tr><td class="t-name">toggleWire()</td><td class="t-desc">Toggle wireframe + button state.</td></tr>
+      <tr><td class="t-name">toggleMode()</td><td class="t-desc">Toggle 3D ↔ 2D + button state.</td></tr>
+      <tr><td class="t-name">toggleJson()</td><td class="t-desc">Open / close JSON editor panel.</td></tr>
+      <tr><td class="t-name">exportJson()</td><td class="t-desc">Write current rack state to JSON editor textarea.</td></tr>
+      <tr><td class="t-name">applyJson()</td><td class="t-desc">Parse JSON editor content and hot-apply to rack.</td></tr>
+      <tr><td class="t-name">destroy()</td><td class="t-desc">Dispose Three.js renderer, remove DOM, unbind events. Call before unmounting.</td></tr>
+    </table>
+
+    <h3>Method chaining example</h3>
+    <pre><code>viz
+  .<span class="fn">setData</span>(myRack)
+  .<span class="fn">setTheme</span>(<span class="str">'matrix'</span>)
+  .<span class="fn">setWireframe</span>(<span class="num">false</span>)
+  .<span class="fn">setCameraAngle</span>(Math.<span class="fn">PI</span>, <span class="num">0.2</span>, <span class="num">30</span>)
+  .<span class="fn">setOptions</span>({ view: { <span class="prop">autoRotate</span>: <span class="num">true</span> } });</code></pre>
+  </div>
+</section>
+
+<!-- ── JSON SCHEMA ── -->
+<section id="json">
+  <div class="container">
+    <h2>JSON Schema</h2>
+    <p class="section-sub">The full shape of a rack data object. This is what you pass to <code>setData()</code> and what <code>getData()</code> returns.</p>
+    <pre><code>{
+  <span class="prop">"rack"</span>: {
+    <span class="prop">"name"</span>:        <span class="str">"DC-RACK-01"</span>,   <span class="cmt">// Display name shown in header + sidebar</span>
+    <span class="prop">"units"</span>:       <span class="num">24</span>,            <span class="cmt">// Total rack unit capacity (4–48)</span>
+
+    <span class="cmt">// ── Rack-level sensors (not per-device) ──────────</span>
+    <span class="prop">"rackTemp"</span>:    <span class="num">38</span>,            <span class="cmt">// °C  — intake air / ambient temperature</span>
+    <span class="prop">"pduCapacity"</span>: <span class="num">6400</span>,         <span class="cmt">// W   — PDU rated capacity</span>
+    <span class="prop">"pduLoad"</span>:     <span class="num">3215</span>,         <span class="cmt">// W   — current PDU load reading</span>
+
+    <span class="prop">"devices"</span>: [
+      {
+        <span class="prop">"id"</span>:          <span class="str">"d1"</span>,        <span class="cmt">// Unique string ID (any format)</span>
+        <span class="prop">"name"</span>:        <span class="str">"Core Router"</span>,<span class="cmt">// Label shown in 3D, sidebar, unit map</span>
+        <span class="prop">"type"</span>:        <span class="str">"router"</span>,    <span class="cmt">// Registered device type key</span>
+        <span class="prop">"startUnit"</span>:   <span class="num">1</span>,           <span class="cmt">// First rack unit occupied (1-indexed)</span>
+        <span class="prop">"heightUnits"</span>: <span class="num">2</span>,           <span class="cmt">// Number of units tall (1U–12U)</span>
+        <span class="prop">"watts"</span>:       <span class="num">450</span>         <span class="cmt">// Power draw for this device (W)</span>
+        <span class="cmt">// Any extra fields are preserved through getData() / onChange()</span>
+      }
+      <span class="cmt">// ... more devices</span>
+    ]
+  }
+}</code></pre>
+
+    <div class="note"><strong>Note:</strong> Temperature and PDU metrics are rack-level properties, not per-device. This reflects how real datacenter sensors work — a single intake thermistor and PDU clamp meter per rack.</div>
+  </div>
+</section>
+
+<!-- ── REACT ── -->
+<section id="react">
+  <div class="container">
+    <h2>React Integration</h2>
+    <p class="section-sub">Use the provided React wrapper or mount the class directly in a <code>useEffect</code>.</p>
+
+    <h3>Option A — React wrapper component</h3>
+    <pre><code><span class="kw">import</span> RackViewer <span class="kw">from</span> <span class="str">'rack3d-visualizer/examples/react/RackViewer'</span>;
+
+<span class="kw">function</span> <span class="fn">App</span>() {
+  <span class="kw">const</span> [theme, setTheme] = <span class="fn">useState</span>(<span class="str">'dark'</span>);
+
+  <span class="kw">return</span> (
+    <span class="kw">&lt;div</span> style={{ width:<span class="str">'100vw'</span>, height:<span class="str">'100vh'</span> }}<span class="kw">&gt;</span>
+      <span class="kw">&lt;RackViewer</span>
+        data={rackData}
+        theme={theme}
+        options={{ view: { autoRotate: <span class="num">false</span> } }}
+        onSelect={dev => console.<span class="fn">log</span>(dev)}
+      <span class="kw">/&gt;</span>
+    <span class="kw">&lt;/div&gt;</span>
+  );
+}</code></pre>
+
+    <h3>Option B — useEffect mount</h3>
+    <pre><code><span class="kw">import</span> { useEffect, useRef } <span class="kw">from</span> <span class="str">'react'</span>;
+<span class="kw">import</span> { Rack3DVisualizer } <span class="kw">from</span> <span class="str">'rack3d-visualizer'</span>;
+
+<span class="kw">export function</span> <span class="fn">RackEmbed</span>({ data, theme = <span class="str">'dark'</span> }) {
+  <span class="kw">const</span> ref = <span class="fn">useRef</span>(<span class="num">null</span>);
+  <span class="kw">const</span> viz = <span class="fn">useRef</span>(<span class="num">null</span>);
+
+  <span class="fn">useEffect</span>(() => {
+    viz.current = <span class="kw">new</span> <span class="fn">Rack3DVisualizer</span>(ref.current, { theme });
+    viz.current.<span class="fn">setData</span>(data);
+    <span class="kw">return</span> () => viz.current.<span class="fn">destroy</span>();
+  }, []);  <span class="cmt">// mount once</span>
+
+  <span class="fn">useEffect</span>(() => {
+    <span class="kw">if</span> (viz.current) viz.current.<span class="fn">setTheme</span>(theme);
+  }, [theme]);
+
+  <span class="fn">useEffect</span>(() => {
+    <span class="kw">if</span> (viz.current) viz.current.<span class="fn">setData</span>(data);
+  }, [data]);
+
+  <span class="kw">return</span> <span class="kw">&lt;div</span> ref={ref} style={{ width:<span class="str">'100%'</span>, height:<span class="str">'100%'</span> }} <span class="kw">/&gt;</span>;
+}</code></pre>
+
+    <div class="warn note"><strong>Important:</strong> Always call <code>viz.destroy()</code> in the <code>useEffect</code> cleanup function to dispose the Three.js renderer and prevent memory leaks on unmount.</div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>rack3d-visualizer &nbsp;·&nbsp; MIT License &nbsp;·&nbsp;
+      <a href="https://github.com/your-org/rack3d-visualizer">GitHub</a> &nbsp;·&nbsp;
+      <a href="https://www.npmjs.com/package/rack3d-visualizer">npm</a>
+    </p>
+    <p style="margin-top:6px;font-size:9px">Built on Three.js r128+ &nbsp;·&nbsp; No framework dependencies &nbsp;·&nbsp; ESM · CJS · UMD</p>
+  </div>
+</footer>
+
+</body>
+</html>

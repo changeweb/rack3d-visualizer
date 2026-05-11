@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rack3D — Vanilla JS Example</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0e16; font-family: monospace; }
+    h2   { color: #00d4ff; padding: 12px 16px; font-size: 13px; letter-spacing: 2px; border-bottom: 1px solid #1e2d45; }
+    #rack-container { width: 100vw; height: calc(100vh - 44px); }
+  </style>
+</head>
+<body>
+  <h2>RACK3D · Vanilla JS · Dark Theme</h2>
+  <div id="rack-container"></div>
+
+  <!-- Three.js peer dependency (required) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Rack3D UMD bundle -->
+  <script src="../../dist/rack3d-visualizer.umd.js"></script>
+
+  <script>
+    const { Rack3DVisualizer } = Rack3D;
+
+    // ── 1. Define your rack data ──────────────────────────────
+    const myRack = {
+      name: 'DC-RACK-01',
+      units: 24,
+      rackTemp: 38,
+      pduCapacity: 6400,
+      pduLoad: 3215,
+      devices: [
+        { id: 'd1', name: 'Core Router',    type: 'router',   startUnit: 1,  heightUnits: 2, watts: 450 },
+        { id: 'd2', name: 'Firewall FW-1',  type: 'firewall', startUnit: 3,  heightUnits: 2, watts: 320 },
+        { id: 'd3', name: 'Patch Panel A',  type: 'patch',    startUnit: 5,  heightUnits: 1, watts: 0   },
+        { id: 'd4', name: 'Switch 48p',     type: 'switch',   startUnit: 6,  heightUnits: 1, watts: 180 },
+        { id: 'd5', name: 'Web Server 01',  type: 'server',   startUnit: 7,  heightUnits: 2, watts: 620 },
+        { id: 'd6', name: 'DB Server',      type: 'server',   startUnit: 9,  heightUnits: 4, watts: 850 },
+        { id: 'd7', name: 'NAS Storage',    type: 'storage',  startUnit: 14, heightUnits: 3, watts: 290 },
+        { id: 'd8', name: 'IDS Sensor',     type: 'security', startUnit: 18, heightUnits: 1, watts: 95  },
+        { id: 'd9', name: 'Backup Server',  type: 'server',   startUnit: 20, heightUnits: 2, watts: 410 },
+        { id: 'd10',name: 'PDU-A',          type: 'pdu',      startUnit: 23, heightUnits: 1, watts: 30  },
+      ]
+    };
+
+    // ── 2. Instantiate ────────────────────────────────────────
+    const viz = new Rack3DVisualizer('#rack-container', {
+      theme: 'dark',
+      view: {
+        mode:        '3d',
+        autoRotate:  false,
+        showLabels:  true,
+        allowEdit:   true,
+        allowJsonEdit: true,
+      },
+      camera: {
+        azimuth:   Math.PI,   // face the front
+        elevation: 0.15,
+        distance:  'auto',
+      },
+      lighting: {
+        overheadIntensity: 9.0,
+        frontIntensity:    10.0,
+        exposure:          2.8,
+      },
+      room: {
+        enabled:     true,
+        stripLights: true,
+        floorTiles:  true,
+      },
+      labels: {
+        enabled: true,
+        side:    'auto',   // alternates left / right
+      },
+      onSelect: (device) => console.log('Selected:', device),
+      onChange: (data)   => console.log('Changed:', data.rack.name),
+      onReady:  (viz)    => console.log('Rack3D ready!', viz),
+    });
+
+    // ── 3. Load data ───────────────────────────────────────────
+    viz.setData(myRack);
+  </script>
+</body>
+</html>
