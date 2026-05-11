@@ -57,35 +57,6 @@ export function buildHTML(self) {
         <button class="r3-btn" id="${self._id}-btnCopy" style="flex:1" onclick="window._r3['${self._id}'].copyJson()" title="Copy JSON to clipboard">⎘ Copy JSON</button>
       </div>` : ''}
     </div>` : ''}
-    ${sb.showEditPanel && v.allowEdit ? `
-    <div class="r3-ep" id="${self._id}-ep" style="display:none">
-      <div class="r3-pl" id="${self._id}-elbl" style="margin-bottom:5px">Edit</div>
-      <div class="r3-rw"><span class="r3-lbl">Name</span><input class="r3-inp" id="${self._id}-en" oninput="window._r3['${self._id}']._ed('name',this.value)"></div>
-      <div class="r3-rw"><span class="r3-lbl">Type</span>
-        <select class="r3-inp" id="${self._id}-et" onchange="window._r3['${self._id}']._ed('type',this.value)">
-          ${Object.entries(self._types).map(([k,tv])=>`<option value="${k}">${tv.label}</option>`).join('')}
-        </select>
-      </div>
-      <div class="r3-rw"><span class="r3-lbl">Watts</span><input class="r3-inp" type="number" id="${self._id}-ew" oninput="window._r3['${self._id}']._ed('watts',+this.value)"></div>
-      <div class="r3-rw"><span class="r3-lbl">Height U</span><input class="r3-inp" type="number" min="1" max="12" id="${self._id}-eh" oninput="window._r3['${self._id}']._ed('heightUnits',+this.value)"></div>
-      <div class="r3-rw"><span class="r3-lbl">Start U</span><input class="r3-inp" type="number" min="1" id="${self._id}-es" oninput="window._r3['${self._id}']._ed('startUnit',+this.value)"></div>
-      <div class="r3-rw"><span class="r3-lbl">Width</span>
-        <select class="r3-inp" id="${self._id}-ehw" onchange="window._r3['${self._id}']._ed('halfWidth',this.value||undefined)">
-          <option value="">Full Width</option>
-          <option value="left">Half — Left</option>
-          <option value="right">Half — Right</option>
-        </select>
-      </div>
-      <div class="r3-rw"><span class="r3-lbl">Color</span><input class="r3-inp" type="color" id="${self._id}-ecolor" style="padding:2px;height:28px" oninput="window._r3['${self._id}']._ed('color',this.value)"></div>
-      <div class="r3-rw"><span class="r3-lbl">Front Img</span><input class="r3-inp" id="${self._id}-eimg" placeholder="URL" oninput="window._r3['${self._id}']._ed('imageUrl',this.value)"></div>
-      <div class="r3-rw"><span class="r3-lbl">Rear Img</span><input class="r3-inp" id="${self._id}-eimgr" placeholder="URL or path" oninput="window._r3['${self._id}']._ed('imageUrlRear',this.value)"></div>
-      <div class="r3-rw"><span class="r3-lbl">IP</span><input class="r3-inp" id="${self._id}-eip" oninput="window._r3['${self._id}']._ed('ip',this.value)"></div>
-      <div class="r3-rw"><span class="r3-lbl">Status</span><select class="r3-inp" id="${self._id}-estat" onchange="window._r3['${self._id}']._ed('status',this.value||undefined)"><option value="">-</option><option value="up">Up ▲</option><option value="down">Down ▼</option><option value="warn">Warn ⚠</option></select></div>
-      <div class="r3-rw" style="flex-direction:column;align-items:stretch;gap:4px">
-        <div style="display:flex;align-items:center;justify-content:space-between"><span class="r3-lbl">Custom Fields</span><button class="r3-btn" style="padding:1px 6px;font-size:10px" onclick="window._r3['${self._id}']._addCustomField()">+ Add</button></div>
-        <div id="${self._id}-efields"></div>
-      </div>
-    </div>` : ''}
     <div class="r3-pnl">
       <div class="r3-pl" style="display:flex;justify-content:space-between;align-items:center">
         <span>Device Catalog</span>
@@ -138,5 +109,41 @@ export function buildHTML(self) {
     <div class="r3-2d-wrap" id="${self._id}-2d"></div>
   </div>`;
 
-  return `${toolbar}<div class="r3-body">${sidebarHtml}${self._mode==='2d'?view2dHtml:canvasHtml}${self._mode==='2d'?canvasHtml:view2dHtml}</div>`;
+  const editPanelHtml = sb.showEditPanel && v.allowEdit ? `
+  <div class="r3-ep r3-pnl" id="${self._id}-ep" style="display:none">
+    <div class="r3-pl" id="${self._id}-elbl" style="margin-bottom:5px">Edit Device</div>
+    <div class="r3-rw"><span class="r3-lbl">Name</span><input class="r3-inp" id="${self._id}-en" oninput="window._r3['${self._id}']._ed('name',this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Type</span>
+      <select class="r3-inp" id="${self._id}-et" onchange="window._r3['${self._id}']._ed('type',this.value)">
+        ${Object.entries(self._types).map(([k,tv])=>`<option value="${k}">${tv.label}</option>`).join('')}
+      </select>
+    </div>
+    <div class="r3-rw"><span class="r3-lbl">Watts</span><input class="r3-inp" type="number" id="${self._id}-ew" oninput="window._r3['${self._id}']._ed('watts',+this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Height U</span><input class="r3-inp" type="number" min="1" max="12" id="${self._id}-eh" oninput="window._r3['${self._id}']._ed('heightUnits',+this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Start U</span><input class="r3-inp" type="number" min="1" id="${self._id}-es" oninput="window._r3['${self._id}']._ed('startUnit',+this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Width</span>
+      <select class="r3-inp" id="${self._id}-ehw" onchange="window._r3['${self._id}']._ed('halfWidth',this.value||undefined)">
+        <option value="">Full Width</option>
+        <option value="left">Half — Left</option>
+        <option value="right">Half — Right</option>
+      </select>
+    </div>
+    <div class="r3-rw"><span class="r3-lbl">Color</span><input class="r3-inp" type="color" id="${self._id}-ecolor" style="padding:2px;height:28px" oninput="window._r3['${self._id}']._ed('color',this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Front Img</span><input class="r3-inp" id="${self._id}-eimg" placeholder="URL" oninput="window._r3['${self._id}']._ed('imageUrl',this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Rear Img</span><input class="r3-inp" id="${self._id}-eimgr" placeholder="URL" oninput="window._r3['${self._id}']._ed('imageUrlRear',this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">IP</span><input class="r3-inp" id="${self._id}-eip" oninput="window._r3['${self._id}']._ed('ip',this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Status</span><select class="r3-inp" id="${self._id}-estat" onchange="window._r3['${self._id}']._ed('status',this.value||undefined)"><option value="">-</option><option value="up">Up ▲</option><option value="down">Down ▼</option><option value="warn">Warn ⚠</option></select></div>
+    <div class="r3-rw" style="flex-direction:column;align-items:stretch;gap:4px">
+      <div style="display:flex;align-items:center;justify-content:space-between"><span class="r3-lbl">Custom Fields</span><button class="r3-btn" style="padding:1px 6px;font-size:10px" onclick="window._r3['${self._id}']._addCustomField()">+ Add</button></div>
+      <div id="${self._id}-efields"></div>
+    </div>
+  </div>` : '';
+
+  const rightSidebarHtml = `
+  <div class="r3-sb r3-sb-right" id="${self._id}-sbr">
+    ${editPanelHtml}
+    <div id="${self._id}-cat-edit-wrap"></div>
+  </div>`;
+
+  return `${toolbar}<div class="r3-body">${sidebarHtml}${self._mode==='2d'?view2dHtml:canvasHtml}${self._mode==='2d'?canvasHtml:view2dHtml}${rightSidebarHtml}</div>`;
 }

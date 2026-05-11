@@ -123,7 +123,6 @@ export function on2DDrop(self, event, unit, side = '') {
   if (isCatalog && catId) {
     const item = self._rack?.catalog?.find(c => c.id === catId);
     if (!item) return;
-    const sideHint = side || item.halfWidth || null;
     const nd = {
       id: 'd' + Date.now(),
       name: item.name,
@@ -132,8 +131,7 @@ export function on2DDrop(self, event, unit, side = '') {
       heightUnits: item.heightUnits,
       watts: item.watts,
     };
-    if (sideHint) nd.halfWidth = sideHint;
-    else if (item.halfWidth) nd.halfWidth = item.halfWidth;
+    if (item.halfWidth) nd.halfWidth = item.halfWidth;
 
     const tempId = nd.id;
     self._rack.devices.push(nd);
@@ -185,7 +183,7 @@ export function dropUnit(self, devId, unit, side = null) {
     }
   });
 
-  const newHW = side || dev.halfWidth || null;
+  const newHW = dev.halfWidth || null;
 
   let ok = true;
   for (let u = unit; u < unit + dev.heightUnits; u++) {
@@ -203,7 +201,6 @@ export function dropUnit(self, devId, unit, side = null) {
 
   if (ok) {
     dev.startUnit = unit;
-    if (side !== null) dev.halfWidth = side || undefined;
     self._buildRack();
     self._refresh();
     if (self._mode === '2d') self._render2D();

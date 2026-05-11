@@ -175,8 +175,21 @@ export function buildCSS(scope, theme, opts) {
 
 /* ── CATALOG ── */
 #${scope} .r3-cat-list { display:flex; flex-direction:column; gap:2px; }
-#${scope} .r3-cat-item { cursor:grab; }
+#${scope} .r3-cat-item { cursor:grab; padding:3px 6px !important; }
 #${scope} .r3-cat-item:active { cursor:grabbing; }
+#${scope} .r3-cat-item .r3-dn { font-size:12px; }
+#${scope} .r3-cat-item .r3-dm { font-size:10px; }
+
+/* ── RIGHT SIDEBAR ── */
+#${scope} .r3-sb-right {
+  width:260px; min-width:260px;
+  border-left:1px solid var(--r3-border);
+  display:none; flex-direction:column; overflow-y:auto; background:var(--r3-panel);
+  scrollbar-width:thin; scrollbar-color:var(--r3-border) transparent;
+}
+#${scope} .r3-sb-right.r3-sbr-open { display:flex; }
+#${scope} .r3-sb-right::-webkit-scrollbar { width:4px; }
+#${scope} .r3-sb-right::-webkit-scrollbar-thumb { background:var(--r3-border); border-radius:2px; }
 
 /* ── ZOOM BUTTONS ── */
 #${scope} .r3-zoom-btns { position:absolute; bottom:44px; right:12px; display:flex; flex-direction:column; gap:4px; z-index:6; }

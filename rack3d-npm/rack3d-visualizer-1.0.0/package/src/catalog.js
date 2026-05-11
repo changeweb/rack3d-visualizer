@@ -41,6 +41,7 @@ export function renderCatalog(self) {
       self._selCatId = isSel ? null : item.id;
       self._renderCatalog();
       if (self._selCatId) self._openCatalogEdit(item);
+      else _closeSbrIfEmpty(self);
     });
     el.appendChild(d);
   });
@@ -65,27 +66,33 @@ export function addCatalogItem(self) {
 export function removeCatalogItem(self, id) {
   if (!self._rack?.catalog) return;
   self._rack.catalog = self._rack.catalog.filter(c => c.id !== id);
-  if (self._selCatId === id) self._selCatId = null;
+  if (self._selCatId === id) {
+    self._selCatId = null;
+    const wrap = document.getElementById(self._id + '-cat-edit-wrap');
+    if (wrap) wrap.innerHTML = '';
+    _closeSbrIfEmpty(self);
+  }
   self._renderCatalog();
 }
 
 export function openCatalogEdit(self, item) {
-  const catEl = document.getElementById(self._id + '-cat');
-  if (!catEl) return;
+  const wrap = document.getElementById(self._id + '-cat-edit-wrap');
+  if (!wrap) return;
 
-  const existing = document.getElementById(self._id + '-cat-edit');
-  if (existing) existing.remove();
+  wrap.innerHTML = '';
 
-  const form = document.createElement('div');
-  form.id = self._id + '-cat-edit';
-  form.style.cssText = 'margin-top:6px;padding:7px;border:1px solid var(--r3-border);border-radius:3px;background:var(--r3-bg)';
+  const sbr = document.getElementById(self._id + '-sbr');
+  if (sbr) sbr.classList.add('r3-sbr-open');
 
   const typeOptions = Object.entries(self._types)
     .map(([k, v]) => `<option value="${k}" ${k === item.type ? 'selected' : ''}>${v.label}</option>`)
     .join('');
 
+  const form = document.createElement('div');
+  form.id = self._id + '-cat-edit';
+  form.className = 'r3-pnl';
   form.innerHTML = `
-    <div class="r3-pl" style="margin-bottom:5px">Edit Catalog Item</div>
+    <div class="r3-pl" style="margin-bottom:5px">Catalog Item</div>
     <div class="r3-rw"><span class="r3-lbl">Name</span><input class="r3-inp" id="${self._id}-cen" value="${item.name}"></div>
     <div class="r3-rw"><span class="r3-lbl">Type</span>
       <select class="r3-inp" id="${self._id}-cet">${typeOptions}</select>
@@ -99,12 +106,12 @@ export function openCatalogEdit(self, item) {
         <option value="right" ${item.halfWidth === 'right' ? 'selected' : ''}>Half — Right</option>
       </select>
     </div>
-    <div style="display:flex;gap:5px;margin-top:6px">
+    <div style="display:flex;gap:5px;margin-top:8px">
       <button class="r3-btn on" id="${self._id}-cat-save" style="flex:1">✓ Save</button>
       <button class="r3-btn" id="${self._id}-cat-cancel" style="flex:1">✕ Cancel</button>
     </div>`;
 
-  catEl.parentElement.insertBefore(form, catEl.nextSibling);
+  wrap.appendChild(form);
 
   document.getElementById(self._id + '-cat-save').addEventListener('click', () => {
     const get = sfx => document.getElementById(self._id + '-c' + sfx)?.value;
@@ -114,13 +121,24 @@ export function openCatalogEdit(self, item) {
     item.watts       = parseInt(get('ew'), 10) || 0;
     const hw = get('ehw');
     if (hw) item.halfWidth = hw; else delete item.halfWidth;
-    form.remove();
+    wrap.innerHTML = '';
+    self._selCatId = null;
+    _closeSbrIfEmpty(self);
     self._renderCatalog();
   });
 
   document.getElementById(self._id + '-cat-cancel').addEventListener('click', () => {
-    form.remove();
+    wrap.innerHTML = '';
     self._selCatId = null;
+    _closeSbrIfEmpty(self);
     self._renderCatalog();
   });
+}
+
+function _closeSbrIfEmpty(self) {
+  const ep = document.getElementById(self._id + '-ep');
+  if (!ep || ep.style.display === 'none') {
+    const sbr = document.getElementById(self._id + '-sbr');
+    if (sbr) sbr.classList.remove('r3-sbr-open');
+  }
 }

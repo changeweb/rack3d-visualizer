@@ -122,6 +122,8 @@ export function buildLegend(self) {
 export function openEdit(self, dev) {
   const ep = document.getElementById(self._id + '-ep'); if (!ep) return;
   ep.style.display = 'block';
+  const sbr = document.getElementById(self._id + '-sbr');
+  if (sbr) sbr.classList.add('r3-sbr-open');
   const el = document.getElementById(self._id + '-elbl'); if (el) el.textContent = '▸ ' + dev.name;
   const set = (id, v) => { const e = document.getElementById(self._id + '-' + id); if (e) e.value = v; };
   set('en', dev.name); set('et', dev.type); set('ew', dev.watts);
@@ -137,6 +139,11 @@ export function openEdit(self, dev) {
 
 export function closeEdit(self) {
   const ep = document.getElementById(self._id + '-ep'); if (ep) ep.style.display = 'none';
+  const catWrap = document.getElementById(self._id + '-cat-edit-wrap');
+  if (!catWrap?.hasChildNodes()) {
+    const sbr = document.getElementById(self._id + '-sbr');
+    if (sbr) sbr.classList.remove('r3-sbr-open');
+  }
 }
 
 export function ed(self, field, value) {

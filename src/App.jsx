@@ -76,7 +76,7 @@ function RackInstance({ data, theme = 'dark' }) {
       room: {
         enabled:         true,
         width:           26,       // metres
-        depth:           20,
+        depth:           40,
         height:          24,
         floorTiles:      true,     // Raised floor 0.6 m tile grid
         ceilingGrid:     true,     // T-bar drop ceiling grid
@@ -105,7 +105,7 @@ function RackInstance({ data, theme = 'dark' }) {
 
 export default function App() {
   return (
-    <div style={{ display: 'flex', width: '100vh', height: '100vh', background: '#070c14', gap: '1px' }}>
+    <div style={{ display: 'flex', width: '100%', height: '100vh', background: '#070c14', gap: '1px' }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <RackInstance data={RACK_B} theme="light" />
       </div>
