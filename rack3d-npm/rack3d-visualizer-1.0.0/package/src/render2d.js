@@ -1,9 +1,12 @@
 // ── RENDER2D ── flat 2D schematic view + drag-drop + export
 
 export function render2D(self) {
-  if (!self._rack) return;
   const cont = document.getElementById(self._id + '-2d');
   if (!cont) return;
+  if (!self._rack) {
+    cont.innerHTML = '<div style="color:var(--r3-dim);font-family:\'Share Tech Mono\',monospace;font-size:11px;padding:30px;text-align:center;opacity:.5">Click a rack in 3D view to see its 2D representation</div>';
+    return;
+  }
   const r  = self._rack;
   const UH = 26;
   const allowDrag = self._opts.view.allowDragDrop;

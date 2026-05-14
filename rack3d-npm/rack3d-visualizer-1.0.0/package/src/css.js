@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────────────────────
 
 export function buildCSS(scope, theme, opts) {
-  const c = theme.css;
+  const c   = theme.css;
   const sbW = opts.sidebar.width;
   const sbPos = opts.sidebar.position;
 
@@ -60,7 +60,7 @@ export function buildCSS(scope, theme, opts) {
 /* ── BODY ── */
 #${scope} .r3-body { display:flex; flex:1; overflow:hidden; min-height:0; flex-direction:${sbPos==='right'?'row-reverse':'row'}; }
 
-/* ── SIDEBAR ── */
+/* ── LEFT SIDEBAR ── */
 #${scope} .r3-sb {
   width:${sbW}px; min-width:${sbW}px;
   border-${sbPos==='right'?'left':'right'}:1px solid var(--r3-border);
@@ -94,8 +94,7 @@ export function buildCSS(scope, theme, opts) {
 #${scope} .r3-dm    { color:var(--r3-dim); font-size:10px; }
 #${scope} .r3-xb    { background:none; border:none; color:${c.border}; cursor:pointer; font-size:14px; padding:0 2px; line-height:1; flex-shrink:0; transition:color .15s; }
 #${scope} .r3-xb:hover  { color:var(--r3-red); }
-#${scope} .r3-ab    { border-radius:2px; padding:3px 8px; cursor:pointer; font-size:9px; font-weight:600; font-family:'Share Tech Mono',monospace; letter-spacing:.5px; margin:2px; transition:all .2s; }
-#${scope} .r3-ab:hover  { filter:brightness(1.3); }
+#${scope} .r3-no-rack { color:var(--r3-dim); font-size:10px; font-family:'Share Tech Mono',monospace; padding:10px 6px; opacity:.6; text-align:center; }
 
 /* ── EDIT PANEL ── */
 #${scope} .r3-ep    { padding:8px 10px; border-bottom:1px solid var(--r3-border); background:${c.bg}; }
@@ -105,14 +104,9 @@ export function buildCSS(scope, theme, opts) {
 #${scope} .r3-ur    { height:17px; display:flex; align-items:center; gap:4px; padding:0 5px; border-bottom:1px solid ${c.bg}; transition:background .1s; }
 #${scope} .r3-ur.ov { background:${c.accent}22; }
 
-/* ── LEGEND ── */
-#${scope} .r3-legend { display:flex; flex-direction:column; gap:2px; }
-#${scope} .r3-lrow   { display:flex; align-items:center; gap:8px; font-size:12px; font-family:'Share Tech Mono',monospace; color:var(--r3-text); padding:3px 0; }
-#${scope} .r3-lswatch{ width:13px; height:13px; border-radius:2px; flex-shrink:0; }
-
 /* ── 3D CANVAS ── */
 #${scope} .r3-cv    { flex:1; position:relative; min-width:0; min-height:0; overflow:hidden; background:${c.bg}; }
-#${scope} .r3-canvas{ position:absolute; top:0; left:0; width:100%; height:100%; display:block; }
+#${scope} .r3-canvas{ position:absolute; top:0; left:0; width:100%; height:100%; display:block; cursor:crosshair; }
 #${scope} .r3-scan  { position:absolute; inset:0; pointer-events:none; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px); z-index:1; }
 
 /* ── FLOATING LABELS ── */
@@ -122,33 +116,21 @@ export function buildCSS(scope, theme, opts) {
   white-space:nowrap; pointer-events:none; display:flex; align-items:center;
   opacity:0; transition:opacity .25s; transform:translateY(-50%);
 }
-/* side-left:  dot at RIGHT (at rack post), card extends RIGHT (outward) */
 #${scope} .r3-label.side-left  { flex-direction:row; }
-/* side-right: dot at LEFT  (at rack post), card extends LEFT (outward) */
 #${scope} .r3-label.side-right { flex-direction:row-reverse; }
-
 #${scope} .r3-lcard { display:flex; flex-direction:column; }
 #${scope} .r3-label.side-left  .r3-lcard { align-items:flex-start; }
 #${scope} .r3-label.side-right .r3-lcard { align-items:flex-end; }
-
-/* Name tag — main label chip */
 #${scope} .r3-ltag  { display:flex; align-items:center; gap:5px; background:${c.bg}f0; border:1px solid; border-radius:3px 3px 0 0; padding:3px 9px 3px 7px; backdrop-filter:blur(6px); }
 #${scope} .r3-lname { color:${c.text}; font-size:11px; font-weight:700; letter-spacing:.3px; }
 #${scope} .r3-ltype { font-size:10px; opacity:.7; margin-left:2px; }
-
-/* Detail block — single card containing all meta + custom rows */
-#${scope} .r3-ldetail { background:${c.bg}ee; border:1px solid; border-top:none; border-radius:0 0 3px 3px; padding:3px 8px 3px 8px; display:flex; flex-direction:column; gap:2px; min-width:0; }
+#${scope} .r3-ldetail { background:${c.bg}ee; border:1px solid; border-top:none; border-radius:0 0 3px 3px; padding:3px 8px; display:flex; flex-direction:column; gap:2px; min-width:0; }
 #${scope} .r3-ldetail-row { font-size:10px; display:flex; align-items:center; gap:4px; white-space:nowrap; }
-
-/* Connector line — solid at dot end, fades toward card */
 #${scope} .r3-lhline { height:1px; flex-shrink:0; }
-/* side-left row-reverse: dot on RIGHT, card on LEFT → gradient solid-right fading-left */
 #${scope} .r3-label.side-left  .r3-lhline { background:linear-gradient(to right, transparent, currentColor); }
-/* side-right row: dot on LEFT, card on RIGHT → gradient solid-left fading-right */
 #${scope} .r3-label.side-right .r3-lhline { background:linear-gradient(to left, transparent, currentColor); }
-
-/* Anchor dot */
 #${scope} .r3-ldot  { width:7px; height:7px; border-radius:50%; flex-shrink:0; border:1px solid currentColor; background:${c.bg}; box-shadow:0 0 5px currentColor; }
+#${scope} .r3-ltoggle { pointer-events:all !important; }
 
 /* ── TIP ── */
 #${scope} .r3-tip   { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); background:${c.bg}bb; border:1px solid var(--r3-border); border-radius:2px; padding:5px 14px; font-size:11px; color:var(--r3-dim); pointer-events:none; white-space:nowrap; font-family:'Share Tech Mono',monospace; letter-spacing:.5px; z-index:3; }
@@ -175,10 +157,58 @@ export function buildCSS(scope, theme, opts) {
 
 /* ── CATALOG ── */
 #${scope} .r3-cat-list { display:flex; flex-direction:column; gap:2px; }
+#${scope} .r3-cat-group { margin-bottom:2px; }
+#${scope} .r3-cat-group-hdr {
+  display:flex; align-items:center; gap:5px; padding:3px 6px;
+  cursor:pointer; user-select:none; border-radius:2px;
+  font-family:'Share Tech Mono',monospace; font-size:10px;
+  color:var(--r3-dim); letter-spacing:1px; text-transform:uppercase;
+  transition:background .1s;
+}
+#${scope} .r3-cat-group-hdr:hover { background:${c.bg}; }
+#${scope} .r3-cat-group-arrow { transition:transform .2s; display:inline-block; font-size:12px; }
+#${scope} .r3-cat-group-body  { padding-left:4px; }
 #${scope} .r3-cat-item { cursor:grab; padding:3px 6px !important; }
 #${scope} .r3-cat-item:active { cursor:grabbing; }
-#${scope} .r3-cat-item .r3-dn { font-size:12px; }
+#${scope} .r3-cat-item .r3-dn { font-size:11px; }
 #${scope} .r3-cat-item .r3-dm { font-size:10px; }
+#${scope} .r3-cat-add-btn {
+  background:none; border:1px solid var(--r3-border); color:var(--r3-dim);
+  cursor:pointer; font-size:13px; padding:0 5px; line-height:1; flex-shrink:0;
+  border-radius:2px; transition:all .15s; font-weight:700;
+}
+#${scope} .r3-cat-add-btn:hover { border-color:var(--r3-green); color:var(--r3-green); }
+
+/* ── TABS ── */
+#${scope} .r3-tab-pnl { padding-bottom:2px; }
+#${scope} .r3-tab-bar {
+  display:flex; align-items:center; gap:2px; margin-bottom:6px;
+  border-bottom:1px solid var(--r3-border);
+}
+#${scope} .r3-tab {
+  background:transparent; border:1px solid transparent; color:var(--r3-dim);
+  border-radius:2px 2px 0 0; padding:3px 10px; cursor:pointer; font-size:10px;
+  font-family:'Share Tech Mono',monospace; letter-spacing:1px; text-transform:uppercase;
+  transition:all .15s; margin-bottom:-1px; border-bottom-color:var(--r3-border);
+}
+#${scope} .r3-tab:hover { color:var(--r3-text); }
+#${scope} .r3-tab.active {
+  border-color:var(--r3-border); border-bottom-color:var(--r3-panel);
+  color:var(--r3-accent); background:var(--r3-panel);
+}
+
+/* ── RACK LIST ── */
+#${scope} .r3-rack-item {
+  display:flex; align-items:center; gap:6px; padding:5px 8px; margin-bottom:2px;
+  border-radius:3px; border:1px solid var(--r3-border); background:${c.bg};
+  cursor:pointer; transition:all .15s; font-size:11px; font-family:'Share Tech Mono',monospace;
+}
+#${scope} .r3-rack-item:hover  { border-color:${c.accent}55; }
+#${scope} .r3-rack-item.sel    { border-color:var(--r3-accent); background:${c.accent}11; color:var(--r3-accent); }
+#${scope} .r3-rack-badge {
+  font-size:9px; padding:1px 5px; border-radius:1px; border:1px solid;
+  font-family:'Share Tech Mono',monospace;
+}
 
 /* ── RIGHT SIDEBAR ── */
 #${scope} .r3-sb-right {
@@ -194,10 +224,26 @@ export function buildCSS(scope, theme, opts) {
 /* ── ZOOM BUTTONS ── */
 #${scope} .r3-zoom-btns { position:absolute; bottom:44px; right:12px; display:flex; flex-direction:column; gap:4px; z-index:6; }
 #${scope} .r3-zoom-btn  { width:30px; height:30px; background:var(--r3-panel); border:1px solid var(--r3-border); color:var(--r3-text); border-radius:4px; cursor:pointer; font-size:18px; line-height:1; display:flex; align-items:center; justify-content:center; transition:all .2s; }
-#${scope} .r3-zoom-btn:hover { border-color:var(--r3-accent); color:var(--r3-accent); background:var(--r3-accent)11; }
+#${scope} .r3-zoom-btn:hover { border-color:var(--r3-accent); color:var(--r3-accent); background:${c.accent}11; }
 
-/* ── LABEL TOGGLE ── */
-#${scope} .r3-ltoggle { pointer-events:all !important; }
+/* ── LEGEND OVERLAY ── */
+#${scope} .r3-legend-overlay {
+  position:absolute; bottom:44px; left:12px; z-index:6;
+  display:flex; flex-direction:column; align-items:flex-start; gap:4px;
+}
+#${scope} .r3-legend-toggle-btn {
+  background:${c.panel}cc; border:1px solid var(--r3-border); color:var(--r3-dim);
+  border-radius:2px; padding:4px 9px; cursor:pointer; font-size:9px;
+  font-family:'Share Tech Mono',monospace; letter-spacing:1px; text-transform:uppercase;
+  transition:all .2s; backdrop-filter:blur(6px);
+}
+#${scope} .r3-legend-toggle-btn:hover { border-color:${c.accent}88; color:${c.accent}88; }
+#${scope} .r3-legend-body {
+  background:${c.panel}ee; border:1px solid var(--r3-border); border-radius:3px;
+  padding:6px 10px; backdrop-filter:blur(8px);
+}
+#${scope} .r3-legend { display:flex; flex-direction:column; gap:2px; }
+#${scope} .r3-lrow   { display:flex; align-items:center; gap:8px; font-size:11px; font-family:'Share Tech Mono',monospace; color:var(--r3-text); padding:2px 0; }
+#${scope} .r3-lswatch{ width:12px; height:12px; border-radius:2px; flex-shrink:0; }
 `;
-
 }

@@ -57,7 +57,7 @@ export function buildEnvironment(self) {
   const cx = 0, cz = 2;
 
   const floorMat = new T.MeshStandardMaterial({ color: ts.floorColor, roughness: 0.65, metalness: 0.25 });
-  const wallMat  = new T.MeshStandardMaterial({ color: ts.wallColor,  roughness: 0.8,  metalness: 0.05 });
+  const wallMat  = new T.MeshStandardMaterial({ color: ts.wallColor,  roughness: 0.8,  metalness: 0.05, side: T.DoubleSide });
   const ceilMat  = new T.MeshStandardMaterial({ color: ts.ceilColor,  roughness: 0.85, metalness: 0.02 });
 
   const floor = new T.Mesh(new T.PlaneGeometry(W, D), floorMat);
@@ -77,12 +77,24 @@ export function buildEnvironment(self) {
       const g = new T.BufferGeometry().setFromPoints([new T.Vector3(-hw + cx, 0.001, z), new T.Vector3(hw + cx, 0.001, z)]);
       sc.add(new T.Line(g, gm));
     }
-    const pm = new T.MeshStandardMaterial({ color: 0x243040, roughness: 0.6, metalness: 0.35 });
-    for (let pi = -Math.floor(W / 2 / ts2); pi <= Math.floor(W / 2 / ts2); pi++)
-      for (let pj = -Math.floor(D / 2 / ts2); pj <= Math.floor(D / 2 / ts2); pj++) {
-        const p = new T.Mesh(new T.BoxGeometry(ts2 - 0.03, 0.04, ts2 - 0.03), pm);
-        p.position.set(pi * ts2 + cx, 0.02, pj * ts2 + cz); sc.add(p);
+    // InstancedMesh: one draw call for all tiles instead of one per tile
+    const pm      = new T.MeshStandardMaterial({ color: 0x243040, roughness: 0.6, metalness: 0.35 });
+    const tileGeo = new T.BoxGeometry(ts2 - 0.03, 0.04, ts2 - 0.03);
+    const minX = -Math.floor(W / 2 / ts2), maxX = Math.floor(W / 2 / ts2);
+    const minZ = -Math.floor(D / 2 / ts2), maxZ = Math.floor(D / 2 / ts2);
+    const count = (maxX - minX + 1) * (maxZ - minZ + 1);
+    const inst  = new T.InstancedMesh(tileGeo, pm, count);
+    inst.receiveShadow = true;
+    const dummy = new T.Object3D();
+    let idx = 0;
+    for (let pi = minX; pi <= maxX; pi++)
+      for (let pj = minZ; pj <= maxZ; pj++) {
+        dummy.position.set(pi * ts2 + cx, 0.02, pj * ts2 + cz);
+        dummy.updateMatrix();
+        inst.setMatrixAt(idx++, dummy.matrix);
       }
+    inst.instanceMatrix.needsUpdate = true;
+    sc.add(inst);
   }
 
   const ceil = new T.Mesh(new T.PlaneGeometry(W, D), ceilMat);
@@ -101,7 +113,7 @@ export function buildEnvironment(self) {
   // Walls
   const bw = new T.Mesh(new T.PlaneGeometry(W, H), wallMat);
   bw.position.set(cx, H / 2, cz + D / 2); sc.add(bw);
-  const fm = new T.MeshStandardMaterial({ color: 0x1e2d40, transparent: true, opacity: 0.2, side: T.BackSide });
+  const fm = new T.MeshStandardMaterial({ color: 0x1e2d40, transparent: true, opacity: 0.65, side: T.DoubleSide });
   const fw = new T.Mesh(new T.PlaneGeometry(W, H), fm);
   fw.position.set(cx, H / 2, cz - D / 2); sc.add(fw);
   const lw = new T.Mesh(new T.PlaneGeometry(D, H), wallMat);

@@ -1,7 +1,7 @@
 // ── HTML ── DOM scaffold builder
 
 export function buildHTML(self) {
-  const o = self._opts;
+  const o  = self._opts;
   const sb = o.sidebar;
   const v  = o.view;
 
@@ -14,14 +14,22 @@ export function buildHTML(self) {
     <span class="r3-badge" id="${self._id}-bt" style="color:#e3b341;border-color:#ffaa0055;background:#ffaa0011">—</span>
     <span class="r3-badge" id="${self._id}-bw" style="color:#cc88ff;border-color:#cc88ff55;background:#cc88ff11">—</span>
     <div class="r3-spacer"></div>
-    ${self._mode!=='2d'?`<button class="r3-btn on"  id="${self._id}-btnL"  onclick="window._r3['${self._id}'].toggleLabels()">◈ LABELS</button>`:''}
+    ${self._mode!=='2d'?`<button class="r3-btn on" id="${self._id}-btnL" onclick="window._r3['${self._id}'].toggleLabels()">◈ LABELS</button>`:''}
     <button class="r3-btn" id="${self._id}-btnW" onclick="window._r3['${self._id}'].toggleWire()">◻ WIRE</button>
+    <button class="r3-btn" id="${self._id}-btnCam" onclick="window._r3['${self._id}'].toggleCameraMode()" title="Toggle FPS / Orbit camera">${self._ctrl?.mode==='fps'?'⊹ FPS':'⊕ ORBIT'}</button>
     <button class="r3-btn" id="${self._id}-btn2d" onclick="window._r3['${self._id}'].toggleMode()">⊞ ${self._mode==='2d'?'3D':'2D'}</button>
     ${v.allowJsonEdit?`<button class="r3-btn" id="${self._id}-btnJ" onclick="window._r3['${self._id}'].toggleJson()">{ } JSON</button>`:''}
   </div>`;
 
   const sidebarHtml = !sb.enabled ? '' : `
   <div class="r3-sb" id="${self._id}-sb">
+    <div class="r3-pnl">
+      <div class="r3-pl" style="justify-content:space-between">
+        <span>Room</span>
+        <button class="r3-btn" style="padding:1px 7px;font-size:9px" onclick="window._r3['${self._id}']._addRack()">+ Rack</button>
+      </div>
+      <div id="${self._id}-rack-list"></div>
+    </div>
     ${sb.showRackConfig ? `
     <div class="r3-pnl">
       <div class="r3-pl">Rack Config</div>
@@ -50,30 +58,26 @@ export function buildHTML(self) {
     <div class="r3-pnl">
       <div class="r3-pl">Devices</div>
       <div id="${self._id}-dl"></div>
-      ${sb.showAddButtons && v.allowAddRemove ? `
-      <div style="display:flex;flex-wrap:wrap;margin-top:5px" id="${self._id}-ab"></div>
       <div style="display:flex;gap:4px;margin-top:6px;border-top:1px solid var(--r3-border);padding-top:6px">
         <button class="r3-btn" style="flex:1" onclick="window._r3['${self._id}'].resetRack()" title="Reset rack to empty">↺ Reset</button>
-        <button class="r3-btn" id="${self._id}-btnCopy" style="flex:1" onclick="window._r3['${self._id}'].copyJson()" title="Copy JSON to clipboard">⎘ Copy JSON</button>
-      </div>` : ''}
-    </div>` : ''}
-    <div class="r3-pnl">
-      <div class="r3-pl" style="display:flex;justify-content:space-between;align-items:center">
-        <span>Device Catalog</span>
-        <button class="r3-btn" style="padding:1px 7px;font-size:9px" onclick="window._r3['${self._id}']._addCatalogItem()">+ New</button>
+        <button class="r3-btn" id="${self._id}-btnCopy" style="flex:1" onclick="window._r3['${self._id}'].copyJson()" title="Copy JSON to clipboard">⎘ Copy</button>
       </div>
-      <div id="${self._id}-cat" class="r3-cat-list"></div>
+    </div>` : ''}
+    <div class="r3-pnl r3-tab-pnl">
+      <div class="r3-tab-bar">
+        <button class="r3-tab active" id="${self._id}-tab-cat" onclick="window._r3['${self._id}']._switchTab('cat')">Catalog</button>
+        ${sb.showUnitMap ? `<button class="r3-tab" id="${self._id}-tab-um" onclick="window._r3['${self._id}']._switchTab('um')">Unit Map</button>` : ''}
+        <div style="flex:1"></div>
+        <button class="r3-btn" id="${self._id}-tab-cat-add" style="padding:1px 7px;font-size:9px" onclick="window._r3['${self._id}']._addCatalogItem()">+ New</button>
+      </div>
+      <div id="${self._id}-tab-body-cat">
+        <div id="${self._id}-cat" class="r3-cat-list"></div>
+      </div>
+      ${sb.showUnitMap ? `
+      <div id="${self._id}-tab-body-um" style="display:none">
+        <div class="r3-um" id="${self._id}-um"></div>
+      </div>` : ''}
     </div>
-    ${sb.showUnitMap ? `
-    <div class="r3-pnl">
-      <div class="r3-pl">Unit Map</div>
-      <div class="r3-um" id="${self._id}-um"></div>
-    </div>` : ''}
-    ${sb.showLegend ? `
-    <div class="r3-pnl">
-      <div class="r3-pl">Legend</div>
-      <div class="r3-legend" id="${self._id}-legend"></div>
-    </div>` : ''}
   </div>`;
 
   const canvasHtml = `
@@ -85,7 +89,11 @@ export function buildHTML(self) {
       <button class="r3-zoom-btn" onclick="window._r3['${self._id}'].zoomIn()" title="Zoom in">＋</button>
       <button class="r3-zoom-btn" onclick="window._r3['${self._id}'].zoomOut()" title="Zoom out">－</button>
     </div>
-    <div class="r3-tip">🖱 Drag to orbit &nbsp;·&nbsp; Scroll to zoom &nbsp;·&nbsp; Click device to select</div>
+    <div class="r3-legend-overlay">
+      <button class="r3-legend-toggle-btn" onclick="window._r3['${self._id}']._toggleLegend()">⬡ Types</button>
+      <div class="r3-legend-body" id="${self._id}-legend" style="display:none"></div>
+    </div>
+    <div class="r3-tip" id="${self._id}-tip">${self._ctrl?.mode==='fps' ? '🖱 Drag to look · WASD walk · Click ⊹FPS button to lock mouse' : '🖱 Drag to orbit · Scroll to zoom · Click to select'}</div>
     ${v.allowJsonEdit ? `
     <div class="r3-jp" id="${self._id}-jp" style="display:none">
       <div class="r3-jh">// JSON CONFIG <button class="r3-btn" onclick="window._r3['${self._id}'].toggleJson()" style="padding:2px 6px">✕</button></div>
