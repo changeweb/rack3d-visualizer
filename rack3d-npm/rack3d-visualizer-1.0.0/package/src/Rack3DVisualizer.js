@@ -6,12 +6,17 @@ import { resolveTheme } from './themes.js';
 import { DEVICE_TYPES } from './constants.js';
 import { buildCSS } from './css.js';
 import { buildHTML } from './html.js';
-import { buildLights, buildEnvironment } from './scene.js';
-import { clearAllRacks, mk, buildAllRacks, makeUnitLabel, buildDevice } from './geometry.js';
+import { makeUnitLabel } from './geometry.js';
 import { createLabel, updateLabels } from './labels.js';
 import { render2D, on2DDragStart, on2DDragEnd, on2DDrop, dropUnit, exportImage, dlBlob, gen2DCanvas, gen2DSVG } from './render2d.js';
 import { renderCatalog, addFromCatalog, addCatalogItem, removeCatalogItem, openCatalogEdit } from './catalog.js';
 import { refresh, buildRoomPanel, buildUnitMap, buildLegendOverlay, openEdit, closeEdit, ed, addDev, rmDev, onRackName, onRackUnits, onRackProp, onRackWidth, renderCustomFieldsEditor, addCustomField, editField, removeField } from './sidebar.js';
+import { MaterialFactory } from './services/MaterialFactory.js';
+import { SelectionManager } from './services/SelectionManager.js';
+import { GeometryManager } from './services/GeometryManager.js';
+import { RackBuilder } from './builders/RackBuilder.js';
+import { DeviceBuilder } from './builders/DeviceBuilder.js';
+import { EnvironmentBuilder } from './builders/EnvironmentBuilder.js';
 
 let _instanceCount = 0;
 
@@ -83,6 +88,11 @@ export class Rack3DVisualizer {
     this._devMeshes      = {};
     this._labelDivs      = {};
     this._labelPositions = {};
+
+    // OOP service instances (initialised after Three.js boots)
+    this._materialFactory  = null;
+    this._selectionManager = null;
+    this._geometryManager  = null;
 
     this._injectStyles();
     this._el.id = this._id;
@@ -162,6 +172,7 @@ export class Rack3DVisualizer {
 
   setTheme(themeInput) {
     this._theme = resolveTheme(themeInput);
+    this._materialFactory?.setTheme(this._theme);
     this._injectStyles();
     this._refresh();
     if (this._scene) this._buildRack();
@@ -245,6 +256,8 @@ export class Rack3DVisualizer {
 
   destroy() {
     cancelAnimationFrame(this._raf);
+    this._materialFactory?.dispose();
+    this._geometryManager?.clearAllRacks();
     if (this._ren) { this._ren.dispose(); this._ren = null; }
     const style = document.getElementById(this._id + '-styles');
     if (style) style.remove();
@@ -303,8 +316,12 @@ export class Rack3DVisualizer {
     this._cam = new T.PerspectiveCamera(this._opts.camera.fov, W/H, 0.05, 200);
     this._posCamera();
 
-    this._buildLights();
-    if (this._opts.room.enabled) this._buildEnvironment();
+    this._initServices();
+    if (this._opts.room.enabled) {
+      this._buildEnvironment();
+    } else {
+      this._buildLights();
+    }
     if (this._room) this._buildRack();
 
     this._onResize = () => {
@@ -328,15 +345,82 @@ export class Rack3DVisualizer {
     this._render2D();
   }
 
-  // ─── Module delegates ─────────────────────────────────────
-  _buildLights()      { buildLights(this); }
-  _buildEnvironment() { buildEnvironment(this); }
+  // ─── Service initialisation ───────────────────────────────
+  _initServices() {
+    const T = this._T3;
+    this._materialFactory  = new MaterialFactory(T, this._theme);
+    this._selectionManager = new SelectionManager(this._scene, this._cam, T);
 
-  _clearRack()        { clearAllRacks(this); }
-  _mk(g, m, t)        { return mk(this, g, m, t); }
-  _buildRack()        { buildAllRacks(this); }
+    const rackBuilder = new RackBuilder(T, this._theme, this._materialFactory);
+    const deviceBuilder = new DeviceBuilder(T, this._materialFactory, this._types);
+    const envBuilder = new EnvironmentBuilder(T, this._theme);
+
+    this._geometryManager = new GeometryManager(T, this._scene, rackBuilder, deviceBuilder, envBuilder, this._materialFactory);
+    this._geometryManager.labelSide = this._opts.labels?.side || 'auto';
+  }
+
+  // ─── Module delegates ─────────────────────────────────────
+  _buildLights() {
+    this._geometryManager?.environmentBuilder.buildLightsOnly(this._scene, this._opts.lighting, this._theme.scene);
+  }
+  _buildEnvironment() {
+    this._geometryManager.buildEnvironment(this._room, this._opts.room, this._opts.lighting, this._theme.scene);
+  }
+
+  _clearRack() {
+    Object.values(this._labelDivs || {}).forEach(d => d.remove());
+    this._labelDivs = {};
+    this._geometryManager?.clearAllRacks();
+    this._rackGroups = {};
+    this._devMeshes  = {};
+    this._labelPositions = {};
+  }
+
+  _buildRack() {
+    this._clearRack();
+    this._geometryManager.buildAllRacks(this._room, this._opts.rack, this._theme.rack);
+
+    // Sync geometry manager state back to instance so labels.js / sidebar.js can read them
+    this._rackGroups     = this._geometryManager.rackGroups;
+    this._devMeshes      = this._geometryManager.deviceMeshes;
+    this._labelPositions = this._geometryManager.labelPositions;
+
+    // Create CSS labels for every device
+    if (this._room?.racks) {
+      this._room.racks.forEach(rack => {
+        (rack.devices || []).forEach(dev => {
+          const lp = this._labelPositions[dev.id];
+          if (!lp) return;
+          const typeInfo = this._types[dev.type] || this._types.server;
+          this._createLabel(dev, dev.color || typeInfo.color, lp.side);
+        });
+      });
+    }
+
+    if (this._opts.camera.distance === 'auto' && this._ctrl.mode !== 'fps') {
+      this._ctrl.r = Math.max(22, this._rackH() * 2.2);
+    }
+    this._posCamera();
+  }
+
   _makeUnitLabel(u, y, hw, hd, UH, POST, ox, oz, rackId) { return makeUnitLabel(this, u, y, hw, hd, UH, POST, ox, oz, rackId); }
-  _buildDevice(dev, idx, ox, oz, rackId) { buildDevice(this, dev, idx, ox, oz, rackId); }
+
+  _buildDevice(dev, idx, ox, oz, rackId) {
+    const group = this._rackGroups?.[rackId];
+    if (group && this._geometryManager) {
+      const ro    = this._opts.rack;
+      const entry = this._room?.racks?.find(r => r.id === rackId) || { id: rackId };
+      this._geometryManager.deviceBuilder.build(
+        dev, idx, this._opts.labels?.side || 'auto', ro, group, entry,
+        ro.width / 2, ro.depth / 2, this._labelPositions, this._devMeshes
+      );
+      const lp = this._labelPositions[dev.id];
+      if (lp) {
+        const ti = this._types[dev.type] || this._types.server;
+        this._createLabel(dev, dev.color || ti.color, lp.side);
+      }
+    }
+  }
 
   _createLabel(dev, col, side)  { createLabel(this, dev, col, side); }
   _updateLabels()               { updateLabels(this); }
@@ -524,30 +608,23 @@ export class Rack3DVisualizer {
   }
 
   _doRaycast(e, cv) {
-    const T = this._T3;
-    const rect = cv.getBoundingClientRect();
-    const ray  = new T.Raycaster();
-    ray.setFromCamera(
-      new T.Vector2(((e.clientX-rect.left)/cv.clientWidth)*2-1, -((e.clientY-rect.top)/cv.clientHeight)*2+1),
-      this._cam
+    const rect   = cv.getBoundingClientRect();
+    const result = this._selectionManager.raycast(
+      e.clientX - rect.left, e.clientY - rect.top,
+      cv.clientWidth, cv.clientHeight
     );
-    const hits = ray.intersectObjects(this._scene.children, true);
-    const devHit  = hits.find(h => h.object.userData?.deviceId);
-    const rackHit = !devHit && hits.find(h => h.object.userData?.rackId && !h.object.userData?.deviceId);
 
-    if (devHit) {
-      const rackId = devHit.object.userData.rackId;
-      const rack   = this._room?.racks.find(r => r.id === rackId);
+    if (result?.type === 'device') {
+      const rack = this._room?.racks.find(r => r.id === result.rackId);
       if (rack) {
-        this._selRackId = rackId; this._rack = rack;
-        this._selId = devHit.object.userData.deviceId;
+        this._selRackId = result.rackId; this._rack = rack;
+        this._selId = result.id;
         const dev = rack.devices?.find(d => d.id === this._selId);
         if (dev) { this._openEdit(dev); if (this._opts.onSelect) this._opts.onSelect(dev, rack); }
       }
-    } else if (rackHit) {
-      const rackId = rackHit.object.userData.rackId;
-      const rack   = this._room?.racks.find(r => r.id === rackId);
-      if (rack) { this._selRackId = rackId; this._rack = rack; }
+    } else if (result?.type === 'rack') {
+      const rack = this._room?.racks.find(r => r.id === result.id);
+      if (rack) { this._selRackId = result.id; this._rack = rack; }
       this._selId = null; this._closeEdit();
     } else {
       this._selId = null; this._closeEdit();
@@ -655,7 +732,8 @@ export class Rack3DVisualizer {
   toggleWire() {
     this._showWire = !this._showWire;
     const b = document.getElementById(this._id + '-btnW');
-    if (b) b.className = 'r3-btn'+(this._showWire?' on':'');
+    if (b) b.className = 'r3-btn' + (this._showWire ? ' on' : '');
+    this._materialFactory?.setWireframeMode(this._showWire);
     this._buildRack();
   }
   toggleMode() {
