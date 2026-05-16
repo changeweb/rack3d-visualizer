@@ -12,10 +12,26 @@ export class GeometryManager {
     this.deviceMeshes = {};
     this.labelPositions = {};
     this.labelSide = 'auto';
+    this._envGroup = null;
   }
 
   buildEnvironment(room, roomOptions, lightingOptions, sceneTheme) {
-    this.environmentBuilder.build(this.scene, roomOptions, lightingOptions, sceneTheme);
+    // Clear old environment geometry
+    if (this._envGroup) {
+      this._envGroup.traverse(obj => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+          else obj.material.dispose();
+        }
+      });
+      this.scene.remove(this._envGroup);
+      this._envGroup = null;
+    }
+    // Build into a group so it can be cleared on rebuild
+    this._envGroup = new this.THREE.Group();
+    this.scene.add(this._envGroup);
+    this.environmentBuilder.build(this._envGroup, roomOptions, lightingOptions, sceneTheme);
   }
 
   buildAllRacks(room, rackOptions, rackTheme) {

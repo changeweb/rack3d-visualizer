@@ -34,6 +34,11 @@ export function refresh(self) {
   val('rn',r.name); val('ru',r.units);
   val('rwidth',self._opts.rack.width);
   val('rtemp',r.rackTemp); val('rpduCap',r.pduCapacity); val('rpduLoad',r.pduLoad);
+  // Rack position fields
+  const rg = self._rackGroups?.[r.id];
+  val('rposX', +(rg?.position.x ?? r.position?.x ?? 0).toFixed(2));
+  val('rposZ', +(rg?.position.z ?? r.position?.z ?? 0).toFixed(2));
+  val('rangle', +(((r.facingAngle ?? 0) * 180 / Math.PI)).toFixed(0));
 
   const sw = $('sw'); if (sw) sw.innerHTML = `<span style="font-family:'Orbitron',monospace">${r.pduLoad||0}</span><span style="font-size:10px;opacity:.6"> / ${r.pduCapacity||0}W (${pct}%)</span>`;
   const st = $('st'); if (st) st.innerHTML = `<span style="font-family:'Orbitron',monospace;color:${tc2}">${r.rackTemp||0}</span><span style="font-size:10px;opacity:.6">°C</span>`;
@@ -143,10 +148,9 @@ export function buildLegendOverlay(self) {
 }
 
 export function openEdit(self, dev) {
-  const ep = document.getElementById(self._id + '-ep'); if (!ep) return;
-  ep.style.display = 'block';
-  const sbr = document.getElementById(self._id + '-sbr');
-  if (sbr) sbr.classList.add('r3-sbr-open');
+  // Show the editDevice panel (was hidden until a device is selected)
+  const editPanel = document.querySelector(`#${self._id} [data-panel-id="editDevice"]`);
+  if (editPanel) editPanel.classList.remove('r3-panel-hidden');
   const el = document.getElementById(self._id + '-elbl'); if (el) el.textContent = '▸ '+dev.name;
   const set = (id, v) => { const e = document.getElementById(self._id+'-'+id); if (e) e.value = v; };
   set('en',dev.name); set('et',dev.type); set('ew',dev.watts);
@@ -161,12 +165,8 @@ export function openEdit(self, dev) {
 }
 
 export function closeEdit(self) {
-  const ep = document.getElementById(self._id + '-ep'); if (ep) ep.style.display = 'none';
-  const catWrap = document.getElementById(self._id + '-cat-edit-wrap');
-  if (!catWrap?.hasChildNodes()) {
-    const sbr = document.getElementById(self._id + '-sbr');
-    if (sbr) sbr.classList.remove('r3-sbr-open');
-  }
+  const editPanel = document.querySelector(`#${self._id} [data-panel-id="editDevice"]`);
+  if (editPanel) editPanel.classList.add('r3-panel-hidden');
 }
 
 export function ed(self, field, value) {
@@ -230,6 +230,20 @@ export function onRackUnits(self, v) {
 export function onRackProp(self, p, v) { if (self._rack) { self._rack[p] = v; self._refresh(); } }
 export function onRackWidth(self, v) {
   if (v>=2&&v<=12) { self._opts.rack.width=v; self._buildRack(); self._refresh(); }
+}
+export function onRackPos(self, axis, v) {
+  if (!self._rack) return;
+  if (!self._rack.position) {
+    const g = self._rackGroups?.[self._rack.id];
+    self._rack.position = { x: g?.position.x ?? 0, y: 0, z: g?.position.z ?? 0 };
+  }
+  self._rack.position[axis] = v;
+  self._buildRack(); self._refresh();
+}
+export function onRackAngle(self, deg) {
+  if (!self._rack) return;
+  self._rack.facingAngle = deg * Math.PI / 180;
+  self._buildRack(); self._refresh();
 }
 
 export function renderCustomFieldsEditor(self, dev) {

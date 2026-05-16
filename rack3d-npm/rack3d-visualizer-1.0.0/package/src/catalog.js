@@ -187,10 +187,6 @@ export function openCatalogEdit(self, item) {
   });
 }
 
-function _closeSbrIfEmpty(self) {
-  const ep = document.getElementById(self._id + '-ep');
-  if (!ep || ep.style.display === 'none') {
-    const sbr = document.getElementById(self._id + '-sbr');
-    if (sbr) sbr.classList.remove('r3-sbr-open');
-  }
+function _closeSbrIfEmpty(_self) {
+  // Right sidebar is always visible; nothing to close
 }

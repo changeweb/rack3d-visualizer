@@ -214,12 +214,89 @@ export function buildCSS(scope, theme, opts) {
 #${scope} .r3-sb-right {
   width:260px; min-width:260px;
   border-left:1px solid var(--r3-border);
-  display:none; flex-direction:column; overflow-y:auto; background:var(--r3-panel);
+  display:flex; flex-direction:column; overflow-y:auto; background:var(--r3-panel);
   scrollbar-width:thin; scrollbar-color:var(--r3-border) transparent;
 }
-#${scope} .r3-sb-right.r3-sbr-open { display:flex; }
 #${scope} .r3-sb-right::-webkit-scrollbar { width:4px; }
 #${scope} .r3-sb-right::-webkit-scrollbar-thumb { background:var(--r3-border); border-radius:2px; }
+
+/* ── PANEL SYSTEM ── */
+#${scope} .r3-panel { border-bottom:1px solid var(--r3-border); }
+#${scope} .r3-panel.r3-panel-hidden { display:none; }
+#${scope} .r3-ph {
+  display:flex; align-items:center; gap:6px; padding:5px 8px;
+  background:var(--r3-panel); cursor:default; user-select:none;
+  position:relative;
+}
+#${scope} .r3-ph::after {
+  content:''; position:absolute; bottom:0; left:8px; right:8px; height:1px;
+  background:var(--r3-border);
+}
+#${scope} .r3-ph-drag {
+  cursor:grab; color:var(--r3-border); font-size:14px; line-height:1;
+  letter-spacing:-1px; padding:0 2px; flex-shrink:0; transition:color .15s;
+}
+#${scope} .r3-ph:hover .r3-ph-drag { color:var(--r3-dim); }
+#${scope} .r3-ph-drag:active { cursor:grabbing; }
+#${scope} .r3-ph-title {
+  flex:1; font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px;
+  text-transform:uppercase; color:var(--r3-dim);
+}
+#${scope} .r3-ph-title::before {
+  content:''; display:inline-block; width:3px; height:3px; background:var(--r3-accent);
+  border-radius:50%; margin-right:6px; vertical-align:middle;
+}
+#${scope} .r3-ph-btn {
+  background:none; border:none; color:var(--r3-border); cursor:pointer;
+  font-size:11px; padding:0 3px; line-height:1; flex-shrink:0;
+  transition:all .2s; transform-origin:center;
+}
+#${scope} .r3-ph-btn:hover { color:var(--r3-dim); }
+#${scope} .r3-pb { padding:8px 10px; }
+#${scope} .r3-panel.r3-collapsed .r3-pb { display:none; }
+#${scope} .r3-panel.r3-collapsed .r3-ph-btn { transform:rotate(-90deg); }
+#${scope} .r3-panel.r3-panel-dragging { opacity:0.4; }
+#${scope} .r3-panel.r3-panel-drop-before { border-top:2px solid var(--r3-accent); }
+
+/* ── ENV CONFIG PANEL ── */
+#${scope} .r3-env-sec {
+  font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:2px;
+  text-transform:uppercase; color:var(--r3-accent); margin:8px 0 5px;
+  padding-bottom:3px; border-bottom:1px solid ${c.accent}33;
+}
+#${scope} .r3-env-row { display:flex; align-items:center; gap:6px; margin-bottom:4px; }
+#${scope} .r3-range {
+  flex:1; -webkit-appearance:none; appearance:none; height:3px;
+  background:var(--r3-border); border-radius:2px; outline:none; cursor:pointer;
+}
+#${scope} .r3-range::-webkit-slider-thumb {
+  -webkit-appearance:none; width:11px; height:11px; border-radius:50%;
+  background:var(--r3-accent); cursor:pointer; border:none;
+  box-shadow:0 0 4px ${c.accent}55;
+}
+#${scope} .r3-range::-moz-range-thumb {
+  width:11px; height:11px; border-radius:50%; background:var(--r3-accent);
+  cursor:pointer; border:none;
+}
+#${scope} .r3-val {
+  font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--r3-text);
+  min-width:30px; text-align:right;
+}
+#${scope} .r3-env-toggles { display:flex; flex-direction:column; gap:3px; margin:4px 0; }
+#${scope} .r3-sw-label { display:flex; align-items:center; justify-content:space-between; gap:6px; }
+#${scope} .r3-sw { position:relative; display:inline-flex; align-items:center; cursor:pointer; flex-shrink:0; }
+#${scope} .r3-sw input { position:absolute; opacity:0; width:0; height:0; }
+#${scope} .r3-sw-track {
+  width:28px; height:14px; background:var(--r3-border); border-radius:7px;
+  position:relative; transition:background .2s;
+}
+#${scope} .r3-sw input:checked ~ .r3-sw-track { background:var(--r3-accent); }
+#${scope} .r3-sw-thumb {
+  position:absolute; top:2px; left:2px; width:10px; height:10px;
+  background:#fff; border-radius:50%; transition:left .2s;
+  box-shadow:0 1px 3px rgba(0,0,0,.3);
+}
+#${scope} .r3-sw input:checked ~ .r3-sw-track .r3-sw-thumb { left:16px; }
 
 /* ── ZOOM BUTTONS ── */
 #${scope} .r3-zoom-btns { position:absolute; bottom:44px; right:12px; display:flex; flex-direction:column; gap:4px; z-index:6; }

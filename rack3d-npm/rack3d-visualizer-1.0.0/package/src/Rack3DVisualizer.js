@@ -10,7 +10,7 @@ import { makeUnitLabel } from './geometry.js';
 import { createLabel, updateLabels } from './labels.js';
 import { render2D, on2DDragStart, on2DDragEnd, on2DDrop, dropUnit, exportImage, dlBlob, gen2DCanvas, gen2DSVG } from './render2d.js';
 import { renderCatalog, addFromCatalog, addCatalogItem, removeCatalogItem, openCatalogEdit } from './catalog.js';
-import { refresh, buildRoomPanel, buildUnitMap, buildLegendOverlay, openEdit, closeEdit, ed, addDev, rmDev, onRackName, onRackUnits, onRackProp, onRackWidth, renderCustomFieldsEditor, addCustomField, editField, removeField } from './sidebar.js';
+import { refresh, buildRoomPanel, buildUnitMap, buildLegendOverlay, openEdit, closeEdit, ed, addDev, rmDev, onRackName, onRackUnits, onRackProp, onRackWidth, onRackPos, onRackAngle, renderCustomFieldsEditor, addCustomField, editField, removeField } from './sidebar.js';
 import { MaterialFactory } from './services/MaterialFactory.js';
 import { SelectionManager } from './services/SelectionManager.js';
 import { GeometryManager } from './services/GeometryManager.js';
@@ -94,10 +94,14 @@ export class Rack3DVisualizer {
     this._selectionManager = null;
     this._geometryManager  = null;
 
+    // Rack drag state
+    this._rackDragState = null;
+
     this._injectStyles();
     this._el.id = this._id;
     this._el.innerHTML = this._buildHTML();
     this._bindSidebarEvents();
+    this._restorePanelState();
 
     this._loadThree(() => {
       if (this._mode === '2d') this._boot2D();
@@ -454,6 +458,8 @@ export class Rack3DVisualizer {
   _onRackUnits(v)               { onRackUnits(this, v); }
   _onRackProp(p, v)             { onRackProp(this, p, v); }
   _onRackWidth(v)               { onRackWidth(this, v); }
+  _onRackPos(axis, v)           { onRackPos(this, axis, v); }
+  _onRackAngle(deg)             { onRackAngle(this, deg); }
   _renderCustomFieldsEditor(dev){ renderCustomFieldsEditor(this, dev); }
   _addCustomField()             { addCustomField(this); }
   _editField(idx, key, value)   { editField(this, idx, key, value); }
@@ -504,6 +510,27 @@ export class Rack3DVisualizer {
     // Pointer lock only via toolbar button — canvas click always selects
     cv.addEventListener('mousedown', e => {
       if (e.button !== 0) return;
+
+      // In orbit mode: check if mousedown hits the selected rack → start rack drag
+      if (this._ctrl.mode !== 'fps' && !this._ctrl.pointerLocked && this._selRackId && this._room) {
+        const rect = cv.getBoundingClientRect();
+        const hit = this._selectionManager?.raycast(
+          e.clientX - rect.left, e.clientY - rect.top, cv.clientWidth, cv.clientHeight
+        );
+        if (hit && (hit.rackId === this._selRackId || hit.id === this._selRackId)) {
+          const floorHit = this._raycastFloor(e.clientX, e.clientY, cv);
+          if (floorHit) {
+            const rackGroup = this._rackGroups[this._selRackId];
+            const curX = rackGroup?.position.x ?? 0;
+            const curZ = rackGroup?.position.z ?? 0;
+            this._rackDragState = { active: true, rackId: this._selRackId,
+              offsetX: floorHit.x - curX, offsetZ: floorHit.z - curZ, lastRebuild: 0 };
+            cv.style.cursor = 'move';
+            return;
+          }
+        }
+      }
+
       this._ctrl.drag = true;
       this._ctrl.lx = dragStartX = e.clientX;
       this._ctrl.ly = dragStartY = e.clientY;
@@ -531,6 +558,34 @@ export class Rack3DVisualizer {
     document.addEventListener('pointerlockchange', onPointerLockChange);
 
     const onMouseMove = e => {
+      // Rack drag mode
+      if (this._rackDragState?.active) {
+        const floorHit = this._raycastFloor(e.clientX, e.clientY, cv);
+        if (floorHit) {
+          const rack = this._room?.racks.find(r => r.id === this._rackDragState.rackId);
+          if (rack) {
+            let nx = floorHit.x - this._rackDragState.offsetX;
+            let nz = floorHit.z - this._rackDragState.offsetZ;
+            // Wall snap
+            const snapped = this._snapRackPos(nx, nz);
+            nx = snapped.x; nz = snapped.z;
+            // Clamp to room bounds
+            const ro = this._opts.room;
+            const rHW = this._opts.rack.width / 2, rHD = this._opts.rack.depth / 2;
+            nx = Math.max(-ro.width/2 + rHW, Math.min(ro.width/2 - rHW, nx));
+            nz = Math.max(2 - ro.depth/2 + rHD, Math.min(2 + ro.depth/2 - rHD, nz));
+            rack.position = { x: nx, y: rack.position?.y ?? 0, z: nz };
+            // Throttled rebuild (50ms)
+            const now = Date.now();
+            if (now - this._rackDragState.lastRebuild > 50) {
+              this._rackDragState.lastRebuild = now;
+              this._buildRack();
+            }
+          }
+        }
+        return;
+      }
+
       if (this._ctrl.pointerLocked) {
         lockedMoveAccum += Math.abs(e.movementX) + Math.abs(e.movementY);
         this._ctrl.yaw   += e.movementX * 0.003;
@@ -553,6 +608,15 @@ export class Rack3DVisualizer {
     };
 
     const onMouseUp = e => {
+      // Finalize rack drag
+      if (this._rackDragState?.active) {
+        this._rackDragState = null;
+        cv.style.cursor = 'crosshair';
+        this._buildRack();
+        this._refresh();
+        return;
+      }
+
       if (this._ctrl.pointerLocked) {
         if (lockedMoveAccum < 12) {
           const rect = cv.getBoundingClientRect();
@@ -820,6 +884,151 @@ export class Rack3DVisualizer {
     });
     const addBtn = document.getElementById(this._id + '-tab-cat-add');
     if (addBtn) addBtn.style.display = tabId === 'cat' ? '' : 'none';
+  }
+
+  // ─── Room / Lighting live config ─────────────────────────
+  _setRoom(field, value) {
+    this._opts.room[field] = value;
+    if (field === 'fogNear' || field === 'fogFar') {
+      if (this._scene?.fog) {
+        this._scene.fog.near = this._opts.room.fogNear;
+        this._scene.fog.far  = this._opts.room.fogFar;
+      }
+    } else if (this._scene && this._geometryManager) {
+      this._buildEnvironment();
+    }
+  }
+
+  _setLight(field, value) {
+    this._opts.lighting[field] = value;
+    if (field === 'exposure' && this._ren) {
+      this._ren.toneMappingExposure = value;
+    } else if (this._scene && this._geometryManager) {
+      this._buildEnvironment();
+    }
+  }
+
+  // ─── Rack drag helpers ────────────────────────────────────
+  _raycastFloor(clientX, clientY, cv) {
+    const T = this._T3;
+    if (!T || !this._cam) return null;
+    const rect = cv.getBoundingClientRect();
+    const mx = ((clientX - rect.left) / cv.clientWidth) * 2 - 1;
+    const my = -((clientY - rect.top) / cv.clientHeight) * 2 + 1;
+    const raycaster = new T.Raycaster();
+    raycaster.setFromCamera(new T.Vector2(mx, my), this._cam);
+    const floorPlane = new T.Plane(new T.Vector3(0, 1, 0), 0);
+    const hit = new T.Vector3();
+    const ok = raycaster.ray.intersectPlane(floorPlane, hit);
+    return ok ? hit : null;
+  }
+
+  _snapRackPos(x, z) {
+    const ro = this._opts.room;
+    const wallHW  = ro.width / 2;
+    const wallHD  = ro.depth / 2;
+    const sceneCZ = 2;
+    const rackHW  = this._opts.rack.width / 2;
+    const rackHD  = this._opts.rack.depth / 2;
+    const snapDist = 1.2;
+    let sx = x, sz = z;
+    if (Math.abs(x - (-wallHW + rackHW)) < snapDist) sx = -wallHW + rackHW;
+    else if (Math.abs(x - (wallHW - rackHW)) < snapDist) sx = wallHW - rackHW;
+    if (Math.abs(z - (sceneCZ - wallHD + rackHD)) < snapDist) sz = sceneCZ - wallHD + rackHD;
+    else if (Math.abs(z - (sceneCZ + wallHD - rackHD)) < snapDist) sz = sceneCZ + wallHD - rackHD;
+    return { x: sx, z: sz };
+  }
+
+  // ─── Panel system ─────────────────────────────────────────
+  _onPanelDragStart(event, panelId) {
+    event.dataTransfer.setData('text/plain', panelId);
+    event.dataTransfer.effectAllowed = 'move';
+    const el = document.querySelector(`#${this._id} [data-panel-id="${panelId}"]`);
+    if (el) el.classList.add('r3-panel-dragging');
+  }
+
+  _onPanelDragEnd() {
+    document.querySelectorAll(`#${this._id} .r3-panel-dragging`).forEach(el => el.classList.remove('r3-panel-dragging'));
+    document.querySelectorAll(`#${this._id} .r3-panel-drop-before`).forEach(el => el.classList.remove('r3-panel-drop-before'));
+  }
+
+  _onPanelDragOverPanel(event, panelId) {
+    event.preventDefault();
+    event.stopPropagation();
+    document.querySelectorAll(`#${this._id} .r3-panel-drop-before`).forEach(el => el.classList.remove('r3-panel-drop-before'));
+    const el = document.querySelector(`#${this._id} [data-panel-id="${panelId}"]`);
+    if (el) el.classList.add('r3-panel-drop-before');
+  }
+
+  _onPanelDropPanel(event, targetPanelId) {
+    event.preventDefault();
+    event.stopPropagation();
+    const panelId = event.dataTransfer.getData('text/plain');
+    if (panelId === targetPanelId) return;
+    const movingPanel = document.querySelector(`#${this._id} [data-panel-id="${panelId}"]`);
+    const targetPanel = document.querySelector(`#${this._id} [data-panel-id="${targetPanelId}"]`);
+    if (!movingPanel || !targetPanel) return;
+    targetPanel.parentNode.insertBefore(movingPanel, targetPanel);
+    document.querySelectorAll(`#${this._id} .r3-panel-drop-before`).forEach(el => el.classList.remove('r3-panel-drop-before'));
+    this._savePanelState();
+  }
+
+  _onPanelDropSidebar(event, sidebar) {
+    event.preventDefault();
+    const panelId = event.dataTransfer.getData('text/plain');
+    const panel = document.querySelector(`#${this._id} [data-panel-id="${panelId}"]`);
+    if (!panel) return;
+    const targetSb = document.getElementById(sidebar === 'left' ? this._id + '-sb' : this._id + '-sbr');
+    if (!targetSb) return;
+    // Insert before cat-edit-wrap if present, otherwise append
+    const catWrap = targetSb.querySelector(`#${this._id}-cat-edit-wrap`);
+    if (catWrap) targetSb.insertBefore(panel, catWrap);
+    else targetSb.appendChild(panel);
+    document.querySelectorAll(`#${this._id} .r3-panel-drop-before`).forEach(el => el.classList.remove('r3-panel-drop-before'));
+    this._savePanelState();
+  }
+
+  _togglePanel(panelId) {
+    const panel = document.querySelector(`#${this._id} [data-panel-id="${panelId}"]`);
+    if (panel) { panel.classList.toggle('r3-collapsed'); this._savePanelState(); }
+  }
+
+  _savePanelState() {
+    try {
+      const leftSb  = document.getElementById(this._id + '-sb');
+      const rightSb = document.getElementById(this._id + '-sbr');
+      const leftPanels  = leftSb  ? Array.from(leftSb.querySelectorAll(':scope > .r3-panel')).map(p => p.dataset.panelId)  : [];
+      const rightPanels = rightSb ? Array.from(rightSb.querySelectorAll(':scope > .r3-panel')).map(p => p.dataset.panelId) : [];
+      const collapsed = {};
+      document.querySelectorAll(`#${this._id} .r3-panel.r3-collapsed`).forEach(p => {
+        if (p.dataset.panelId) collapsed[p.dataset.panelId] = true;
+      });
+      localStorage.setItem('r3d-panels-' + this._id, JSON.stringify({ left: leftPanels, right: rightPanels, collapsed }));
+    } catch { /* localStorage may be unavailable */ }
+  }
+
+  _restorePanelState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('r3d-panels-' + this._id));
+      if (!saved) return;
+      const leftSb  = document.getElementById(this._id + '-sb');
+      const rightSb = document.getElementById(this._id + '-sbr');
+      const allPanels = [...(saved.left || []), ...(saved.right || [])];
+      allPanels.forEach(panelId => {
+        const panel = document.querySelector(`#${this._id} [data-panel-id="${panelId}"]`);
+        if (!panel) return;
+        const inRight = (saved.right || []).includes(panelId);
+        const targetSb = inRight ? rightSb : leftSb;
+        if (!targetSb) return;
+        const catWrap = targetSb.querySelector(`#${this._id}-cat-edit-wrap`);
+        if (catWrap) targetSb.insertBefore(panel, catWrap);
+        else targetSb.appendChild(panel);
+      });
+      Object.keys(saved.collapsed || {}).forEach(panelId => {
+        const panel = document.querySelector(`#${this._id} [data-panel-id="${panelId}"]`);
+        if (panel && saved.collapsed[panelId]) panel.classList.add('r3-collapsed');
+      });
+    } catch { /* ignore */ }
   }
 }
 
