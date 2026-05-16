@@ -94,8 +94,8 @@ function RoomInstance({ data, theme = 'dark' }) {
 
 export default function App() {
   return (
-    <div style={{ width: '100%', height: '100vh', background: '#070c14' }}>
-      <RoomInstance data={ROOM_DATA} theme="dark" />
+    <div style={{ height: '100vh', background: '#070c14' }}>
+      <RoomInstance data={ROOM_DATA} theme="light" />
     </div>
   );
 }

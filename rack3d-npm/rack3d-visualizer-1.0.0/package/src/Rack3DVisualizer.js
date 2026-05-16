@@ -5,7 +5,7 @@ import { DEFAULT_OPTIONS, mergeOptions } from './options.js';
 import { resolveTheme } from './themes.js';
 import { DEVICE_TYPES } from './constants.js';
 import { buildCSS } from './css.js';
-import { buildHTML } from './html.js';
+import { buildHTML, customLightRow } from './html.js';
 import { makeUnitLabel } from './geometry.js';
 import { createLabel, updateLabels } from './labels.js';
 import { render2D, on2DDragStart, on2DDragEnd, on2DDrop, dropUnit, exportImage, dlBlob, gen2DCanvas, gen2DSVG } from './render2d.js';
@@ -247,7 +247,7 @@ export class Rack3DVisualizer {
   }
 
   copyJson() {
-    const json = JSON.stringify(this._room, null, 2);
+    const json = JSON.stringify({ room: this._room, config: this.getConfig() }, null, 2);
     navigator.clipboard?.writeText(json).then(() => {
       const b = document.getElementById(this._id + '-btnCopy');
       const orig = b?.textContent;
@@ -778,6 +778,40 @@ export class Rack3DVisualizer {
   _bindSidebarEvents() {
     if (!window._r3) window._r3 = {};
     window._r3[this._id] = this;
+    this._bindSidebarResize();
+  }
+
+  _bindSidebarResize() {
+    const bindHandle = (handleId, sbId, isLeft) => {
+      const handle = document.getElementById(handleId);
+      if (!handle) return;
+      handle.addEventListener('mousedown', startE => {
+        startE.preventDefault();
+        const sb = document.getElementById(sbId);
+        if (!sb) return;
+        const startX = startE.clientX;
+        const startW = sb.clientWidth;
+        handle.classList.add('r3-resizing');
+        const onMove = e => {
+          const delta = isLeft ? (e.clientX - startX) : (startX - e.clientX);
+          const newW  = Math.max(160, Math.min(520, startW + delta));
+          sb.style.width    = newW + 'px';
+          sb.style.minWidth = newW + 'px';
+          if (isLeft) this._opts.sidebar.leftWidth  = newW;
+          else        this._opts.sidebar.rightWidth = newW;
+        };
+        const onUp = () => {
+          handle.classList.remove('r3-resizing');
+          window.removeEventListener('mousemove', onMove);
+          window.removeEventListener('mouseup',   onUp);
+          this._savePanelState();
+        };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup',   onUp);
+      });
+    };
+    bindHandle(this._id + '-sb-handle',  this._id + '-sb',  true);
+    bindHandle(this._id + '-sbr-handle', this._id + '-sbr', false);
   }
 
   _rackH() {
@@ -849,10 +883,29 @@ export class Rack3DVisualizer {
     if (b) b.className = 'r3-btn'+(on?' on':'');
     if (on) this.exportJson();
   }
+  getConfig() {
+    const sb = this._opts.sidebar;
+    return {
+      sidebar: {
+        showLeft:     sb.showLeft,
+        showRight:    sb.showRight,
+        leftWidth:    sb.leftWidth,
+        rightWidth:   sb.rightWidth,
+        panelLayout:  sb.panelLayout,
+        roomFields:   sb.roomFields,
+        lightingFields: sb.lightingFields,
+      },
+      lighting: {
+        customLights: this._opts.lighting.customLights || [],
+      },
+    };
+  }
+
   exportJson() {
     const ta = document.getElementById(this._id + '-jta');
-    if (ta) ta.value = JSON.stringify(this._room, null, 2);
+    if (ta) ta.value = JSON.stringify({ room: this._room, config: this.getConfig() }, null, 2);
   }
+
   applyJson() {
     const ta = document.getElementById(this._id + '-jta');
     const je = document.getElementById(this._id + '-je');
@@ -860,13 +913,47 @@ export class Rack3DVisualizer {
     try {
       const p = JSON.parse(ta.value);
       if (je) je.textContent = '';
-      // Accept either room or rack
-      if (Array.isArray(p.racks)) this.setRoomData(p);
-      else if (Array.isArray(p.rack?.devices)) this.setData(p.rack);
-      else if (Array.isArray(p.devices)) this.setData(p);
-      else throw new Error("Missing 'racks' or 'devices' key");
+
+      // New format: { room: {...}, config: {...} }
+      if (p.room && Array.isArray(p.room.racks)) {
+        this.setRoomData(p.room);
+        if (p.config) this._applyConfig(p.config);
+      } else if (Array.isArray(p.racks)) {
+        this.setRoomData(p);
+      } else if (Array.isArray(p.rack?.devices)) {
+        this.setData(p.rack);
+      } else if (Array.isArray(p.devices)) {
+        this.setData(p);
+      } else {
+        throw new Error("Missing 'racks' or 'devices' key");
+      }
     } catch (e) {
       if (je) je.textContent = '⚠ ' + e.message;
+    }
+  }
+
+  _applyConfig(cfg) {
+    if (!cfg) return;
+    const { sidebar, lighting } = cfg;
+    if (sidebar) {
+      if (sidebar.leftWidth  !== undefined) {
+        this._opts.sidebar.leftWidth = sidebar.leftWidth;
+        const el = document.getElementById(this._id + '-sb');
+        if (el) { el.style.width = sidebar.leftWidth + 'px'; el.style.minWidth = sidebar.leftWidth + 'px'; }
+      }
+      if (sidebar.rightWidth !== undefined) {
+        this._opts.sidebar.rightWidth = sidebar.rightWidth;
+        const el = document.getElementById(this._id + '-sbr');
+        if (el) { el.style.width = sidebar.rightWidth + 'px'; el.style.minWidth = sidebar.rightWidth + 'px'; }
+      }
+      if (sidebar.showLeft !== undefined && sidebar.showLeft !== this._opts.sidebar.showLeft) this._toggleSidebarLeft();
+      if (sidebar.showRight !== undefined && sidebar.showRight !== this._opts.sidebar.showRight) this._toggleSidebarRight();
+      if (sidebar.panelLayout) { this._opts.sidebar.panelLayout = sidebar.panelLayout; this._restorePanelState(); }
+    }
+    if (lighting?.customLights) {
+      this._opts.lighting.customLights = lighting.customLights;
+      this._buildEnvironment();
+      this._renderCustomLights();
     }
   }
   _toggleLegend() {
@@ -884,6 +971,54 @@ export class Rack3DVisualizer {
     });
     const addBtn = document.getElementById(this._id + '-tab-cat-add');
     if (addBtn) addBtn.style.display = tabId === 'cat' ? '' : 'none';
+  }
+
+  // ─── Sidebar toggle & visibility ─────────────────────────
+  _toggleSidebarLeft() {
+    this._opts.sidebar.showLeft = !this._opts.sidebar.showLeft;
+    const sb  = document.getElementById(this._id + '-sb');
+    const btn = document.getElementById(this._id + '-btnSbL');
+    if (sb)  sb.style.display  = this._opts.sidebar.showLeft ? 'flex' : 'none';
+    if (btn) btn.className     = 'r3-sb-toggle' + (this._opts.sidebar.showLeft ? ' on' : '');
+    this._savePanelState();
+  }
+
+  _toggleSidebarRight() {
+    this._opts.sidebar.showRight = !this._opts.sidebar.showRight;
+    const sb  = document.getElementById(this._id + '-sbr');
+    const btn = document.getElementById(this._id + '-btnSbR');
+    if (sb)  sb.style.display  = this._opts.sidebar.showRight ? 'flex' : 'none';
+    if (btn) btn.className     = 'r3-sb-toggle' + (this._opts.sidebar.showRight ? ' on' : '');
+    this._savePanelState();
+  }
+
+  // ─── Custom lights ────────────────────────────────────────
+  _addCustomLight() {
+    if (!this._opts.lighting.customLights) this._opts.lighting.customLights = [];
+    this._opts.lighting.customLights.push({ type: 'point', x: 0, y: 10, z: 0, intensity: 5, color: '#ffffff' });
+    this._buildEnvironment();
+    this._renderCustomLights();
+  }
+
+  _editCustomLight(idx, field, value) {
+    const cl = this._opts.lighting.customLights?.[idx];
+    if (!cl) return;
+    cl[field] = value;
+    this._buildEnvironment();
+  }
+
+  _removeCustomLight(idx) {
+    this._opts.lighting.customLights?.splice(idx, 1);
+    this._buildEnvironment();
+    this._renderCustomLights();
+  }
+
+  _renderCustomLights() {
+    const el = document.getElementById(this._id + '-custom-lights');
+    if (!el) return;
+    const sid = this._id;
+    el.innerHTML = (this._opts.lighting.customLights || [])
+      .map((cl, i) => customLightRow(sid, cl, i)).join('');
   }
 
   // ─── Room / Lighting live config ─────────────────────────
@@ -997,38 +1132,45 @@ export class Rack3DVisualizer {
     try {
       const leftSb  = document.getElementById(this._id + '-sb');
       const rightSb = document.getElementById(this._id + '-sbr');
-      const leftPanels  = leftSb  ? Array.from(leftSb.querySelectorAll(':scope > .r3-panel')).map(p => p.dataset.panelId)  : [];
-      const rightPanels = rightSb ? Array.from(rightSb.querySelectorAll(':scope > .r3-panel')).map(p => p.dataset.panelId) : [];
+      const leftPanels  = leftSb  ? Array.from(leftSb.querySelectorAll(':scope > .r3-panel')).map(p => p.dataset.panelId).filter(Boolean)  : [];
+      const rightPanels = rightSb ? Array.from(rightSb.querySelectorAll(':scope > .r3-panel')).map(p => p.dataset.panelId).filter(Boolean) : [];
       const collapsed = {};
       document.querySelectorAll(`#${this._id} .r3-panel.r3-collapsed`).forEach(p => {
         if (p.dataset.panelId) collapsed[p.dataset.panelId] = true;
       });
-      localStorage.setItem('r3d-panels-' + this._id, JSON.stringify({ left: leftPanels, right: rightPanels, collapsed }));
+      const state = { left: leftPanels, right: rightPanels, collapsed };
+      // Persist to opts so getConfig() / exportJson() includes it
+      this._opts.sidebar.panelLayout = state;
+      this._opts.sidebar.leftWidth   = leftSb?.clientWidth  || this._opts.sidebar.leftWidth;
+      this._opts.sidebar.rightWidth  = rightSb?.clientWidth || this._opts.sidebar.rightWidth;
+      localStorage.setItem('r3d-panels-' + this._id, JSON.stringify(state));
     } catch { /* localStorage may be unavailable */ }
   }
 
   _restorePanelState() {
-    try {
-      const saved = JSON.parse(localStorage.getItem('r3d-panels-' + this._id));
-      if (!saved) return;
-      const leftSb  = document.getElementById(this._id + '-sb');
-      const rightSb = document.getElementById(this._id + '-sbr');
-      const allPanels = [...(saved.left || []), ...(saved.right || [])];
-      allPanels.forEach(panelId => {
-        const panel = document.querySelector(`#${this._id} [data-panel-id="${panelId}"]`);
-        if (!panel) return;
-        const inRight = (saved.right || []).includes(panelId);
-        const targetSb = inRight ? rightSb : leftSb;
-        if (!targetSb) return;
-        const catWrap = targetSb.querySelector(`#${this._id}-cat-edit-wrap`);
-        if (catWrap) targetSb.insertBefore(panel, catWrap);
-        else targetSb.appendChild(panel);
-      });
-      Object.keys(saved.collapsed || {}).forEach(panelId => {
-        const panel = document.querySelector(`#${this._id} [data-panel-id="${panelId}"]`);
-        if (panel && saved.collapsed[panelId]) panel.classList.add('r3-collapsed');
-      });
-    } catch { /* ignore */ }
+    // Priority: opts.sidebar.panelLayout (from constructor/setOptions) → localStorage
+    let saved = this._opts.sidebar.panelLayout;
+    if (!saved) {
+      try { saved = JSON.parse(localStorage.getItem('r3d-panels-' + this._id)); } catch { /* ignore */ }
+    }
+    if (!saved) return;
+    const leftSb  = document.getElementById(this._id + '-sb');
+    const rightSb = document.getElementById(this._id + '-sbr');
+    const allPanels = [...(saved.left || []), ...(saved.right || [])];
+    allPanels.forEach(panelId => {
+      const panel = document.querySelector(`#${this._id} [data-panel-id="${panelId}"]`);
+      if (!panel) return;
+      const inRight  = (saved.right || []).includes(panelId);
+      const targetSb = inRight ? rightSb : leftSb;
+      if (!targetSb) return;
+      const catWrap = targetSb.querySelector(`#${this._id}-cat-edit-wrap`);
+      if (catWrap) targetSb.insertBefore(panel, catWrap);
+      else targetSb.appendChild(panel);
+    });
+    Object.keys(saved.collapsed || {}).forEach(panelId => {
+      const panel = document.querySelector(`#${this._id} [data-panel-id="${panelId}"]`);
+      if (panel && saved.collapsed[panelId]) panel.classList.add('r3-collapsed');
+    });
   }
 }
 

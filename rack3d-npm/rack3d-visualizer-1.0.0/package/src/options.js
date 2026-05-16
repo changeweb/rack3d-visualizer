@@ -147,8 +147,9 @@ export const DEFAULT_OPTIONS = {
     floorGlowIntensity:3.0,
     exposure:          2.8,
     shadows:           true,
-    shadowMapSize:     512,    // 512×512 per shadow light — good enough, much cheaper than 1024
-    powerPreference:   'default', // 'default' | 'low-power' | 'high-performance'
+    shadowMapSize:     512,
+    powerPreference:   'default',
+    customLights:      [],  // [{ type:'point'|'directional'|'spot'|'ceiling', x,y,z, intensity, color, distance }]
   },
 
   room: {
@@ -200,6 +201,15 @@ export const DEFAULT_OPTIONS = {
     showEditPanel:  true,
     showUnitMap:    true,
     showLegend:     true,
+    // Visibility & layout
+    showLeft:       true,
+    showRight:      true,
+    leftWidth:      248,
+    rightWidth:     260,
+    panelLayout:    null,   // { left: [...], right: [...], collapsed: {} } — restored on init
+    // Which env fields to show (null = all)
+    roomFields:     null,
+    lightingFields: null,
   },
 
   deviceTypes: {},   // merged into DEVICE_TYPES

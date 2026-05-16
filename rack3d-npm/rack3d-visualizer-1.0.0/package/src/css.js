@@ -3,8 +3,7 @@
 // ─────────────────────────────────────────────────────────────
 
 export function buildCSS(scope, theme, opts) {
-  const c   = theme.css;
-  const sbW = opts.sidebar.width;
+  const c     = theme.css;
   const sbPos = opts.sidebar.position;
 
   return `
@@ -60,15 +59,32 @@ export function buildCSS(scope, theme, opts) {
 /* ── BODY ── */
 #${scope} .r3-body { display:flex; flex:1; overflow:hidden; min-height:0; flex-direction:${sbPos==='right'?'row-reverse':'row'}; }
 
-/* ── LEFT SIDEBAR ── */
+/* ── SIDEBARS ── */
 #${scope} .r3-sb {
-  width:${sbW}px; min-width:${sbW}px;
   border-${sbPos==='right'?'left':'right'}:1px solid var(--r3-border);
   display:flex; flex-direction:column; overflow-y:auto; background:var(--r3-panel);
   scrollbar-width:thin; scrollbar-color:var(--r3-border) transparent;
+  position:relative; flex-shrink:0;
 }
 #${scope} .r3-sb::-webkit-scrollbar { width:4px; }
 #${scope} .r3-sb::-webkit-scrollbar-thumb { background:var(--r3-border); border-radius:2px; }
+
+/* ── SIDEBAR RESIZE HANDLE ── */
+#${scope} .r3-sb-handle {
+  position:absolute; top:0; bottom:0; right:0; width:4px;
+  cursor:col-resize; z-index:20; background:transparent; transition:background .15s;
+}
+#${scope} .r3-sb-handle:hover, #${scope} .r3-sb-handle.r3-resizing { background:var(--r3-accent)66; }
+#${scope} .r3-sbr-handle { right:auto; left:0; }
+
+/* ── SIDEBAR TOGGLE BUTTONS ── */
+#${scope} .r3-sb-toggle {
+  background:transparent; border:1px solid transparent; color:var(--r3-border);
+  border-radius:2px; padding:3px 7px; cursor:pointer; font-size:14px;
+  transition:all .2s; line-height:1;
+}
+#${scope} .r3-sb-toggle:hover  { color:var(--r3-dim); border-color:var(--r3-border); }
+#${scope} .r3-sb-toggle.on     { color:var(--r3-accent); border-color:${c.accent}44; background:${c.accent}11; }
 #${scope} .r3-pnl   { padding:8px 10px; border-bottom:1px solid var(--r3-border); }
 #${scope} .r3-pl    { font-family:'Share Tech Mono',monospace; color:var(--r3-dim); font-size:10px; letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
 #${scope} .r3-pl::before { content:''; display:inline-block; width:3px; height:3px; background:var(--r3-accent); border-radius:50%; }
@@ -297,6 +313,27 @@ export function buildCSS(scope, theme, opts) {
   box-shadow:0 1px 3px rgba(0,0,0,.3);
 }
 #${scope} .r3-sw input:checked ~ .r3-sw-track .r3-sw-thumb { left:16px; }
+
+/* ── ENV NUMBER INPUTS ── */
+#${scope} .r3-env-num { width:60px; text-align:right; flex-shrink:0; }
+#${scope} .r3-inp-xs  { padding:2px 4px; font-size:10px; width:36px; }
+
+/* ── CUSTOM LIGHTS ── */
+#${scope} .r3-cl-labels {
+  display:flex; gap:3px; padding:2px 0; margin-bottom:2px;
+  font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--r3-dim);
+}
+#${scope} .r3-cl-labels span:first-child { width:76px; flex-shrink:0; }
+#${scope} .r3-cl-labels span:not(:first-child):not(:last-child) { width:38px; flex-shrink:0; text-align:center; }
+#${scope} .r3-cl-row {
+  display:flex; align-items:center; gap:3px; margin-bottom:3px;
+  padding:3px 0; border-bottom:1px solid ${c.bg};
+}
+#${scope} .r3-color-pick {
+  width:24px; height:22px; padding:1px; cursor:pointer;
+  background:none; border:1px solid var(--r3-border); border-radius:2px;
+  flex-shrink:0;
+}
 
 /* ── ZOOM BUTTONS ── */
 #${scope} .r3-zoom-btns { position:absolute; bottom:44px; right:12px; display:flex; flex-direction:column; gap:4px; z-index:6; }

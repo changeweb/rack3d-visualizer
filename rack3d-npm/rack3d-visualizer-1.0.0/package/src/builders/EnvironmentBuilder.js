@@ -289,5 +289,34 @@ export class EnvironmentBuilder {
     const glow = new this.THREE.PointLight(0x3377ff, lo.rackGlowIntensity ?? 6.0, 14);
     glow.position.set(0, 12, 2);
     scene.add(glow);
+
+    // User-defined custom lights
+    (lo.customLights || []).forEach(cl => {
+      const color = typeof cl.color === 'string'
+        ? parseInt(cl.color.replace('#', ''), 16)
+        : (cl.color || 0xffffff);
+      const intensity = cl.intensity ?? 5;
+      const x = cl.x ?? 0, z = cl.z ?? 0;
+      // 'ceiling' type: place at room ceiling height
+      const y = cl.type === 'ceiling' ? ((lo.roomHeight ?? 13) - 0.5) : (cl.y ?? 8);
+
+      if (cl.type === 'point' || cl.type === 'ceiling') {
+        const pl = new this.THREE.PointLight(color, intensity, cl.distance ?? 20);
+        pl.position.set(x, y, z);
+        scene.add(pl);
+      } else if (cl.type === 'spot') {
+        const sl = new this.THREE.SpotLight(color, intensity);
+        sl.position.set(x, y, z);
+        sl.angle = cl.angle ?? Math.PI / 6;
+        sl.penumbra = 0.2;
+        sl.target.position.set(x, 0, z);
+        scene.add(sl); scene.add(sl.target);
+      } else {
+        // directional (default)
+        const dl = new this.THREE.DirectionalLight(color, intensity);
+        dl.position.set(x, y, z);
+        scene.add(dl);
+      }
+    });
   }
 }
