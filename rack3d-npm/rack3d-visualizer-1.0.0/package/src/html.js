@@ -17,6 +17,34 @@ function panelHtml(self, id, title, body, opts = {}) {
   </div>`;
 }
 
+// ── Window / door row helpers ─────────────────────────────────
+function windowRow(sid, w, i) {
+  const walls = ['front','back','left','right'];
+  return `<div class="r3-cl-row">
+    <select class="r3-inp r3-inp-xs" style="width:62px" onchange="window._r3['${sid}']._editWindow(${i},'wall',this.value)">
+      ${walls.map(t=>`<option value="${t}"${w.wall===t?' selected':''}>${t}</option>`).join('')}
+    </select>
+    <input class="r3-inp r3-inp-xs" type="number" step="0.5" value="${w.x??0}" title="X pos" style="width:38px" oninput="window._r3['${sid}']._editWindow(${i},'x',+this.value)">
+    <input class="r3-inp r3-inp-xs" type="number" step="0.5" value="${w.y??1.5}" title="Y pos" style="width:38px" oninput="window._r3['${sid}']._editWindow(${i},'y',+this.value)">
+    <input class="r3-inp r3-inp-xs" type="number" step="0.5" value="${w.width??2}" title="Width" style="width:38px" oninput="window._r3['${sid}']._editWindow(${i},'width',+this.value)">
+    <input class="r3-inp r3-inp-xs" type="number" step="0.5" value="${w.height??1.5}" title="Height" style="width:38px" oninput="window._r3['${sid}']._editWindow(${i},'height',+this.value)">
+    <button class="r3-ph-btn" style="font-size:13px" onclick="window._r3['${sid}']._removeWindow(${i})">×</button>
+  </div>`;
+}
+
+function doorRow(sid, d, i) {
+  const walls = ['front','back','left','right'];
+  return `<div class="r3-cl-row">
+    <select class="r3-inp r3-inp-xs" style="width:62px" onchange="window._r3['${sid}']._editDoor(${i},'wall',this.value)">
+      ${walls.map(t=>`<option value="${t}"${d.wall===t?' selected':''}>${t}</option>`).join('')}
+    </select>
+    <input class="r3-inp r3-inp-xs" type="number" step="0.5" value="${d.x??0}" title="X pos" style="width:38px" oninput="window._r3['${sid}']._editDoor(${i},'x',+this.value)">
+    <input class="r3-inp r3-inp-xs" type="number" step="0.5" value="${d.width??1.2}" title="Width" style="width:38px" oninput="window._r3['${sid}']._editDoor(${i},'width',+this.value)">
+    <input class="r3-inp r3-inp-xs" type="number" step="0.5" value="${d.height??2.5}" title="Height" style="width:38px" oninput="window._r3['${sid}']._editDoor(${i},'height',+this.value)">
+    <button class="r3-ph-btn" style="font-size:13px" onclick="window._r3['${sid}']._removeDoor(${i})">×</button>
+  </div>`;
+}
+
 // ── Panel body builders ───────────────────────────────────────
 function roomPanelBody(self) {
   const sid = self._id;
@@ -30,14 +58,15 @@ function roomPanelBody(self) {
 function customLightRow(sid, cl, i) {
   const types = ['point','directional','spot','ceiling'];
   return `<div class="r3-cl-row" id="${sid}-cl-${i}">
-    <select class="r3-inp r3-inp-xs" style="width:76px" onchange="window._r3['${sid}']._editCustomLight(${i},'type',this.value)">
+    <select class="r3-inp r3-inp-xs" style="width:72px" onchange="window._r3['${sid}']._editCustomLight(${i},'type',this.value)">
       ${types.map(t => `<option value="${t}"${cl.type===t?' selected':''}>${t}</option>`).join('')}
     </select>
-    <input class="r3-inp r3-inp-xs" type="number" step="1" value="${cl.x||0}" title="X" style="width:38px" oninput="window._r3['${sid}']._editCustomLight(${i},'x',+this.value)">
-    <input class="r3-inp r3-inp-xs" type="number" step="1" value="${cl.y||8}" title="Y" style="width:38px" oninput="window._r3['${sid}']._editCustomLight(${i},'y',+this.value)">
-    <input class="r3-inp r3-inp-xs" type="number" step="1" value="${cl.z||0}" title="Z" style="width:38px" oninput="window._r3['${sid}']._editCustomLight(${i},'z',+this.value)">
-    <input class="r3-inp r3-inp-xs" type="number" min="0" max="30" step="0.5" value="${cl.intensity||5}" title="Intensity" style="width:38px" oninput="window._r3['${sid}']._editCustomLight(${i},'intensity',+this.value)">
-    <input type="color" value="${cl.color||'#ffffff'}" title="Color" class="r3-color-pick" oninput="window._r3['${sid}']._editCustomLight(${i},'color',this.value)">
+    <input class="r3-inp r3-inp-xs" type="number" step="1" value="${cl.x??0}" title="X" style="width:34px" oninput="window._r3['${sid}']._editCustomLight(${i},'x',+this.value)">
+    <input class="r3-inp r3-inp-xs" type="number" step="1" value="${cl.y??8}" title="Y" style="width:34px" oninput="window._r3['${sid}']._editCustomLight(${i},'y',+this.value)">
+    <input class="r3-inp r3-inp-xs" type="number" step="1" value="${cl.z??0}" title="Z" style="width:34px" oninput="window._r3['${sid}']._editCustomLight(${i},'z',+this.value)">
+    <input class="r3-inp r3-inp-xs" type="number" min="0" max="30" step="0.5" value="${cl.intensity??5}" title="Intensity" style="width:34px" oninput="window._r3['${sid}']._editCustomLight(${i},'intensity',+this.value)">
+    <input class="r3-inp r3-inp-xs" type="number" min="0" step="1" value="${cl.distance??0}" title="Distance (0=∞)" style="width:34px" oninput="window._r3['${sid}']._editCustomLight(${i},'distance',+this.value)">
+    <input type="color" value="${typeof cl.color==='string'?cl.color:'#ffffff'}" title="Color" class="r3-color-pick" oninput="window._r3['${sid}']._editCustomLight(${i},'color',this.value)">
     <button class="r3-ph-btn" style="font-size:13px" onclick="window._r3['${sid}']._removeCustomLight(${i})">×</button>
   </div>`;
 }
@@ -121,22 +150,40 @@ function envPanelBody(self) {
     <span>Custom Lights</span>
     <button class="r3-btn" style="padding:1px 6px;font-size:9px" onclick="window._r3['${sid}']._addCustomLight()">+ Add</button>
   </div>
-  <div class="r3-cl-labels"><span>Type</span><span>X</span><span>Y</span><span>Z</span><span>Int</span><span>Col</span></div>
-  <div id="${sid}-custom-lights">${(lo.customLights||[]).map((cl,i) => customLightRow(sid,cl,i)).join('')}</div>` : ''}`;
+  <div class="r3-cl-labels"><span>Type</span><span>X</span><span>Y</span><span>Z</span><span>Int</span><span>Dst</span><span>Col</span></div>
+  <div id="${sid}-custom-lights">${(lo.customLights||[]).map((cl,i) => customLightRow(sid,cl,i)).join('')}</div>` : ''}
+  <div class="r3-env-sec" style="display:flex;align-items:center;justify-content:space-between">
+    <span>Windows</span>
+    <button class="r3-btn" style="padding:1px 6px;font-size:9px" onclick="window._r3['${sid}']._addWindow()">+ Add</button>
+  </div>
+  <div class="r3-cl-labels"><span>Wall</span><span>X</span><span>Y</span><span>W</span><span>H</span></div>
+  <div id="${sid}-windows">${(ro.windows||[]).map((w,i) => windowRow(sid,w,i)).join('')}</div>
+  <div class="r3-env-sec" style="display:flex;align-items:center;justify-content:space-between">
+    <span>Doors</span>
+    <button class="r3-btn" style="padding:1px 6px;font-size:9px" onclick="window._r3['${sid}']._addDoor()">+ Add</button>
+  </div>
+  <div class="r3-cl-labels"><span>Wall</span><span>X</span><span>W</span><span>H</span></div>
+  <div id="${sid}-doors">${(ro.doors||[]).map((d,i) => doorRow(sid,d,i)).join('')}</div>`;
 }
 
 function rackPropsPanelBody(self) {
   const sid = self._id;
+  const ro  = self._opts.rack;
   return `<div class="r3-rw"><span class="r3-lbl">Name</span><input class="r3-inp" id="${sid}-rn" oninput="window._r3['${sid}']._onRackName(this.value)"></div>
   <div class="r3-rw"><span class="r3-lbl">Units</span><input class="r3-inp" type="number" id="${sid}-ru" min="4" max="48" style="width:55px" oninput="window._r3['${sid}']._onRackUnits(+this.value)"></div>
   <div class="r3-rw"><span class="r3-lbl">Width(m)</span><input class="r3-inp" type="number" id="${sid}-rwidth" min="2" max="12" step="0.1" style="width:65px" oninput="window._r3['${sid}']._onRackWidth(+this.value)"></div>
   <div class="r3-rw"><span class="r3-lbl">Pos X</span><input class="r3-inp" type="number" id="${sid}-rposX" step="0.5" style="width:65px" oninput="window._r3['${sid}']._onRackPos('x',+this.value)"></div>
+  <div class="r3-rw"><span class="r3-lbl">Pos Y</span><input class="r3-inp" type="number" id="${sid}-rposY" step="0.5" style="width:65px" oninput="window._r3['${sid}']._onRackPos('y',+this.value)"></div>
   <div class="r3-rw"><span class="r3-lbl">Pos Z</span><input class="r3-inp" type="number" id="${sid}-rposZ" step="0.5" style="width:65px" oninput="window._r3['${sid}']._onRackPos('z',+this.value)"></div>
   <div class="r3-rw"><span class="r3-lbl">Angle°</span><input class="r3-inp" type="number" id="${sid}-rangle" min="-180" max="180" step="5" style="width:65px" oninput="window._r3['${sid}']._onRackAngle(+this.value)"></div>
   <div class="r3-rw"><span class="r3-lbl">Temp°C</span><input class="r3-inp" type="number" id="${sid}-rtemp" oninput="window._r3['${sid}']._onRackProp('rackTemp',+this.value)"></div>
   <div class="r3-rw"><span class="r3-lbl">PDU Cap</span><input class="r3-inp" type="number" id="${sid}-rpduCap" oninput="window._r3['${sid}']._onRackProp('pduCapacity',+this.value)"></div>
   <div class="r3-rw"><span class="r3-lbl">PDU Load</span><input class="r3-inp" type="number" id="${sid}-rpduLoad" oninput="window._r3['${sid}']._onRackProp('pduLoad',+this.value)"></div>
-  <div style="margin-top:6px;font-size:10px;color:var(--r3-dim);font-family:'Share Tech Mono',monospace">⟳ Drag rack in 3D to reposition</div>`;
+  <div style="margin-top:6px;font-size:10px;color:var(--r3-dim);font-family:'Share Tech Mono',monospace">⟳ Drag rack in 3D to reposition</div>
+  <div class="r3-env-sec">Nameplate</div>
+  <div class="r3-rw"><span class="r3-lbl">Scale</span><input class="r3-inp" type="number" min="0.1" max="5" step="0.1" value="${ro.nameplateScale??1}" style="width:65px" oninput="window._r3['${sid}']._setRackOpt('nameplateScale',+this.value)"></div>
+  <div class="r3-rw"><span class="r3-lbl">Y Offset</span><input class="r3-inp" type="number" step="0.1" value="${ro.nameplateYOffset??0.2}" style="width:65px" oninput="window._r3['${sid}']._setRackOpt('nameplateYOffset',+this.value)"></div>
+  <div class="r3-rw"><span class="r3-lbl">Opacity</span><input class="r3-range" type="range" min="0" max="1" step="0.05" value="${ro.nameplateOpacity??1}" style="flex:1" oninput="window._r3['${sid}']._setRackOpt('nameplateOpacity',+this.value)"></div>`;
 }
 
 function statsPanelBody(self) {
@@ -241,7 +288,6 @@ export function buildHTML(self) {
     ${panelHtml(self,'room','Room',roomPanelBody(self))}
     ${panelHtml(self,'env','Environment',envPanelBody(self))}
     ${panelHtml(self,'catalog','Catalog',catalogPanelBody(self))}
-    <div class="r3-sb-handle" id="${sid}-sb-handle"></div>
   </div>`;
 
   const canvasHtml = `
@@ -285,7 +331,6 @@ export function buildHTML(self) {
   <div class="r3-sb r3-sb-right" id="${sid}-sbr" style="width:${rW}px;min-width:${rW}px;display:${showR?'flex':'none'}"
        ondragover="event.preventDefault()"
        ondrop="window._r3['${sid}']._onPanelDropSidebar(event,'right')">
-    <div class="r3-sb-handle r3-sbr-handle" id="${sid}-sbr-handle"></div>
     ${panelHtml(self,'rackProps','Rack Properties',rackPropsPanelBody(self))}
     ${panelHtml(self,'stats','Statistics',statsPanelBody(self))}
     ${panelHtml(self,'devices','Devices',devicesPanelBody(self))}
@@ -293,8 +338,11 @@ export function buildHTML(self) {
     <div id="${sid}-cat-edit-wrap"></div>
   </div>`;
 
-  return `${toolbar}<div class="r3-body">${sidebarHtml}${self._mode==='2d'?view2dHtml:canvasHtml}${self._mode==='2d'?canvasHtml:view2dHtml}${rightSidebarHtml}</div>`;
+  const leftHandleHtml  = !sb.enabled ? '' : `<div class="r3-sb-handle"  id="${sid}-sb-handle"  style="display:${showL?'flex':'none'}"></div>`;
+  const rightHandleHtml = !sb.enabled ? '' : `<div class="r3-sb-handle r3-sbr-handle" id="${sid}-sbr-handle" style="display:${showR?'flex':'none'}"></div>`;
+
+  return `${toolbar}<div class="r3-body">${sidebarHtml}${leftHandleHtml}${self._mode==='2d'?view2dHtml:canvasHtml}${self._mode==='2d'?canvasHtml:view2dHtml}${rightHandleHtml}${rightSidebarHtml}</div>`;
 }
 
-// Exported for dynamic re-render of custom lights list
-export { customLightRow };
+// Exported for dynamic re-render
+export { customLightRow, windowRow, doorRow };

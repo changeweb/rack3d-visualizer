@@ -5,7 +5,7 @@ import { DEFAULT_OPTIONS, mergeOptions } from './options.js';
 import { resolveTheme } from './themes.js';
 import { DEVICE_TYPES } from './constants.js';
 import { buildCSS } from './css.js';
-import { buildHTML, customLightRow } from './html.js';
+import { buildHTML, customLightRow, windowRow, doorRow } from './html.js';
 import { makeUnitLabel } from './geometry.js';
 import { createLabel, updateLabels } from './labels.js';
 import { render2D, on2DDragStart, on2DDragEnd, on2DDrop, dropUnit, exportImage, dlBlob, gen2DCanvas, gen2DSVG } from './render2d.js';
@@ -382,7 +382,7 @@ export class Rack3DVisualizer {
 
   _buildRack() {
     this._clearRack();
-    this._geometryManager.buildAllRacks(this._room, this._opts.rack, this._theme.rack);
+    this._geometryManager.buildAllRacks(this._room, this._opts.rack, this._theme.rack, this._selRackId);
 
     // Sync geometry manager state back to instance so labels.js / sidebar.js can read them
     this._rackGroups     = this._geometryManager.rackGroups;
@@ -759,11 +759,11 @@ export class Rack3DVisualizer {
       // Pulse only on change — not every frame — so idle renders stay truly idle
       if (selChange) {
         Object.entries(this._devMeshes).forEach(([id, m]) => {
-          if (m?.material) m.material.emissiveIntensity = id === this._selId ? 1.0 : 0.55;
+          if (m?.material) m.material.emissiveIntensity = id === this._selId ? 3.0 : 0.55;
         });
       } else if (dirty && this._selId) {
         const m = this._devMeshes[this._selId];
-        if (m?.material) m.material.emissiveIntensity = 1.0 + 0.3 * Math.sin(this._tick * 0.15);
+        if (m?.material) m.material.emissiveIntensity = 3.0 + 0.8 * Math.sin(this._tick * 0.15);
       }
 
       this._ren.render(this._scene, this._cam);
@@ -976,20 +976,28 @@ export class Rack3DVisualizer {
   // ─── Sidebar toggle & visibility ─────────────────────────
   _toggleSidebarLeft() {
     this._opts.sidebar.showLeft = !this._opts.sidebar.showLeft;
-    const sb  = document.getElementById(this._id + '-sb');
-    const btn = document.getElementById(this._id + '-btnSbL');
-    if (sb)  sb.style.display  = this._opts.sidebar.showLeft ? 'flex' : 'none';
-    if (btn) btn.className     = 'r3-sb-toggle' + (this._opts.sidebar.showLeft ? ' on' : '');
+    const on     = this._opts.sidebar.showLeft;
+    const sb     = document.getElementById(this._id + '-sb');
+    const handle = document.getElementById(this._id + '-sb-handle');
+    const btn    = document.getElementById(this._id + '-btnSbL');
+    if (sb)     sb.style.display     = on ? 'flex' : 'none';
+    if (handle) handle.style.display = on ? 'flex' : 'none';
+    if (btn)    btn.className        = 'r3-sb-toggle' + (on ? ' on' : '');
     this._savePanelState();
+    setTimeout(() => this._onResize?.(), 50);
   }
 
   _toggleSidebarRight() {
     this._opts.sidebar.showRight = !this._opts.sidebar.showRight;
-    const sb  = document.getElementById(this._id + '-sbr');
-    const btn = document.getElementById(this._id + '-btnSbR');
-    if (sb)  sb.style.display  = this._opts.sidebar.showRight ? 'flex' : 'none';
-    if (btn) btn.className     = 'r3-sb-toggle' + (this._opts.sidebar.showRight ? ' on' : '');
+    const on     = this._opts.sidebar.showRight;
+    const sb     = document.getElementById(this._id + '-sbr');
+    const handle = document.getElementById(this._id + '-sbr-handle');
+    const btn    = document.getElementById(this._id + '-btnSbR');
+    if (sb)     sb.style.display     = on ? 'flex' : 'none';
+    if (handle) handle.style.display = on ? 'flex' : 'none';
+    if (btn)    btn.className        = 'r3-sb-toggle' + (on ? ' on' : '');
     this._savePanelState();
+    setTimeout(() => this._onResize?.(), 50);
   }
 
   // ─── Custom lights ────────────────────────────────────────
@@ -1019,6 +1027,56 @@ export class Rack3DVisualizer {
     const sid = this._id;
     el.innerHTML = (this._opts.lighting.customLights || [])
       .map((cl, i) => customLightRow(sid, cl, i)).join('');
+  }
+
+  _setRackOpt(field, value) {
+    this._opts.rack[field] = value;
+    this._buildRack();
+  }
+
+  // ─── Window / door management ─────────────────────────────
+  _addWindow() {
+    if (!this._opts.room.windows) this._opts.room.windows = [];
+    this._opts.room.windows.push({ wall:'front', x:0, y:1.5, width:2, height:1.5 });
+    this._buildEnvironment();
+    this._renderWindows();
+  }
+  _editWindow(idx, field, value) {
+    const w = this._opts.room.windows?.[idx]; if (!w) return;
+    w[field] = value;
+    this._buildEnvironment();
+  }
+  _removeWindow(idx) {
+    this._opts.room.windows?.splice(idx, 1);
+    this._buildEnvironment();
+    this._renderWindows();
+  }
+  _renderWindows() {
+    const el = document.getElementById(this._id + '-windows'); if (!el) return;
+    const sid = this._id;
+    el.innerHTML = (this._opts.room.windows || []).map((w,i) => windowRow(sid,w,i)).join('');
+  }
+
+  _addDoor() {
+    if (!this._opts.room.doors) this._opts.room.doors = [];
+    this._opts.room.doors.push({ wall:'front', x:0, width:1.2, height:2.5 });
+    this._buildEnvironment();
+    this._renderDoors();
+  }
+  _editDoor(idx, field, value) {
+    const d = this._opts.room.doors?.[idx]; if (!d) return;
+    d[field] = value;
+    this._buildEnvironment();
+  }
+  _removeDoor(idx) {
+    this._opts.room.doors?.splice(idx, 1);
+    this._buildEnvironment();
+    this._renderDoors();
+  }
+  _renderDoors() {
+    const el = document.getElementById(this._id + '-doors'); if (!el) return;
+    const sid = this._id;
+    el.innerHTML = (this._opts.room.doors || []).map((d,i) => doorRow(sid,d,i)).join('');
   }
 
   // ─── Room / Lighting live config ─────────────────────────

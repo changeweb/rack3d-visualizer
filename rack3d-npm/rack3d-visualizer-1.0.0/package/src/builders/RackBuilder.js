@@ -7,7 +7,7 @@ export class RackBuilder {
     this.materialFactory = materialFactory;
   }
 
-  build(rack, rackOptions, rackTheme, group) {
+  build(rack, rackOptions, rackTheme, group, selRackId) {
     const UH = rackOptions.unitHeight;
     const RW = rackOptions.width;
     const RD = rackOptions.depth;
@@ -17,8 +17,8 @@ export class RackBuilder {
     const hw = RW / 2;
     const hd = RD / 2;
 
-    const isSelected = rack.id === group.userData.selRackId;
-    const selMix = isSelected ? 0.35 : 0;
+    const isSelected = rack.id === selRackId;
+    const selMix = isSelected ? 0.65 : 0;
     const frameColor = isSelected
       ? new this.THREE.Color(rackTheme.frameColor).lerp(new this.THREE.Color(0x1155cc), selMix).getHex()
       : rackTheme.frameColor;
@@ -121,6 +121,7 @@ export class RackBuilder {
           nut.position.set(x, y + UH * 0.5, -hd + 0.06);
           group.add(nut);
         });
+        this._buildUnitLabel(i + 1, y, hw, hd, UH, group, rack.id);
       }
     }
 
@@ -178,11 +179,70 @@ export class RackBuilder {
       group.add(nameplate);
     }
 
+    if (isSelected) {
+      // Glowing floor indicator
+      const indMat = new this.THREE.MeshBasicMaterial({
+        color: 0x1a6fff, transparent: true, opacity: 0.5, depthWrite: false
+      });
+      const ind = new this.THREE.Mesh(new this.THREE.PlaneGeometry(RW + 0.6, RD + 0.6), indMat);
+      ind.rotation.x = -Math.PI / 2;
+      ind.position.set(0, 0.03, 0);
+      ind.userData.rackId = rack.id;
+      group.add(ind);
+
+      // Edge outline box
+      const edgeGeo = new this.THREE.EdgesGeometry(new this.THREE.BoxGeometry(RW + 0.12, H + 0.04, RD + 0.12));
+      const edgeMat = new this.THREE.LineBasicMaterial({ color: 0x00aaff, linewidth: 2 });
+      const edges = new this.THREE.LineSegments(edgeGeo, edgeMat);
+      edges.position.set(0, my, 0);
+      edges.userData.rackId = rack.id;
+      group.add(edges);
+    }
+
     this._buildRackLabel(rack, group, H, hw, hd, rackOptions, isSelected);
     return group;
   }
 
+  _buildUnitLabel(unit, y, hw, hd, UH, group, rackId) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = 'rgba(10,20,35,0.72)';
+    ctx.beginPath();
+    ctx.roundRect(2, 2, 252, 124, 8);
+    ctx.fill();
+
+    ctx.fillStyle = '#a8c8e8';
+    ctx.font = 'bold 72px "Share Tech Mono",monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(unit, 128, 64);
+
+    const tex = new this.THREE.CanvasTexture(canvas);
+    const mat = new this.THREE.MeshBasicMaterial({
+      map: tex,
+      transparent: true,
+      depthWrite: false,
+      side: this.THREE.FrontSide
+    });
+
+    const planeH = UH * 0.7;
+    const planeW = planeH * 2;
+    const mesh = new this.THREE.Mesh(new this.THREE.PlaneGeometry(planeW, planeH), mat);
+    mesh.userData.rk = 'unitlabel';
+    mesh.userData.rackId = rackId;
+    mesh.position.set(-hw + 0.10, y + UH * 0.5, -hd - 0.05);
+    mesh.rotation.y = Math.PI;
+    group.add(mesh);
+  }
+
   _buildRackLabel(rack, group, H, hw, hd, rackOptions, isSelected) {
+    const scale   = rackOptions.nameplateScale   ?? 1.0;
+    const yOffset = rackOptions.nameplateYOffset ?? 0.2;
+    const opacity = rackOptions.nameplateOpacity ?? 1.0;
+
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 128;
@@ -206,15 +266,16 @@ export class RackBuilder {
     const mat = new this.THREE.MeshBasicMaterial({
       map: tex,
       transparent: true,
+      opacity,
       depthWrite: false,
       side: this.THREE.FrontSide
     });
-    const planeW = rackOptions.width * 0.88;
+    const planeW = rackOptions.width * 0.88 * scale;
     const planeH = planeW * (128 / 512);
     const mesh = new this.THREE.Mesh(new this.THREE.PlaneGeometry(planeW, planeH), mat);
     mesh.userData.rk = 'racklabel';
     mesh.userData.rackId = rack.id;
-    mesh.position.set(0, H + planeH * 0.5 + 0.2, -hd + 0.02);
+    mesh.position.set(0, H + planeH * 0.5 + yOffset, -hd + 0.02);
     mesh.rotation.y = Math.PI;
     group.add(mesh);
   }

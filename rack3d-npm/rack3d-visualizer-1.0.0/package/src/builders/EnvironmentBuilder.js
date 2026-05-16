@@ -21,9 +21,12 @@ export class EnvironmentBuilder {
     const cx = 0;
     const cz = 2;
 
+    this._buildSkyboxAndSun(scene);
     this._buildFloor(scene, W, D, cx, cz, ts2, ts, ro);
     this._buildCeiling(scene, W, D, H, cx, cz, ts);
-    this._buildWalls(scene, W, D, H, cx, cz, ts);
+    this._buildWalls(scene, W, D, H, cx, cz, ts, ro);
+    this._buildWindows(scene, W, D, H, cx, cz, ro);
+    this._buildDoors(scene, W, D, H, cx, cz, ro);
     this._buildStripLights(scene, W, D, H, cx, cz, ts, ro);
     this._buildBaseboardLights(scene, W, D, cx, cz, ts, ro);
     this._buildExitSign(scene, W, D, H, cx, cz, ro);
@@ -120,34 +123,66 @@ export class EnvironmentBuilder {
     }
   }
 
-  _buildWalls(scene, W, D, H, cx, cz, ts) {
+  _buildWalls(scene, W, D, H, cx, cz, ts, ro) {
     const wallMat = new this.THREE.MeshStandardMaterial({
       color: ts.wallColor,
       roughness: 0.8,
       metalness: 0.05,
       side: this.THREE.DoubleSide
     });
-
-    const bw = new this.THREE.Mesh(new this.THREE.PlaneGeometry(W, H), wallMat);
-    bw.position.set(cx, H / 2, cz + D / 2);
-    scene.add(bw);
-
-    const fm = new this.THREE.MeshStandardMaterial({
+    const frontMat = new this.THREE.MeshStandardMaterial({
       color: 0x1e2d40,
       transparent: true,
       opacity: 0.65,
       side: this.THREE.DoubleSide
     });
-    const fw = new this.THREE.Mesh(new this.THREE.PlaneGeometry(W, H), fm);
+
+    const buildWallGeo = (panW, panH, wallId, negateX) => {
+      const shape = new this.THREE.Shape();
+      shape.moveTo(-panW / 2, -panH / 2);
+      shape.lineTo( panW / 2, -panH / 2);
+      shape.lineTo( panW / 2,  panH / 2);
+      shape.lineTo(-panW / 2,  panH / 2);
+      shape.closePath();
+
+      const addHole = (hx, hy, hw2, hh2) => {
+        const hole = new this.THREE.Path();
+        hole.moveTo(hx - hw2, hy - hh2);
+        hole.lineTo(hx + hw2, hy - hh2);
+        hole.lineTo(hx + hw2, hy + hh2);
+        hole.lineTo(hx - hw2, hy + hh2);
+        hole.closePath();
+        shape.holes.push(hole);
+      };
+
+      (ro?.windows || []).filter(w => (w.wall || 'front') === wallId).forEach(win => {
+        const wx = win.x ?? 0, wy = win.y ?? H / 3;
+        const ww = win.width ?? 2, wh = win.height ?? 1.5;
+        addHole(negateX ? -wx : wx, wy - panH / 2, ww / 2, wh / 2);
+      });
+
+      (ro?.doors || []).filter(d => (d.wall || 'front') === wallId).forEach(door => {
+        const dx = door.x ?? 0, dw = door.width ?? 1.2, dh = door.height ?? 2.5;
+        addHole(negateX ? -dx : dx, dh / 2 - panH / 2, dw / 2, dh / 2);
+      });
+
+      return new this.THREE.ShapeGeometry(shape);
+    };
+
+    const bw = new this.THREE.Mesh(buildWallGeo(W, H, 'back', false), wallMat);
+    bw.position.set(cx, H / 2, cz + D / 2);
+    scene.add(bw);
+
+    const fw = new this.THREE.Mesh(buildWallGeo(W, H, 'front', false), frontMat);
     fw.position.set(cx, H / 2, cz - D / 2);
     scene.add(fw);
 
-    const lw = new this.THREE.Mesh(new this.THREE.PlaneGeometry(D, H), wallMat);
+    const lw = new this.THREE.Mesh(buildWallGeo(D, H, 'left', true), wallMat);
     lw.rotation.y = Math.PI / 2;
     lw.position.set(cx - W / 2, H / 2, cz);
     scene.add(lw);
 
-    const rw = new this.THREE.Mesh(new this.THREE.PlaneGeometry(D, H), wallMat);
+    const rw = new this.THREE.Mesh(buildWallGeo(D, H, 'right', false), wallMat);
     rw.rotation.y = -Math.PI / 2;
     rw.position.set(cx + W / 2, H / 2, cz);
     scene.add(rw);
@@ -200,6 +235,133 @@ export class EnvironmentBuilder {
     const bb = new this.THREE.Mesh(new this.THREE.BoxGeometry(W, 0.07, 0.04), bm);
     bb.position.set(cx, 0.035, cz + D / 2 - 0.05);
     scene.add(bb);
+  }
+
+  _buildWindows(scene, W, D, H, cx, cz, ro) {
+    if (!ro.windows || !ro.windows.length) return;
+    const glassMat = new this.THREE.MeshStandardMaterial({
+      color: 0x88ccff, transparent: true, opacity: 0.25,
+      side: this.THREE.DoubleSide,
+      emissive: new this.THREE.Color(0x4488cc), emissiveIntensity: 0.15
+    });
+    const frameMat = new this.THREE.MeshStandardMaterial({ color: 0x4a6080, roughness: 0.5, metalness: 0.3 });
+    ro.windows.forEach(win => {
+      const wx = win.x ?? 0, wy = win.y ?? H / 3;
+      const ww = win.width ?? 2, wh = win.height ?? 1.5;
+      const ft = 0.06;
+      const g = new this.THREE.Group();
+      switch (win.wall) {
+        case 'back':  g.position.set(cx + wx, 0, cz + D/2 - 0.02); break;
+        case 'left':  g.position.set(cx - W/2 + 0.02, 0, cz + wx); g.rotation.y = Math.PI/2; break;
+        case 'right': g.position.set(cx + W/2 - 0.02, 0, cz + wx); g.rotation.y = -Math.PI/2; break;
+        default:      g.position.set(cx + wx, 0, cz - D/2 + 0.02);
+      }
+      const glass = new this.THREE.Mesh(new this.THREE.PlaneGeometry(ww, wh), glassMat);
+      glass.position.set(0, wy, 0);
+      g.add(glass);
+      [[ww + ft*2, ft, 0, wy + wh/2 + ft/2], [ww + ft*2, ft, 0, wy - wh/2 - ft/2],
+       [ft, wh, -ww/2 - ft/2, wy], [ft, wh, ww/2 + ft/2, wy]].forEach(([fw, fh, fx, fy]) => {
+        const bar = new this.THREE.Mesh(new this.THREE.BoxGeometry(fw, fh, 0.07), frameMat);
+        bar.position.set(fx, fy, 0);
+        g.add(bar);
+      });
+      scene.add(g);
+    });
+  }
+
+  _buildDoors(scene, W, D, H, cx, cz, ro) {
+    if (!ro.doors || !ro.doors.length) return;
+    const glassMat = new this.THREE.MeshStandardMaterial({
+      color: 0x99ddcc, transparent: true, opacity: 0.22,
+      side: this.THREE.DoubleSide,
+      emissive: new this.THREE.Color(0x44bbaa), emissiveIntensity: 0.08
+    });
+    const frameMat = new this.THREE.MeshStandardMaterial({ color: 0x8a9aaa, roughness: 0.3, metalness: 0.7 });
+    ro.doors.forEach(door => {
+      const dx = door.x ?? 0, dw = door.width ?? 1.2, dh = door.height ?? 2.5;
+      const ft = 0.07;
+      const g = new this.THREE.Group();
+      switch (door.wall) {
+        case 'back':  g.position.set(cx + dx, 0, cz + D/2 - 0.02); break;
+        case 'left':  g.position.set(cx - W/2 + 0.02, 0, cz + dx); g.rotation.y = Math.PI/2; break;
+        case 'right': g.position.set(cx + W/2 - 0.02, 0, cz + dx); g.rotation.y = -Math.PI/2; break;
+        default:      g.position.set(cx + dx, 0, cz - D/2 + 0.02);
+      }
+      // Glass pane split into upper+lower for a door crossbar look
+      [[dw - ft*2, dh * 0.6, 0, dh * 0.7], [dw - ft*2, dh * 0.3, 0, dh * 0.2]].forEach(([pw, ph, px, py]) => {
+        const pane = new this.THREE.Mesh(new this.THREE.PlaneGeometry(pw, ph), glassMat);
+        pane.position.set(px, py, 0);
+        g.add(pane);
+      });
+      // Door handle (cylindrical bar)
+      const handleMat = new this.THREE.MeshStandardMaterial({ color: 0xccddee, roughness: 0.2, metalness: 0.9 });
+      const handle = new this.THREE.Mesh(new this.THREE.CylinderGeometry(0.03, 0.03, 0.12, 10), handleMat);
+      handle.rotation.z = Math.PI / 2;
+      handle.position.set(dw / 2 - 0.14, dh * 0.45, 0.06);
+      g.add(handle);
+      // Frame: top + bottom + two posts + mid crossbar
+      [[dw + ft*2, ft, 0, dh + ft/2],          // top
+       [dw + ft*2, ft, 0, 0],                    // bottom sill
+       [ft, dh + ft, -dw/2 - ft/2, dh/2],       // left post
+       [ft, dh + ft,  dw/2 + ft/2, dh/2],       // right post
+       [dw - ft*2,  ft, 0, dh * 0.4]            // mid crossbar
+      ].forEach(([fw, fh, fx, fy]) => {
+        const bar = new this.THREE.Mesh(new this.THREE.BoxGeometry(fw, fh, 0.08), frameMat);
+        bar.position.set(fx, fy, 0);
+        g.add(bar);
+      });
+      scene.add(g);
+    });
+  }
+
+  _buildSkyboxAndSun(scene) {
+    // Sky gradient texture
+    const canvas = typeof document !== 'undefined' ? document.createElement('canvas') : null;
+    if (!canvas) return;
+    canvas.width = 2; canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 512);
+    grad.addColorStop(0,    '#0d2255');
+    grad.addColorStop(0.25, '#1a4fa0');
+    grad.addColorStop(0.55, '#4a90d9');
+    grad.addColorStop(0.78, '#87ceeb');
+    grad.addColorStop(0.92, '#c8e8f8');
+    grad.addColorStop(1,    '#f0d8a0');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 2, 512);
+
+    const skyTex = new this.THREE.CanvasTexture(canvas);
+    const skyMat = new this.THREE.MeshBasicMaterial({
+      map: skyTex, side: this.THREE.BackSide, fog: false, depthWrite: false
+    });
+    const sky = new this.THREE.Mesh(new this.THREE.SphereGeometry(800, 32, 20), skyMat);
+    scene.add(sky);
+
+    // Clouds (flat ellipsoids)
+    const cloudMat = new this.THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, fog: false });
+    [[180, 220, -320], [-240, 200, -280], [60, 250, -400], [-150, 180, -350]].forEach(([x, y, z]) => {
+      const cloud = new this.THREE.Mesh(new this.THREE.SphereGeometry(1, 12, 6), cloudMat);
+      cloud.scale.set(30 + Math.abs(x) % 20, 8, 14 + Math.abs(z) % 12);
+      cloud.position.set(x, y, z);
+      scene.add(cloud);
+    });
+
+    // Sun disc
+    const sunMat = new this.THREE.MeshBasicMaterial({ color: 0xfffde7, fog: false });
+    const sun = new this.THREE.Mesh(new this.THREE.SphereGeometry(18, 20, 12), sunMat);
+    sun.position.set(180, 280, -450);
+    scene.add(sun);
+
+    // Sun corona
+    const coronaMat = new this.THREE.MeshBasicMaterial({ color: 0xfff9c4, transparent: true, opacity: 0.25, fog: false });
+    const corona = new this.THREE.Mesh(new this.THREE.SphereGeometry(32, 20, 12), coronaMat);
+    corona.position.copy(sun.position);
+    scene.add(corona);
+
+    // Sunlight directional (cast from sun direction)
+    const sunLight = new this.THREE.DirectionalLight(0xfff8e1, 6.0);
+    sunLight.position.set(180, 280, -450);
+    scene.add(sunLight);
   }
 
   _buildExitSign(scene, W, D, H, cx, cz, ro) {
@@ -301,7 +463,7 @@ export class EnvironmentBuilder {
       const y = cl.type === 'ceiling' ? ((lo.roomHeight ?? 13) - 0.5) : (cl.y ?? 8);
 
       if (cl.type === 'point' || cl.type === 'ceiling') {
-        const pl = new this.THREE.PointLight(color, intensity, cl.distance ?? 20);
+        const pl = new this.THREE.PointLight(color, intensity, cl.distance ?? 0);
         pl.position.set(x, y, z);
         scene.add(pl);
       } else if (cl.type === 'spot') {

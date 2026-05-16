@@ -34,7 +34,7 @@ export class GeometryManager {
     this.environmentBuilder.build(this._envGroup, roomOptions, lightingOptions, sceneTheme);
   }
 
-  buildAllRacks(room, rackOptions, rackTheme) {
+  buildAllRacks(room, rackOptions, rackTheme, selRackId) {
     this.clearAllRacks();
 
     if (!room?.racks?.length) return;
@@ -54,11 +54,11 @@ export class GeometryManager {
       const oy = entry.position?.y ?? 0;
       const oz = entry.position?.z ?? gridZ;
 
-      this._buildSingleRack(entry, ox, oy, oz, rackOptions, rackTheme);
+      this._buildSingleRack(entry, ox, oy, oz, rackOptions, rackTheme, selRackId);
     });
   }
 
-  _buildSingleRack(rack, ox, oy, oz, rackOptions, rackTheme) {
+  _buildSingleRack(rack, ox, oy, oz, rackOptions, rackTheme, selRackId) {
     const group = new this.THREE.Group();
     group.position.set(ox, oy, oz);
     group.rotation.y = rack.facingAngle || 0;
@@ -68,7 +68,7 @@ export class GeometryManager {
     this.scene.add(group);
     this.rackGroups[rack.id] = group;
 
-    this.rackBuilder.build(rack, rackOptions, rackTheme, group);
+    this.rackBuilder.build(rack, rackOptions, rackTheme, group, selRackId);
 
     const hw = rackOptions.width / 2;
     const hd = rackOptions.depth / 2;

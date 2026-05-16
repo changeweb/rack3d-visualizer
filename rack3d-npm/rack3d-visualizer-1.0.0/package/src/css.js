@@ -71,11 +71,10 @@ export function buildCSS(scope, theme, opts) {
 
 /* ── SIDEBAR RESIZE HANDLE ── */
 #${scope} .r3-sb-handle {
-  position:absolute; top:0; bottom:0; right:0; width:4px;
+  width:4px; flex-shrink:0; align-self:stretch;
   cursor:col-resize; z-index:20; background:transparent; transition:background .15s;
 }
 #${scope} .r3-sb-handle:hover, #${scope} .r3-sb-handle.r3-resizing { background:var(--r3-accent)66; }
-#${scope} .r3-sbr-handle { right:auto; left:0; }
 
 /* ── SIDEBAR TOGGLE BUTTONS ── */
 #${scope} .r3-sb-toggle {

@@ -60,7 +60,7 @@ export class DeviceBuilder {
     const faceW = dw - 0.08;
     const faceH = dh - 0.08;
     const panelCol = new this.THREE.Color(...rgb.map(c => Math.min(1, c * 0.65 + 0.06)));
-    const panelMat = this.materialFactory.createPanelMaterial(device.type, panelCol, rawHex, false);
+    const panelMat = this.materialFactory.createPanelMaterial(device.type, panelCol, rawHex, false).clone();
     const panel = new this.THREE.Mesh(new this.THREE.BoxGeometry(faceW, faceH, 0.02), panelMat);
     panel.userData.rk = 'face';
     panel.userData.deviceId = device.id;

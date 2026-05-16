@@ -37,6 +37,7 @@ export function refresh(self) {
   // Rack position fields
   const rg = self._rackGroups?.[r.id];
   val('rposX', +(rg?.position.x ?? r.position?.x ?? 0).toFixed(2));
+  val('rposY', +(rg?.position.y ?? r.position?.y ?? 0).toFixed(2));
   val('rposZ', +(rg?.position.z ?? r.position?.z ?? 0).toFixed(2));
   val('rangle', +(((r.facingAngle ?? 0) * 180 / Math.PI)).toFixed(0));
 

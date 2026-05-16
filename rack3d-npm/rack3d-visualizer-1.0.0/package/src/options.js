@@ -166,16 +166,21 @@ export const DEFAULT_OPTIONS = {
     cableTrays:     true,
     fogNear:        22,
     fogFar:         55,
+    windows:        [],  // [{wall:'front'|'back'|'left'|'right', x, y, width, height}]
+    doors:          [],  // [{wall:'front'|'back'|'left'|'right', x, width, height}]
   },
 
   rack: {
-    unitHeight:    0.445,
-    width:         5.6,
-    depth:         4.0,
-    postSize:      0.16,
-    showSidePanels:true,
-    showRearPanel: true,
-    showNameplate: true,
+    unitHeight:      0.445,
+    width:           5.6,
+    depth:           4.0,
+    postSize:        0.16,
+    showSidePanels:  true,
+    showRearPanel:   true,
+    showNameplate:   true,
+    nameplateScale:  1.0,
+    nameplateYOffset:0.2,
+    nameplateOpacity:1.0,
   },
 
   labels: {
