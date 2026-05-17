@@ -1,4 +1,5 @@
 // ── GEOMETRY MANAGER ── Orchestrates all geometry builders
+import { RoomItemBuilder } from '../builders/RoomItemBuilder.js';
 
 export class GeometryManager {
   constructor(THREE, scene, rackBuilder, deviceBuilder, environmentBuilder, materialFactory) {
@@ -13,6 +14,9 @@ export class GeometryManager {
     this.labelPositions = {};
     this.labelSide = 'auto';
     this._envGroup = null;
+    this.itemGroups = {};
+    this.itemLabelMeshes = [];
+    this.roomItemBuilder = new RoomItemBuilder(THREE);
   }
 
   buildEnvironment(room, roomOptions, lightingOptions, sceneTheme) {
@@ -32,6 +36,51 @@ export class GeometryManager {
     this._envGroup = new this.THREE.Group();
     this.scene.add(this._envGroup);
     this.environmentBuilder.build(this._envGroup, roomOptions, lightingOptions, sceneTheme);
+  }
+
+  buildRoomItems(items) {
+    this.clearRoomItems();
+    (items || []).forEach(item => {
+      if (!item.id) return;
+      const group = this.roomItemBuilder.build(item);
+      this.scene.add(group);
+      this.itemGroups[item.id] = group;
+
+      // Build standalone billboard label in world space
+      const labelMesh = this.roomItemBuilder.buildLabel(item);
+      if (labelMesh) {
+        const itemH = item.height ?? this.roomItemBuilder._defaultHeight(item.type);
+        const planeH = 2.8 * (128 / 512);
+        labelMesh.position.set(
+          group.position.x,
+          group.position.y + itemH + planeH * 0.5 + 0.4,
+          group.position.z
+        );
+        this.scene.add(labelMesh);
+        this.itemLabelMeshes.push(labelMesh);
+      }
+    });
+  }
+
+  clearRoomItems() {
+    Object.values(this.itemGroups).forEach(group => {
+      group.traverse(obj => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+          else obj.material.dispose();
+        }
+      });
+      this.scene.remove(group);
+    });
+    this.itemLabelMeshes.forEach(m => {
+      if (m.geometry) m.geometry.dispose();
+      if (m.material?.map) m.material.map.dispose();
+      if (m.material) m.material.dispose();
+      this.scene.remove(m);
+    });
+    this.itemLabelMeshes = [];
+    this.itemGroups = {};
   }
 
   buildAllRacks(room, rackOptions, rackTheme, selRackId) {

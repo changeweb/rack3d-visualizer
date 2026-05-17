@@ -40,6 +40,13 @@ export function refresh(self) {
   val('rposY', +(rg?.position.y ?? r.position?.y ?? 0).toFixed(2));
   val('rposZ', +(rg?.position.z ?? r.position?.z ?? 0).toFixed(2));
   val('rangle', +(((r.facingAngle ?? 0) * 180 / Math.PI)).toFixed(0));
+  // Rack nameplate per-rack fields
+  const rnpshape = $('rnpshape');
+  if (rnpshape) rnpshape.value = r.nameplateShape ?? 'rounded';
+  const rnpbg = $('rnpbg');
+  if (rnpbg) rnpbg.value = r.nameplateColor ?? '#081020';
+  const rnptxt = $('rnptxt');
+  if (rnptxt) rnptxt.value = r.nameplateTextColor ?? '#88bbdd';
 
   const sw = $('sw'); if (sw) sw.innerHTML = `<span style="font-family:'Orbitron',monospace">${r.pduLoad||0}</span><span style="font-size:10px;opacity:.6"> / ${r.pduCapacity||0}W (${pct}%)</span>`;
   const st = $('st'); if (st) st.innerHTML = `<span style="font-family:'Orbitron',monospace;color:${tc2}">${r.rackTemp||0}</span><span style="font-size:10px;opacity:.6">°C</span>`;
@@ -228,7 +235,15 @@ export function onRackUnits(self, v) {
   self._rack.units = Math.max(4, v||self._rack.units);
   self._buildRack(); self._refresh();
 }
-export function onRackProp(self, p, v) { if (self._rack) { self._rack[p] = v; self._refresh(); } }
+export function onRackProp(self, p, v) {
+  if (!self._rack) return;
+  self._rack[p] = v;
+  // Nameplate appearance props require a full rack rebuild to re-render the canvas texture
+  if (p === 'nameplateShape' || p === 'nameplateColor' || p === 'nameplateTextColor' || p === 'nameplateBorderColor') {
+    self._buildRack();
+  }
+  self._refresh();
+}
 export function onRackWidth(self, v) {
   if (v>=2&&v<=12) { self._opts.rack.width=v; self._buildRack(); self._refresh(); }
 }

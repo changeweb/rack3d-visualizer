@@ -5,7 +5,7 @@ import { DEFAULT_OPTIONS, mergeOptions } from './options.js';
 import { resolveTheme } from './themes.js';
 import { DEVICE_TYPES } from './constants.js';
 import { buildCSS } from './css.js';
-import { buildHTML, customLightRow, windowRow, doorRow } from './html.js';
+import { buildHTML, customLightRow, roomItemRow, vmPanelBody, vmCard, vmPortRow } from './html.js';
 import { makeUnitLabel } from './geometry.js';
 import { createLabel, updateLabels } from './labels.js';
 import { render2D, on2DDragStart, on2DDragEnd, on2DDrop, dropUnit, exportImage, dlBlob, gen2DCanvas, gen2DSVG } from './render2d.js';
@@ -52,6 +52,7 @@ export class Rack3DVisualizer {
     this._rack      = null;  // selected rack (pointer into _room.racks[i])
     this._selRackId = null;
     this._selId     = null;
+    this._selItemId = null;
     this._dragId    = null;
     this._dragCatId = null;
     this._selCatId  = null;
@@ -142,8 +143,12 @@ export class Rack3DVisualizer {
       console.error('[Rack3D] setRoomData() failed:', e);
       return this;
     }
-    if (!Array.isArray(this._room.catalog))  this._room.catalog = [...DEFAULT_CATALOG];
-    if (!Array.isArray(this._room.racks))    this._room.racks   = [];
+    if (!Array.isArray(this._room.catalog))     this._room.catalog    = [...DEFAULT_CATALOG];
+    if (!Array.isArray(this._room.racks))       this._room.racks      = [];
+    if (!Array.isArray(this._room.room_items))  this._room.room_items = [];
+    this._room.room_items.forEach(item => {
+      if (!item.id) item.id = 'item-' + Date.now() + Math.random().toString(36).slice(2,6);
+    });
     this._room.racks.forEach(r => {
       if (!r.id) r.id = 'rack-' + Date.now() + Math.random().toString(36).slice(2,6);
       if (!Array.isArray(r.devices)) r.devices = [];
@@ -157,6 +162,7 @@ export class Rack3DVisualizer {
       this._selRackId = null; this._rack = null;
     }
     this._selId = null;
+    this._selItemId = null;
     this._closeEdit();
     this._refresh();
     if (this._scene) this._buildRack();
@@ -374,6 +380,7 @@ export class Rack3DVisualizer {
   _clearRack() {
     Object.values(this._labelDivs || {}).forEach(d => d.remove());
     this._labelDivs = {};
+    this._geometryManager?.clearRoomItems();
     this._geometryManager?.clearAllRacks();
     this._rackGroups = {};
     this._devMeshes  = {};
@@ -405,6 +412,8 @@ export class Rack3DVisualizer {
       this._ctrl.r = Math.max(22, this._rackH() * 2.2);
     }
     this._posCamera();
+    this._buildRoomItems();
+    this._renderRoomItems();
   }
 
   _makeUnitLabel(u, y, hw, hd, UH, POST, ox, oz, rackId) { return makeUnitLabel(this, u, y, hw, hd, UH, POST, ox, oz, rackId); }
@@ -449,8 +458,8 @@ export class Rack3DVisualizer {
   _buildRoomPanel()             { buildRoomPanel(this); }
   _buildUnitMap()               { buildUnitMap(this); }
   _buildLegendOverlay()         { buildLegendOverlay(this); }
-  _openEdit(dev)                { openEdit(this, dev); }
-  _closeEdit()                  { closeEdit(this); }
+  _openEdit(dev)                { openEdit(this, dev); this._renderVMPanel(dev); }
+  _closeEdit()                  { closeEdit(this); this._hideVMPanel(); }
   _ed(field, value)             { ed(this, field, value); }
   _addDev(type, hw, name, h, w) { return addDev(this, type, hw, name, h, w); }
   _rmDev(id)                    { rmDev(this, id); }
@@ -682,15 +691,19 @@ export class Rack3DVisualizer {
       const rack = this._room?.racks.find(r => r.id === result.rackId);
       if (rack) {
         this._selRackId = result.rackId; this._rack = rack;
-        this._selId = result.id;
+        this._selId = result.id; this._selItemId = null;
         const dev = rack.devices?.find(d => d.id === this._selId);
         if (dev) { this._openEdit(dev); if (this._opts.onSelect) this._opts.onSelect(dev, rack); }
       }
     } else if (result?.type === 'rack') {
       const rack = this._room?.racks.find(r => r.id === result.id);
       if (rack) { this._selRackId = result.id; this._rack = rack; }
+      this._selId = null; this._selItemId = null; this._closeEdit();
+    } else if (result?.type === 'item') {
+      this._selItemId = result.id;
       this._selId = null; this._closeEdit();
     } else {
+      this._selItemId = null;
       this._selId = null; this._closeEdit();
     }
     this._buildRack(); this._refresh();
@@ -704,7 +717,7 @@ export class Rack3DVisualizer {
     const MS_IDLE   = 800;          // ~1 fps when truly idle — almost no GPU work
 
     let lastTime = 0;
-    let lastSelId = null, lastSelRackId = null;
+    let lastSelId = null, lastSelRackId = null, lastSelItemId = null;
     let lastAz = this._ctrl.az, lastEl = this._ctrl.el, lastR = this._ctrl.r;
     let lastPosX = this._ctrl.pos.x, lastPosY = this._ctrl.pos.y, lastPosZ = this._ctrl.pos.z;
     let lastYaw  = this._ctrl.yaw,   lastPitch = this._ctrl.pitch;
@@ -737,7 +750,7 @@ export class Rack3DVisualizer {
         this._ctrl.az += this._opts.view.autoRotateSpeed;
       }
 
-      const selChange  = this._selId !== lastSelId || this._selRackId !== lastSelRackId;
+      const selChange  = this._selId !== lastSelId || this._selRackId !== lastSelRackId || this._selItemId !== lastSelItemId;
       const camChange  = this._ctrl.az !== lastAz || this._ctrl.el !== lastEl || this._ctrl.r !== lastR
                       || this._ctrl.pos.x !== lastPosX || this._ctrl.pos.y !== lastPosY || this._ctrl.pos.z !== lastPosZ
                       || this._ctrl.yaw !== lastYaw || this._ctrl.pitch !== lastPitch;
@@ -749,7 +762,7 @@ export class Rack3DVisualizer {
       const interval = dirty ? MS_ACTIVE : MS_IDLE;
       if (now - lastTime < interval) return;
       lastTime = now;
-      lastSelId = this._selId; lastSelRackId = this._selRackId;
+      lastSelId = this._selId; lastSelRackId = this._selRackId; lastSelItemId = this._selItemId;
       lastAz = this._ctrl.az; lastEl = this._ctrl.el; lastR = this._ctrl.r;
       lastPosX = this._ctrl.pos.x; lastPosY = this._ctrl.pos.y; lastPosZ = this._ctrl.pos.z;
       lastYaw  = this._ctrl.yaw;   lastPitch = this._ctrl.pitch;
@@ -761,14 +774,43 @@ export class Rack3DVisualizer {
         Object.entries(this._devMeshes).forEach(([id, m]) => {
           if (m?.material) m.material.emissiveIntensity = id === this._selId ? 3.0 : 0.55;
         });
+        // Highlight selected room item
+        if (this._geometryManager?.itemGroups) {
+          Object.entries(this._geometryManager.itemGroups).forEach(([id, group]) => {
+            const sel = id === this._selItemId;
+            group.traverse(obj => {
+              if (obj.isMesh && obj.material && !obj.userData.itemLabel && obj.material.emissive) {
+                obj.material.emissiveIntensity = sel ? 1.8 : (obj.material._baseEmissive ?? obj.material.emissiveIntensity);
+              }
+            });
+          });
+        }
       } else if (dirty && this._selId) {
         const m = this._devMeshes[this._selId];
         if (m?.material) m.material.emissiveIntensity = 3.0 + 0.8 * Math.sin(this._tick * 0.15);
+      } else if (dirty && this._selItemId) {
+        const group = this._geometryManager?.itemGroups?.[this._selItemId];
+        if (group) {
+          group.traverse(obj => {
+            if (obj.isMesh && obj.material?.emissive && !obj.userData.itemLabel) {
+              obj.material.emissiveIntensity = 1.5 + 0.5 * Math.sin(this._tick * 0.15);
+            }
+          });
+        }
       }
 
       this._ren.render(this._scene, this._cam);
+
+      // Billboard: make label meshes face the camera (they are world-space objects)
+      if (this._geometryManager?.itemLabelMeshes) {
+        this._geometryManager.itemLabelMeshes.forEach(m => {
+          m.lookAt(this._cam.position);
+        });
+      }
+
       // Labels are CSS divs projected from 3D — only update when camera or selection moves
       if (camChange || selChange || fpsMoving) this._updateLabels();
+      this._updateCompass();
     };
     requestAnimationFrame(loop);
   }
@@ -1034,49 +1076,182 @@ export class Rack3DVisualizer {
     this._buildRack();
   }
 
-  // ─── Window / door management ─────────────────────────────
-  _addWindow() {
-    if (!this._opts.room.windows) this._opts.room.windows = [];
-    this._opts.room.windows.push({ wall:'front', x:0, y:1.5, width:2, height:1.5 });
-    this._buildEnvironment();
-    this._renderWindows();
-  }
-  _editWindow(idx, field, value) {
-    const w = this._opts.room.windows?.[idx]; if (!w) return;
-    w[field] = value;
-    this._buildEnvironment();
-  }
-  _removeWindow(idx) {
-    this._opts.room.windows?.splice(idx, 1);
-    this._buildEnvironment();
-    this._renderWindows();
-  }
-  _renderWindows() {
-    const el = document.getElementById(this._id + '-windows'); if (!el) return;
-    const sid = this._id;
-    el.innerHTML = (this._opts.room.windows || []).map((w,i) => windowRow(sid,w,i)).join('');
+  // ─── Compass ──────────────────────────────────────────────
+  _updateCompass() {
+    const needle = document.getElementById(this._id + '-needle');
+    const nLabel = document.getElementById(this._id + '-compass-n');
+    if (!needle) return;
+    // In FPS mode use yaw (yaw=0 = +Z = North); in orbit use az-π (az=π = North)
+    const heading = this._ctrl.mode === 'fps'
+      ? this._ctrl.yaw
+      : (this._ctrl.az ?? 0) - Math.PI;
+    needle.style.transform = `rotate(${heading}rad)`;
+    if (nLabel) {
+      const norm = ((heading % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+      const facingNorth = norm < 0.35 || norm > (2 * Math.PI - 0.35);
+      nLabel.style.color = facingNorth ? '#00ff88' : '';
+      nLabel.style.textShadow = facingNorth ? '0 0 8px #00ff8888' : '';
+    }
   }
 
-  _addDoor() {
-    if (!this._opts.room.doors) this._opts.room.doors = [];
-    this._opts.room.doors.push({ wall:'front', x:0, width:1.2, height:2.5 });
-    this._buildEnvironment();
-    this._renderDoors();
+  // ─── Room items ───────────────────────────────────────────
+  _buildRoomItems() {
+    this._geometryManager?.buildRoomItems(this._room?.room_items || []);
   }
-  _editDoor(idx, field, value) {
-    const d = this._opts.room.doors?.[idx]; if (!d) return;
-    d[field] = value;
-    this._buildEnvironment();
+
+  _addRoomItem(type) {
+    if (!this._room) return;
+    if (!Array.isArray(this._room.room_items)) this._room.room_items = [];
+    const id = 'item-' + Date.now();
+    this._room.room_items.push({ id, type, name: type.toUpperCase() + '-' + (this._room.room_items.length + 1), x: 0, y: 0, z: 0, angle: 0 });
+    this._buildRoomItems();
+    this._renderRoomItems();
   }
-  _removeDoor(idx) {
-    this._opts.room.doors?.splice(idx, 1);
-    this._buildEnvironment();
-    this._renderDoors();
+
+  _editRoomItem(idx, field, value) {
+    const item = this._room?.room_items?.[idx];
+    if (!item) return;
+    item[field] = value;
+    this._buildRoomItems();
   }
-  _renderDoors() {
-    const el = document.getElementById(this._id + '-doors'); if (!el) return;
+
+  _removeRoomItem(idx) {
+    this._room?.room_items?.splice(idx, 1);
+    this._buildRoomItems();
+    this._renderRoomItems();
+  }
+
+  _renderRoomItems() {
+    const el = document.getElementById(this._id + '-room-items');
+    if (!el) return;
     const sid = this._id;
-    el.innerHTML = (this._opts.room.doors || []).map((d,i) => doorRow(sid,d,i)).join('');
+    el.innerHTML = (this._room?.room_items || []).map((item, i) => roomItemRow(sid, item, i)).join('');
+  }
+
+  // ─── VM Management ────────────────────────────────────────
+  _renderVMPanel(dev) {
+    const panel = document.querySelector(`#${this._id} [data-panel-id="vms"]`);
+    if (!panel) return;
+    if (dev && dev.type === 'server') {
+      panel.classList.remove('r3-panel-hidden');
+      const body = panel.querySelector('.r3-pb');
+      if (body) body.innerHTML = vmPanelBody(this);
+    } else {
+      panel.classList.add('r3-panel-hidden');
+    }
+  }
+
+  _hideVMPanel() {
+    const panel = document.querySelector(`#${this._id} [data-panel-id="vms"]`);
+    if (panel) panel.classList.add('r3-panel-hidden');
+  }
+
+  _getDevByIdx(di) {
+    return this._rack?.devices?.[di] ?? null;
+  }
+
+  _addVM(di) {
+    const dev = this._getDevByIdx(di);
+    if (!dev) return;
+    if (!Array.isArray(dev.vms)) dev.vms = [];
+    dev.vms.push({
+      id: 'vm-' + Date.now(),
+      name: 'VM-' + (dev.vms.length + 1),
+      label: '',
+      technology: 'KVM/QEMU',
+      os: 'Ubuntu 22.04 LTS',
+      status: 'stopped',
+      ips: { local: '', public: '' },
+      ports: [],
+      resources: { vcpu: 2, memory: 2048, disk: 50 },
+    });
+    this._refreshVMList(di);
+  }
+
+  _editVM(di, vi, field, value) {
+    const dev = this._getDevByIdx(di);
+    const vm = dev?.vms?.[vi];
+    if (!vm) return;
+    vm[field] = value;
+    this._refreshVMCard(di, vi);
+  }
+
+  _editVMNested(di, vi, obj, field, value) {
+    const dev = this._getDevByIdx(di);
+    const vm = dev?.vms?.[vi];
+    if (!vm) return;
+    if (!vm[obj]) vm[obj] = {};
+    vm[obj][field] = value;
+    this._refreshVMCard(di, vi);
+  }
+
+  _removeVM(di, vi) {
+    const dev = this._getDevByIdx(di);
+    if (!dev?.vms) return;
+    dev.vms.splice(vi, 1);
+    this._refreshVMList(di);
+  }
+
+  _addVMPort(di, vi) {
+    const dev = this._getDevByIdx(di);
+    const vm = dev?.vms?.[vi];
+    if (!vm) return;
+    if (!Array.isArray(vm.ports)) vm.ports = [];
+    vm.ports.push({ port: 80, protocol: 'TCP', status: 'open', service: 'HTTP' });
+    this._refreshVMCard(di, vi);
+  }
+
+  _editVMPort(di, vi, pi, field, value) {
+    const dev = this._getDevByIdx(di);
+    const vm = dev?.vms?.[vi];
+    if (!vm?.ports?.[pi]) return;
+    vm.ports[pi][field] = value;
+    this._refreshVMCard(di, vi);
+  }
+
+  _removeVMPort(di, vi, pi) {
+    const dev = this._getDevByIdx(di);
+    const vm = dev?.vms?.[vi];
+    if (!vm?.ports) return;
+    vm.ports.splice(pi, 1);
+    this._refreshVMCard(di, vi);
+  }
+
+  _toggleVMEdit(di, vi) {
+    const el = document.getElementById(this._id + `-vmef-${di}-${vi}`);
+    if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
+  }
+
+  _refreshVMList(di) {
+    const dev = this._getDevByIdx(di);
+    if (!dev) return;
+    const sid = this._id;
+    const listEl = document.getElementById(sid + '-vm-list');
+    if (listEl) listEl.innerHTML = (dev.vms || []).map((vm, vi) => vmCard(sid, vm, di, vi)).join('');
+    // Update header count
+    const hdr = listEl?.previousElementSibling;
+    if (hdr) {
+      const vms = dev.vms || [];
+      hdr.querySelector('span').textContent = `${dev.name} — ${vms.length} VM${vms.length !== 1 ? 's' : ''}`;
+    }
+    if (this._opts.onChange) this._opts.onChange(this.getData());
+  }
+
+  _refreshVMCard(di, vi) {
+    const dev = this._getDevByIdx(di);
+    const vm = dev?.vms?.[vi];
+    if (!vm) return;
+    const sid = this._id;
+    const cardEl = document.getElementById(sid + `-vm-${di}-${vi}`);
+    if (cardEl) {
+      const wasOpen = document.getElementById(sid + `-vmef-${di}-${vi}`)?.style.display !== 'none';
+      cardEl.outerHTML = vmCard(sid, vm, di, vi);
+      if (wasOpen) {
+        const newForm = document.getElementById(sid + `-vmef-${di}-${vi}`);
+        if (newForm) newForm.style.display = '';
+      }
+    }
+    if (this._opts.onChange) this._opts.onChange(this.getData());
   }
 
   // ─── Room / Lighting live config ─────────────────────────

@@ -25,12 +25,8 @@ export class EnvironmentBuilder {
     this._buildFloor(scene, W, D, cx, cz, ts2, ts, ro);
     this._buildCeiling(scene, W, D, H, cx, cz, ts);
     this._buildWalls(scene, W, D, H, cx, cz, ts, ro);
-    this._buildWindows(scene, W, D, H, cx, cz, ro);
-    this._buildDoors(scene, W, D, H, cx, cz, ro);
     this._buildStripLights(scene, W, D, H, cx, cz, ts, ro);
     this._buildBaseboardLights(scene, W, D, cx, cz, ts, ro);
-    this._buildExitSign(scene, W, D, H, cx, cz, ro);
-    this._buildCableTrays(scene, W, D, H, cx, cz, ro);
     this._buildLights(scene, lo, ts);
   }
 
@@ -124,65 +120,26 @@ export class EnvironmentBuilder {
   }
 
   _buildWalls(scene, W, D, H, cx, cz, ts, ro) {
+    const baseColor = ro.wallColor
+      ? (typeof ro.wallColor === 'string' ? parseInt(ro.wallColor.replace('#',''), 16) : ro.wallColor)
+      : ts.wallColor;
     const wallMat = new this.THREE.MeshStandardMaterial({
-      color: ts.wallColor,
-      roughness: 0.8,
-      metalness: 0.05,
-      side: this.THREE.DoubleSide
+      color: baseColor, roughness: 0.8, metalness: 0.05, side: this.THREE.DoubleSide
     });
     const frontMat = new this.THREE.MeshStandardMaterial({
-      color: 0x1e2d40,
-      transparent: true,
-      opacity: 0.65,
-      side: this.THREE.DoubleSide
+      color: 0x1e2d40, transparent: true, opacity: 0.65, side: this.THREE.DoubleSide
     });
-
-    const buildWallGeo = (panW, panH, wallId, negateX) => {
-      const shape = new this.THREE.Shape();
-      shape.moveTo(-panW / 2, -panH / 2);
-      shape.lineTo( panW / 2, -panH / 2);
-      shape.lineTo( panW / 2,  panH / 2);
-      shape.lineTo(-panW / 2,  panH / 2);
-      shape.closePath();
-
-      const addHole = (hx, hy, hw2, hh2) => {
-        const hole = new this.THREE.Path();
-        hole.moveTo(hx - hw2, hy - hh2);
-        hole.lineTo(hx + hw2, hy - hh2);
-        hole.lineTo(hx + hw2, hy + hh2);
-        hole.lineTo(hx - hw2, hy + hh2);
-        hole.closePath();
-        shape.holes.push(hole);
-      };
-
-      (ro?.windows || []).filter(w => (w.wall || 'front') === wallId).forEach(win => {
-        const wx = win.x ?? 0, wy = win.y ?? H / 3;
-        const ww = win.width ?? 2, wh = win.height ?? 1.5;
-        addHole(negateX ? -wx : wx, wy - panH / 2, ww / 2, wh / 2);
-      });
-
-      (ro?.doors || []).filter(d => (d.wall || 'front') === wallId).forEach(door => {
-        const dx = door.x ?? 0, dw = door.width ?? 1.2, dh = door.height ?? 2.5;
-        addHole(negateX ? -dx : dx, dh / 2 - panH / 2, dw / 2, dh / 2);
-      });
-
-      return new this.THREE.ShapeGeometry(shape);
-    };
-
-    const bw = new this.THREE.Mesh(buildWallGeo(W, H, 'back', false), wallMat);
+    const bw = new this.THREE.Mesh(new this.THREE.PlaneGeometry(W, H), wallMat);
     bw.position.set(cx, H / 2, cz + D / 2);
     scene.add(bw);
-
-    const fw = new this.THREE.Mesh(buildWallGeo(W, H, 'front', false), frontMat);
+    const fw = new this.THREE.Mesh(new this.THREE.PlaneGeometry(W, H), frontMat);
     fw.position.set(cx, H / 2, cz - D / 2);
     scene.add(fw);
-
-    const lw = new this.THREE.Mesh(buildWallGeo(D, H, 'left', true), wallMat);
+    const lw = new this.THREE.Mesh(new this.THREE.PlaneGeometry(D, H), wallMat);
     lw.rotation.y = Math.PI / 2;
     lw.position.set(cx - W / 2, H / 2, cz);
     scene.add(lw);
-
-    const rw = new this.THREE.Mesh(buildWallGeo(D, H, 'right', false), wallMat);
+    const rw = new this.THREE.Mesh(new this.THREE.PlaneGeometry(D, H), wallMat);
     rw.rotation.y = -Math.PI / 2;
     rw.position.set(cx + W / 2, H / 2, cz);
     scene.add(rw);
@@ -237,83 +194,6 @@ export class EnvironmentBuilder {
     scene.add(bb);
   }
 
-  _buildWindows(scene, W, D, H, cx, cz, ro) {
-    if (!ro.windows || !ro.windows.length) return;
-    const glassMat = new this.THREE.MeshStandardMaterial({
-      color: 0x88ccff, transparent: true, opacity: 0.25,
-      side: this.THREE.DoubleSide,
-      emissive: new this.THREE.Color(0x4488cc), emissiveIntensity: 0.15
-    });
-    const frameMat = new this.THREE.MeshStandardMaterial({ color: 0x4a6080, roughness: 0.5, metalness: 0.3 });
-    ro.windows.forEach(win => {
-      const wx = win.x ?? 0, wy = win.y ?? H / 3;
-      const ww = win.width ?? 2, wh = win.height ?? 1.5;
-      const ft = 0.06;
-      const g = new this.THREE.Group();
-      switch (win.wall) {
-        case 'back':  g.position.set(cx + wx, 0, cz + D/2 - 0.02); break;
-        case 'left':  g.position.set(cx - W/2 + 0.02, 0, cz + wx); g.rotation.y = Math.PI/2; break;
-        case 'right': g.position.set(cx + W/2 - 0.02, 0, cz + wx); g.rotation.y = -Math.PI/2; break;
-        default:      g.position.set(cx + wx, 0, cz - D/2 + 0.02);
-      }
-      const glass = new this.THREE.Mesh(new this.THREE.PlaneGeometry(ww, wh), glassMat);
-      glass.position.set(0, wy, 0);
-      g.add(glass);
-      [[ww + ft*2, ft, 0, wy + wh/2 + ft/2], [ww + ft*2, ft, 0, wy - wh/2 - ft/2],
-       [ft, wh, -ww/2 - ft/2, wy], [ft, wh, ww/2 + ft/2, wy]].forEach(([fw, fh, fx, fy]) => {
-        const bar = new this.THREE.Mesh(new this.THREE.BoxGeometry(fw, fh, 0.07), frameMat);
-        bar.position.set(fx, fy, 0);
-        g.add(bar);
-      });
-      scene.add(g);
-    });
-  }
-
-  _buildDoors(scene, W, D, H, cx, cz, ro) {
-    if (!ro.doors || !ro.doors.length) return;
-    const glassMat = new this.THREE.MeshStandardMaterial({
-      color: 0x99ddcc, transparent: true, opacity: 0.22,
-      side: this.THREE.DoubleSide,
-      emissive: new this.THREE.Color(0x44bbaa), emissiveIntensity: 0.08
-    });
-    const frameMat = new this.THREE.MeshStandardMaterial({ color: 0x8a9aaa, roughness: 0.3, metalness: 0.7 });
-    ro.doors.forEach(door => {
-      const dx = door.x ?? 0, dw = door.width ?? 1.2, dh = door.height ?? 2.5;
-      const ft = 0.07;
-      const g = new this.THREE.Group();
-      switch (door.wall) {
-        case 'back':  g.position.set(cx + dx, 0, cz + D/2 - 0.02); break;
-        case 'left':  g.position.set(cx - W/2 + 0.02, 0, cz + dx); g.rotation.y = Math.PI/2; break;
-        case 'right': g.position.set(cx + W/2 - 0.02, 0, cz + dx); g.rotation.y = -Math.PI/2; break;
-        default:      g.position.set(cx + dx, 0, cz - D/2 + 0.02);
-      }
-      // Glass pane split into upper+lower for a door crossbar look
-      [[dw - ft*2, dh * 0.6, 0, dh * 0.7], [dw - ft*2, dh * 0.3, 0, dh * 0.2]].forEach(([pw, ph, px, py]) => {
-        const pane = new this.THREE.Mesh(new this.THREE.PlaneGeometry(pw, ph), glassMat);
-        pane.position.set(px, py, 0);
-        g.add(pane);
-      });
-      // Door handle (cylindrical bar)
-      const handleMat = new this.THREE.MeshStandardMaterial({ color: 0xccddee, roughness: 0.2, metalness: 0.9 });
-      const handle = new this.THREE.Mesh(new this.THREE.CylinderGeometry(0.03, 0.03, 0.12, 10), handleMat);
-      handle.rotation.z = Math.PI / 2;
-      handle.position.set(dw / 2 - 0.14, dh * 0.45, 0.06);
-      g.add(handle);
-      // Frame: top + bottom + two posts + mid crossbar
-      [[dw + ft*2, ft, 0, dh + ft/2],          // top
-       [dw + ft*2, ft, 0, 0],                    // bottom sill
-       [ft, dh + ft, -dw/2 - ft/2, dh/2],       // left post
-       [ft, dh + ft,  dw/2 + ft/2, dh/2],       // right post
-       [dw - ft*2,  ft, 0, dh * 0.4]            // mid crossbar
-      ].forEach(([fw, fh, fx, fy]) => {
-        const bar = new this.THREE.Mesh(new this.THREE.BoxGeometry(fw, fh, 0.08), frameMat);
-        bar.position.set(fx, fy, 0);
-        g.add(bar);
-      });
-      scene.add(g);
-    });
-  }
-
   _buildSkyboxAndSun(scene) {
     // Sky gradient texture
     const canvas = typeof document !== 'undefined' ? document.createElement('canvas') : null;
@@ -358,99 +238,57 @@ export class EnvironmentBuilder {
     corona.position.copy(sun.position);
     scene.add(corona);
 
-    // Sunlight directional (cast from sun direction)
-    const sunLight = new this.THREE.DirectionalLight(0xfff8e1, 6.0);
+    // Sunlight directional — kept very dim so it doesn't compete with shadow light
+    const sunLight = new this.THREE.DirectionalLight(0xfff8e1, 0.4);
     sunLight.position.set(180, 280, -450);
     scene.add(sunLight);
   }
 
-  _buildExitSign(scene, W, D, H, cx, cz, ro) {
-    if (!ro.exitSign) return;
-
-    const em = new this.THREE.MeshStandardMaterial({
-      color: 0x00cc44,
-      emissive: new this.THREE.Color(0x00cc44),
-      emissiveIntensity: 3
-    });
-    const ex = new this.THREE.Mesh(new this.THREE.BoxGeometry(0.4, 0.2, 0.05), em);
-    ex.position.set(cx + W / 2 - 1, H - 0.5, cz + D / 2 - 0.1);
-    scene.add(ex);
-  }
-
-  _buildCableTrays(scene, W, D, H, cx, cz, ro) {
-    if (!ro.cableTrays) return;
-
-    const tm = new this.THREE.MeshStandardMaterial({
-      color: 0x2a3a50,
-      roughness: 0.7,
-      metalness: 0.6
-    });
-
-    [-1, W - 1].forEach((x, i) => {
-      const t = new this.THREE.Mesh(new this.THREE.BoxGeometry(0.06, 0.4, D - 0.5), tm);
-      t.position.set(cx - W / 2 + x + 0.3 * (i ? -1 : 1), H - 1, cz);
-      scene.add(t);
-    });
-  }
-
   _buildLights(scene, lo, ts) {
-    scene.add(new this.THREE.AmbientLight(lo.ambientColor ?? ts.ambientColor, lo.ambientIntensity ?? ts.ambientIntensity));
+    // Low ambient so nothing is pitch black
+    scene.add(new this.THREE.AmbientLight(
+      lo.ambientColor ?? ts.ambientColor,
+      lo.ambientIntensity ?? ts.ambientIntensity
+    ));
 
-    const cnt = Math.max(2, Math.min(12, lo.overheadCount));
-    const positions = [];
-    const cols = Math.ceil(Math.sqrt(cnt));
-    const rows = Math.ceil(cnt / cols);
+    const mainIntensity = (lo.overheadIntensity ?? ts.overheadIntensity ?? 5) * 1.2;
 
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        if (positions.length >= cnt) break;
-        positions.push([(c - (cols - 1) / 2) * 7, (r - (rows - 1) / 2) * 6]);
-      }
+    if (lo.shadows) {
+      // Single shadow-casting key light from front-right-above angle
+      const sl = new this.THREE.DirectionalLight(0xfff8f0, mainIntensity);
+      sl.position.set(20, 40, -15);
+      sl.castShadow = true;
+      sl.shadow.mapSize.set(2048, 2048);
+      sl.shadow.camera.near = 1;
+      sl.shadow.camera.far = 150;
+      sl.shadow.camera.left  = -45;
+      sl.shadow.camera.right =  45;
+      sl.shadow.camera.top   =  55;
+      sl.shadow.camera.bottom = -20;
+      sl.shadow.bias = -0.002;
+      sl.shadow.camera.updateProjectionMatrix();
+      sl.target.position.set(0, 0, 2);
+      scene.add(sl);
+      scene.add(sl.target);
+    } else {
+      const ml = new this.THREE.DirectionalLight(0xfff8f0, mainIntensity);
+      ml.position.set(10, 30, -10);
+      scene.add(ml);
     }
 
-    positions.forEach(([x, z], idx) => {
-      const fl = new this.THREE.DirectionalLight(0xf8fbff, lo.overheadIntensity ?? ts.overheadIntensity);
-      fl.position.set(x, 22, z);
-      if (lo.shadows && idx < 2) {
-        fl.castShadow = true;
-        fl.shadow.mapSize.set(512, 512);
-        fl.shadow.camera.near = 1;
-        fl.shadow.camera.far = 80;
-        fl.shadow.camera.left = -18;
-        fl.shadow.camera.right = 18;
-        fl.shadow.camera.top = 32;
-        fl.shadow.camera.bottom = -5;
-        fl.shadow.bias = -0.0005;
-      }
-      scene.add(fl);
-    });
+    // Soft fill lights (much dimmer than key light so shadows remain visible)
+    const fl1 = new this.THREE.DirectionalLight(0xd0e8ff, 0.7);
+    fl1.position.set(-15, 12, 15);
+    scene.add(fl1);
 
-    const front = new this.THREE.DirectionalLight(0xffffff, lo.frontIntensity ?? ts.frontLightIntensity);
-    front.position.set(0, 10, 18);
-    scene.add(front);
+    const fl2 = new this.THREE.DirectionalLight(0xe8f4ff, 0.5);
+    fl2.position.set(15, 8, 15);
+    scene.add(fl2);
 
-    const fi = lo.fillIntensity ?? 6.0;
-    [[-20, 8, 4], [20, 8, 4], [0, 30, 0], [0, 10, -16]].forEach(([x, y, z], i) => {
-      const l = new this.THREE.DirectionalLight(i < 2 ? 0xe8f4ff : 0xffffff, i === 2 ? fi + 1 : fi);
-      l.position.set(x, y, z);
-      scene.add(l);
-    });
-
-    [[-18, 6, 0], [18, 6, 0], [0, 6, -16], [0, 6, 14]].forEach(([x, y, z]) => {
-      const l = new this.THREE.DirectionalLight(0xd8eaff, 3.5);
-      l.position.set(x, y, z);
-      scene.add(l);
-    });
-
-    [[-5, 0.2, 2], [5, 0.2, 2], [0, 0.2, 8]].forEach(([x, y, z]) => {
-      const pl = new this.THREE.PointLight(0x5588ee, lo.floorGlowIntensity ?? 3.0, 22);
-      pl.position.set(x, y, z);
-      scene.add(pl);
-    });
-
-    const glow = new this.THREE.PointLight(0x3377ff, lo.rackGlowIntensity ?? 6.0, 14);
-    glow.position.set(0, 12, 2);
-    scene.add(glow);
+    // Floor accent glow
+    const floorGlow = new this.THREE.PointLight(0x5588ee, lo.floorGlowIntensity ?? 2.0, 22);
+    floorGlow.position.set(0, 0.2, 2);
+    scene.add(floorGlow);
 
     // User-defined custom lights
     (lo.customLights || []).forEach(cl => {
@@ -459,7 +297,6 @@ export class EnvironmentBuilder {
         : (cl.color || 0xffffff);
       const intensity = cl.intensity ?? 5;
       const x = cl.x ?? 0, z = cl.z ?? 0;
-      // 'ceiling' type: place at room ceiling height
       const y = cl.type === 'ceiling' ? ((lo.roomHeight ?? 13) - 0.5) : (cl.y ?? 8);
 
       if (cl.type === 'point' || cl.type === 'ceiling') {
@@ -474,7 +311,6 @@ export class EnvironmentBuilder {
         sl.target.position.set(x, 0, z);
         scene.add(sl); scene.add(sl.target);
       } else {
-        // directional (default)
         const dl = new this.THREE.DirectionalLight(color, intensity);
         dl.position.set(x, y, z);
         scene.add(dl);

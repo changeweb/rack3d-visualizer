@@ -17,31 +17,48 @@ function panelHtml(self, id, title, body, opts = {}) {
   </div>`;
 }
 
-// ── Window / door row helpers ─────────────────────────────────
-function windowRow(sid, w, i) {
-  const walls = ['front','back','left','right'];
-  return `<div class="r3-cl-row">
-    <select class="r3-inp r3-inp-xs" style="width:62px" onchange="window._r3['${sid}']._editWindow(${i},'wall',this.value)">
-      ${walls.map(t=>`<option value="${t}"${w.wall===t?' selected':''}>${t}</option>`).join('')}
-    </select>
-    <input class="r3-inp r3-inp-xs" type="number" step="0.5" value="${w.x??0}" title="X pos" style="width:38px" oninput="window._r3['${sid}']._editWindow(${i},'x',+this.value)">
-    <input class="r3-inp r3-inp-xs" type="number" step="0.5" value="${w.y??1.5}" title="Y pos" style="width:38px" oninput="window._r3['${sid}']._editWindow(${i},'y',+this.value)">
-    <input class="r3-inp r3-inp-xs" type="number" step="0.5" value="${w.width??2}" title="Width" style="width:38px" oninput="window._r3['${sid}']._editWindow(${i},'width',+this.value)">
-    <input class="r3-inp r3-inp-xs" type="number" step="0.5" value="${w.height??1.5}" title="Height" style="width:38px" oninput="window._r3['${sid}']._editWindow(${i},'height',+this.value)">
-    <button class="r3-ph-btn" style="font-size:13px" onclick="window._r3['${sid}']._removeWindow(${i})">×</button>
-  </div>`;
-}
-
-function doorRow(sid, d, i) {
-  const walls = ['front','back','left','right'];
-  return `<div class="r3-cl-row">
-    <select class="r3-inp r3-inp-xs" style="width:62px" onchange="window._r3['${sid}']._editDoor(${i},'wall',this.value)">
-      ${walls.map(t=>`<option value="${t}"${d.wall===t?' selected':''}>${t}</option>`).join('')}
-    </select>
-    <input class="r3-inp r3-inp-xs" type="number" step="0.5" value="${d.x??0}" title="X pos" style="width:38px" oninput="window._r3['${sid}']._editDoor(${i},'x',+this.value)">
-    <input class="r3-inp r3-inp-xs" type="number" step="0.5" value="${d.width??1.2}" title="Width" style="width:38px" oninput="window._r3['${sid}']._editDoor(${i},'width',+this.value)">
-    <input class="r3-inp r3-inp-xs" type="number" step="0.5" value="${d.height??2.5}" title="Height" style="width:38px" oninput="window._r3['${sid}']._editDoor(${i},'height',+this.value)">
-    <button class="r3-ph-btn" style="font-size:13px" onclick="window._r3['${sid}']._removeDoor(${i})">×</button>
+// ── Room item row helper ──────────────────────────────────────
+function roomItemRow(sid, item, i) {
+  const types = ['ups','battery','shelf','pdu','aircon','sensor'];
+  const typeIcons = { ups:'⚡', battery:'🔋', shelf:'📦', pdu:'🔌', aircon:'❄', sensor:'📡' };
+  const defSize = { ups:[3.0,8.0,1.8], battery:[3.6,2.5,2.0], shelf:[5.0,5.0,1.2], pdu:[0.5,10.0,0.4], aircon:[4.0,10.0,2.0], sensor:[0.4,2.2,0.4] };
+  const [dW,dH,dD] = defSize[item.type] ?? [2,4,1.5];
+  return `<div style="border:1px solid var(--r3-border,#1a2a3f);border-radius:4px;padding:5px;margin-bottom:4px">
+    <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:3px">
+      <select class="r3-inp r3-inp-xs" style="width:80px" onchange="window._r3['${sid}']._editRoomItem(${i},'type',this.value)">
+        ${types.map(t=>`<option value="${t}"${item.type===t?' selected':''}>${typeIcons[t]??''} ${t}</option>`).join('')}
+      </select>
+      <input class="r3-inp r3-inp-xs" value="${item.name??''}" placeholder="Name" style="flex:1;min-width:60px" oninput="window._r3['${sid}']._editRoomItem(${i},'name',this.value)">
+      <input type="color" value="${item.color??'#2a3a50'}" class="r3-color-pick" title="Color" oninput="window._r3['${sid}']._editRoomItem(${i},'color',this.value)">
+      <button class="r3-ph-btn" style="font-size:13px;margin-left:auto" onclick="window._r3['${sid}']._removeRoomItem(${i})">×</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:3px">
+      <input class="r3-inp r3-inp-xs" value="${item.label??''}" placeholder="Label" style="flex:1;min-width:80px" oninput="window._r3['${sid}']._editRoomItem(${i},'label',this.value)">
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap">
+      <span style="font-size:9px;color:var(--r3-dim);min-width:20px">Pos</span>
+      <input class="r3-inp r3-inp-xs" type="number" step="0.5" value="${item.x??0}" title="X pos" style="width:40px" oninput="window._r3['${sid}']._editRoomItem(${i},'x',+this.value)">
+      <input class="r3-inp r3-inp-xs" type="number" step="0.5" value="${item.y??0}" title="Y pos" style="width:40px" oninput="window._r3['${sid}']._editRoomItem(${i},'y',+this.value)">
+      <input class="r3-inp r3-inp-xs" type="number" step="0.5" value="${item.z??0}" title="Z pos" style="width:40px" oninput="window._r3['${sid}']._editRoomItem(${i},'z',+this.value)">
+      <input class="r3-inp r3-inp-xs" type="number" step="5" value="${item.angle??0}" title="Angle°" style="width:40px" oninput="window._r3['${sid}']._editRoomItem(${i},'angle',+this.value)">
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-top:3px">
+      <span style="font-size:9px;color:var(--r3-dim);min-width:20px">Size</span>
+      <input class="r3-inp r3-inp-xs" type="number" step="0.1" value="${item.width??dW}" title="Width" style="width:40px" oninput="window._r3['${sid}']._editRoomItem(${i},'width',+this.value)">
+      <input class="r3-inp r3-inp-xs" type="number" step="0.1" value="${item.height??dH}" title="Height" style="width:40px" oninput="window._r3['${sid}']._editRoomItem(${i},'height',+this.value)">
+      <input class="r3-inp r3-inp-xs" type="number" step="0.1" value="${item.depth??dD}" title="Depth" style="width:40px" oninput="window._r3['${sid}']._editRoomItem(${i},'depth',+this.value)">
+      ${item.type==='shelf' ? `<input class="r3-inp r3-inp-xs" type="number" min="1" max="10" value="${item.layers??3}" title="Layers" style="width:40px" oninput="window._r3['${sid}']._editRoomItem(${i},'layers',+this.value)">` : ''}
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-top:3px">
+      <span style="font-size:9px;color:var(--r3-dim);min-width:40px">Plate</span>
+      <select class="r3-inp r3-inp-xs" style="width:70px" onchange="window._r3['${sid}']._editRoomItem(${i},'nameplateShape',this.value)">
+        <option value="rounded"${(item.nameplateShape??'rounded')==='rounded'?' selected':''}>Rounded</option>
+        <option value="rect"${item.nameplateShape==='rect'?' selected':''}>Rect</option>
+        <option value="pill"${item.nameplateShape==='pill'?' selected':''}>Pill</option>
+      </select>
+      <input type="color" value="${item.nameplateColor??'#081020'}" class="r3-color-pick" title="Nameplate BG" oninput="window._r3['${sid}']._editRoomItem(${i},'nameplateColor',this.value)">
+      <input type="color" value="${item.nameplateTextColor??'#88ccff'}" class="r3-color-pick" title="Nameplate Text" oninput="window._r3['${sid}']._editRoomItem(${i},'nameplateTextColor',this.value)">
+    </div>
   </div>`;
 }
 
@@ -113,7 +130,7 @@ function envPanelBody(self) {
       <label class="r3-sw"><input type="checkbox"${val?' checked':''} onchange="window._r3['${sid}']._setLight('${f}',this.checked)">
         <span class="r3-sw-track"><span class="r3-sw-thumb"></span></span></label></label>`;
 
-  const roomFields = ['width','depth','height','fogNear','fogFar','floorTiles','ceilingGrid','stripLights','baseboardLights','exitSign','cableTrays'];
+  const roomFields = ['width','depth','height','fogNear','fogFar','floorTiles','ceilingGrid','stripLights','baseboardLights','wallColor'];
   const lightFields = ['ambientIntensity','overheadCount','overheadIntensity','fillIntensity','rackGlowIntensity','floorGlowIntensity','exposure','shadows'];
   const hasRF = roomFields.some(f => showR(f));
   const hasLF = lightFields.some(f => showL(f));
@@ -124,8 +141,6 @@ function envPanelBody(self) {
     togR('ceilingGrid','Ceil Grid',ro.ceilingGrid),
     togR('stripLights','Strip Lights',ro.stripLights),
     togR('baseboardLights','Baseboard',ro.baseboardLights),
-    togR('exitSign','Exit Sign',ro.exitSign),
-    togR('cableTrays','Cable Trays',ro.cableTrays),
   ].filter(Boolean).join('');
 
   return `
@@ -136,6 +151,11 @@ function envPanelBody(self) {
   ${rngR('fogNear','Fog Near',ro.fogNear,5,40,1,'')}
   ${rngR('fogFar','Fog Far',ro.fogFar,20,120,5,'')}
   ${toggleRows ? `<div class="r3-env-toggles">${toggleRows}</div>` : ''}
+  ${showR('wallColor') ? `<div class="r3-env-row">
+    <span class="r3-lbl">Wall Color</span>
+    <input type="color" class="r3-color-pick" value="${ro.wallColor ? (typeof ro.wallColor==='string' ? ro.wallColor : '#'+ro.wallColor.toString(16).padStart(6,'0')) : '#1a2a3f'}"
+           oninput="window._r3['${sid}']._setRoom('wallColor',this.value)">
+  </div>` : ''}
   ${hasLF || showCL ? '<div class="r3-env-sec">Lighting</div>' : ''}
   ${rngL('ambientIntensity','Ambient',lo.ambientIntensity,0,20,0.5,'')}
   ${rngL('overheadCount','Overheads',lo.overheadCount,2,12,1,'')}
@@ -151,19 +171,23 @@ function envPanelBody(self) {
     <button class="r3-btn" style="padding:1px 6px;font-size:9px" onclick="window._r3['${sid}']._addCustomLight()">+ Add</button>
   </div>
   <div class="r3-cl-labels"><span>Type</span><span>X</span><span>Y</span><span>Z</span><span>Int</span><span>Dst</span><span>Col</span></div>
-  <div id="${sid}-custom-lights">${(lo.customLights||[]).map((cl,i) => customLightRow(sid,cl,i)).join('')}</div>` : ''}
-  <div class="r3-env-sec" style="display:flex;align-items:center;justify-content:space-between">
-    <span>Windows</span>
-    <button class="r3-btn" style="padding:1px 6px;font-size:9px" onclick="window._r3['${sid}']._addWindow()">+ Add</button>
+  <div id="${sid}-custom-lights">${(lo.customLights||[]).map((cl,i) => customLightRow(sid,cl,i)).join('')}</div>` : ''}`;
+}
+
+function roomItemsPanelBody(self) {
+  const sid = self._id;
+  return `<div style="display:flex;align-items:center;gap:4px;margin-bottom:6px">
+    <select class="r3-inp r3-inp-xs" id="${sid}-add-item-type" style="width:80px">
+      <option value="ups">⚡ UPS</option>
+      <option value="battery">🔋 Battery</option>
+      <option value="shelf">📦 Shelf</option>
+      <option value="pdu">🔌 PDU</option>
+      <option value="aircon">❄ Aircon</option>
+      <option value="sensor">📡 Sensor</option>
+    </select>
+    <button class="r3-btn" style="padding:1px 7px;font-size:9px" onclick="window._r3['${sid}']._addRoomItem(document.getElementById('${sid}-add-item-type').value)">+ Add</button>
   </div>
-  <div class="r3-cl-labels"><span>Wall</span><span>X</span><span>Y</span><span>W</span><span>H</span></div>
-  <div id="${sid}-windows">${(ro.windows||[]).map((w,i) => windowRow(sid,w,i)).join('')}</div>
-  <div class="r3-env-sec" style="display:flex;align-items:center;justify-content:space-between">
-    <span>Doors</span>
-    <button class="r3-btn" style="padding:1px 6px;font-size:9px" onclick="window._r3['${sid}']._addDoor()">+ Add</button>
-  </div>
-  <div class="r3-cl-labels"><span>Wall</span><span>X</span><span>W</span><span>H</span></div>
-  <div id="${sid}-doors">${(ro.doors||[]).map((d,i) => doorRow(sid,d,i)).join('')}</div>`;
+  <div id="${sid}-room-items">${(self._room?.room_items||[]).map((item,i)=>roomItemRow(sid,item,i)).join('')}</div>`;
 }
 
 function rackPropsPanelBody(self) {
@@ -183,7 +207,14 @@ function rackPropsPanelBody(self) {
   <div class="r3-env-sec">Nameplate</div>
   <div class="r3-rw"><span class="r3-lbl">Scale</span><input class="r3-inp" type="number" min="0.1" max="5" step="0.1" value="${ro.nameplateScale??1}" style="width:65px" oninput="window._r3['${sid}']._setRackOpt('nameplateScale',+this.value)"></div>
   <div class="r3-rw"><span class="r3-lbl">Y Offset</span><input class="r3-inp" type="number" step="0.1" value="${ro.nameplateYOffset??0.2}" style="width:65px" oninput="window._r3['${sid}']._setRackOpt('nameplateYOffset',+this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Opacity</span><input class="r3-range" type="range" min="0" max="1" step="0.05" value="${ro.nameplateOpacity??1}" style="flex:1" oninput="window._r3['${sid}']._setRackOpt('nameplateOpacity',+this.value)"></div>`;
+  <div class="r3-rw"><span class="r3-lbl">Opacity</span><input class="r3-range" type="range" min="0" max="1" step="0.05" value="${ro.nameplateOpacity??1}" style="flex:1" oninput="window._r3['${sid}']._setRackOpt('nameplateOpacity',+this.value)"></div>
+  <div class="r3-rw"><span class="r3-lbl">Shape</span>
+    <select class="r3-inp" id="${sid}-rnpshape" style="width:85px" onchange="window._r3['${sid}']._onRackProp('nameplateShape',this.value)">
+      <option value="rounded">Rounded</option><option value="rect">Rect</option><option value="pill">Pill</option>
+    </select>
+  </div>
+  <div class="r3-rw"><span class="r3-lbl">BG Color</span><input type="color" id="${sid}-rnpbg" class="r3-color-pick" oninput="window._r3['${sid}']._onRackProp('nameplateColor',this.value)"></div>
+  <div class="r3-rw"><span class="r3-lbl">Text Color</span><input type="color" id="${sid}-rnptxt" class="r3-color-pick" oninput="window._r3['${sid}']._onRackProp('nameplateTextColor',this.value)"></div>`;
 }
 
 function statsPanelBody(self) {
@@ -235,6 +266,100 @@ function editDevicePanelBody(self) {
     <div style="display:flex;align-items:center;justify-content:space-between"><span class="r3-lbl">Custom Fields</span><button class="r3-btn" style="padding:1px 6px;font-size:10px" onclick="window._r3['${sid}']._addCustomField()">+ Add</button></div>
     <div id="${sid}-efields"></div>
   </div>`;
+}
+
+// ── VM helpers ────────────────────────────────────────────────
+function vmStatusClass(s) { return s === 'running' ? 'running' : s === 'paused' ? 'paused' : 'stopped'; }
+function vmStatusLabel(s) { return s === 'running' ? '▶ Running' : s === 'paused' ? '⏸ Paused' : '■ Stopped'; }
+
+function vmCard(sid, vm, di, vi) {
+  const sc = vmStatusClass(vm.status ?? 'stopped');
+  const ips = [vm.ips?.local, vm.ips?.public].filter(Boolean).join(' / ') || '—';
+  const ports = (vm.ports || []);
+  const openPorts = ports.filter(p => p.status !== 'closed');
+  const closedPorts = ports.filter(p => p.status === 'closed');
+  const mem = vm.resources?.memory ? (vm.resources.memory >= 1024 ? (vm.resources.memory/1024).toFixed(1)+'G' : vm.resources.memory+'M') : '—';
+  return `<div class="r3-vm-card r3-vm-${sc}" id="${sid}-vm-${di}-${vi}">
+    <div class="r3-vm-hdr">
+      <span class="r3-vm-status ${sc}"></span>
+      <span class="r3-vm-name">${vm.name || 'VM-'+vi}</span>
+      ${vm.technology ? `<span class="r3-vm-tech">${vm.technology}</span>` : ''}
+      <button class="r3-ph-btn r3-vm-expand" title="Edit" onclick="window._r3['${sid}']._toggleVMEdit(${di},${vi})">✎</button>
+      <button class="r3-ph-btn" title="Remove" onclick="window._r3['${sid}']._removeVM(${di},${vi})">×</button>
+    </div>
+    ${vm.label ? `<div style="font-size:9px;color:var(--r3-dim);margin-bottom:4px;font-family:'Share Tech Mono',monospace">${vm.label}</div>` : ''}
+    <div class="r3-vm-res">
+      <div class="r3-vm-res-item"><span class="r3-vm-res-val">${vm.resources?.vcpu ?? '—'}</span><span class="r3-vm-res-lbl">vCPU</span></div>
+      <div class="r3-vm-res-item"><span class="r3-vm-res-val">${mem}</span><span class="r3-vm-res-lbl">RAM</span></div>
+      <div class="r3-vm-res-item"><span class="r3-vm-res-val">${vm.resources?.disk ? vm.resources.disk+'G' : '—'}</span><span class="r3-vm-res-lbl">Disk</span></div>
+    </div>
+    <div class="r3-vm-body" style="margin-top:5px">
+      <div class="r3-vm-row"><span class="r3-vm-key">OS</span><span class="r3-vm-val">${vm.os || '—'}</span></div>
+      <div class="r3-vm-row"><span class="r3-vm-key">IPs</span><span class="r3-vm-val">${ips}</span></div>
+      ${ports.length ? `<div class="r3-vm-row"><span class="r3-vm-key">Ports</span><div class="r3-vm-chips">
+        ${openPorts.map(p=>`<span class="r3-vm-chip open" title="${p.service||''} ${p.protocol||''}">${p.port}</span>`).join('')}
+        ${closedPorts.map(p=>`<span class="r3-vm-chip close" title="${p.service||''} ${p.protocol||''}">${p.port}</span>`).join('')}
+      </div></div>` : ''}
+    </div>
+    <div class="r3-vm-edit-form" id="${sid}-vmef-${di}-${vi}" style="display:none">
+      <div class="r3-rw"><span class="r3-lbl">Name</span><input class="r3-inp" value="${vm.name??''}" oninput="window._r3['${sid}']._editVM(${di},${vi},'name',this.value)"></div>
+      <div class="r3-rw"><span class="r3-lbl">Label</span><input class="r3-inp" value="${vm.label??''}" oninput="window._r3['${sid}']._editVM(${di},${vi},'label',this.value)"></div>
+      <div class="r3-rw"><span class="r3-lbl">Tech</span>
+        <select class="r3-inp" onchange="window._r3['${sid}']._editVM(${di},${vi},'technology',this.value)">
+          ${['VMware ESXi','KVM/QEMU','Hyper-V','Proxmox','Docker','LXC','Xen','VirtualBox','Other'].map(t=>`<option${vm.technology===t?' selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+      <div class="r3-rw"><span class="r3-lbl">OS</span><input class="r3-inp" value="${vm.os??''}" oninput="window._r3['${sid}']._editVM(${di},${vi},'os',this.value)"></div>
+      <div class="r3-rw"><span class="r3-lbl">Status</span>
+        <select class="r3-inp" onchange="window._r3['${sid}']._editVM(${di},${vi},'status',this.value)">
+          ${['running','stopped','paused'].map(s=>`<option${(vm.status??'stopped')===s?' selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="r3-env-sec">IPs</div>
+      <div class="r3-rw"><span class="r3-lbl">Local</span><input class="r3-inp" value="${vm.ips?.local??''}" placeholder="192.168.x.x" oninput="window._r3['${sid}']._editVMNested(${di},${vi},'ips','local',this.value)"></div>
+      <div class="r3-rw"><span class="r3-lbl">Public</span><input class="r3-inp" value="${vm.ips?.public??''}" placeholder="0.0.0.0" oninput="window._r3['${sid}']._editVMNested(${di},${vi},'ips','public',this.value)"></div>
+      <div class="r3-env-sec">Resources</div>
+      <div class="r3-rw"><span class="r3-lbl">vCPU</span><input class="r3-inp" type="number" min="1" max="128" value="${vm.resources?.vcpu??1}" oninput="window._r3['${sid}']._editVMNested(${di},${vi},'resources','vcpu',+this.value)"></div>
+      <div class="r3-rw"><span class="r3-lbl">RAM(MB)</span><input class="r3-inp" type="number" min="256" step="256" value="${vm.resources?.memory??1024}" oninput="window._r3['${sid}']._editVMNested(${di},${vi},'resources','memory',+this.value)"></div>
+      <div class="r3-rw"><span class="r3-lbl">Disk(GB)</span><input class="r3-inp" type="number" min="1" value="${vm.resources?.disk??50}" oninput="window._r3['${sid}']._editVMNested(${di},${vi},'resources','disk',+this.value)"></div>
+      <div class="r3-env-sec" style="display:flex;align-items:center;justify-content:space-between">
+        <span>Ports</span>
+        <button class="r3-btn" style="padding:1px 5px;font-size:9px" onclick="window._r3['${sid}']._addVMPort(${di},${vi})">+ Port</button>
+      </div>
+      <div id="${sid}-vmports-${di}-${vi}">${(vm.ports||[]).map((p,pi)=>vmPortRow(sid,di,vi,p,pi)).join('')}</div>
+    </div>
+  </div>`;
+}
+
+function vmPortRow(sid, di, vi, p, pi) {
+  return `<div class="r3-vm-port-row" id="${sid}-vmp-${di}-${vi}-${pi}">
+    <input class="r3-inp r3-inp-xs" type="number" min="1" max="65535" value="${p.port??80}" style="width:46px" title="Port" oninput="window._r3['${sid}']._editVMPort(${di},${vi},${pi},'port',+this.value)">
+    <select class="r3-inp r3-inp-xs" style="width:52px" onchange="window._r3['${sid}']._editVMPort(${di},${vi},${pi},'protocol',this.value)">
+      <option${p.protocol==='TCP'?' selected':''}>TCP</option>
+      <option${p.protocol==='UDP'?' selected':''}>UDP</option>
+    </select>
+    <select class="r3-inp r3-inp-xs" style="width:58px" onchange="window._r3['${sid}']._editVMPort(${di},${vi},${pi},'status',this.value)">
+      <option value="open"${p.status!=='closed'?' selected':''}>Open</option>
+      <option value="closed"${p.status==='closed'?' selected':''}>Closed</option>
+    </select>
+    <input class="r3-inp r3-inp-xs" value="${p.service??''}" placeholder="svc" style="flex:1;min-width:40px" oninput="window._r3['${sid}']._editVMPort(${di},${vi},${pi},'service',this.value)">
+    <button class="r3-ph-btn" style="font-size:12px" onclick="window._r3['${sid}']._removeVMPort(${di},${vi},${pi})">×</button>
+  </div>`;
+}
+
+function vmPanelBody(self) {
+  const sid = self._id;
+  const dev = self._rack?.devices?.find(d => d.id === self._selId);
+  if (!dev || dev.type !== 'server') {
+    return `<div style="font-size:10px;color:var(--r3-dim);font-family:'Share Tech Mono',monospace;padding:8px 0">Select a server device to manage VMs.</div>`;
+  }
+  const di = self._rack.devices.indexOf(dev);
+  const vms = dev.vms || [];
+  return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+    <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--r3-dim);flex:1">${dev.name} — ${vms.length} VM${vms.length!==1?'s':''}</span>
+    <button class="r3-btn" style="padding:1px 7px;font-size:9px" onclick="window._r3['${sid}']._addVM(${di})">+ VM</button>
+  </div>
+  <div id="${sid}-vm-list">${vms.map((vm,vi) => vmCard(sid,vm,di,vi)).join('')}</div>`;
 }
 
 function catalogPanelBody(self) {
@@ -304,6 +429,19 @@ export function buildHTML(self) {
       <div class="r3-legend-body" id="${sid}-legend" style="display:none"></div>
     </div>
     <div class="r3-tip" id="${sid}-tip">${self._ctrl?.mode==='fps'?'🖱 Drag to look · WASD walk · Click ⊹FPS button to lock mouse':'🖱 Drag to orbit · Scroll to zoom · Click to select · Drag selected rack to move'}</div>
+    <div class="r3-compass" id="${sid}-compass">
+      <div class="r3-compass-ring">
+        <span class="r3-compass-n" id="${sid}-compass-n">N</span>
+        <span class="r3-compass-e">E</span>
+        <span class="r3-compass-s">S</span>
+        <span class="r3-compass-w">W</span>
+        <svg class="r3-compass-svg" id="${sid}-needle" viewBox="-8 -26 16 52" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="0,-22 4,0 0,-6 -4,0" fill="#ff4433"/>
+          <polygon points="0,22 4,0 0,6 -4,0" fill="#607080"/>
+          <circle cx="0" cy="0" r="2.5" fill="#ccd8e8"/>
+        </svg>
+      </div>
+    </div>
     ${v.allowJsonEdit ? `
     <div class="r3-jp" id="${sid}-jp" style="display:none">
       <div class="r3-jh">// JSON CONFIG <button class="r3-btn" onclick="window._r3['${sid}'].toggleJson()" style="padding:2px 6px">✕</button></div>
@@ -331,10 +469,12 @@ export function buildHTML(self) {
   <div class="r3-sb r3-sb-right" id="${sid}-sbr" style="width:${rW}px;min-width:${rW}px;display:${showR?'flex':'none'}"
        ondragover="event.preventDefault()"
        ondrop="window._r3['${sid}']._onPanelDropSidebar(event,'right')">
+    ${panelHtml(self,'roomItems','Room Items',roomItemsPanelBody(self))}
     ${panelHtml(self,'rackProps','Rack Properties',rackPropsPanelBody(self))}
     ${panelHtml(self,'stats','Statistics',statsPanelBody(self))}
     ${panelHtml(self,'devices','Devices',devicesPanelBody(self))}
     ${sb.showEditPanel && v.allowEdit ? panelHtml(self,'editDevice','Edit Device',editDevicePanelBody(self),{hidden:true}) : ''}
+    ${panelHtml(self,'vms','Virtual Machines',vmPanelBody(self),{hidden:true})}
     <div id="${sid}-cat-edit-wrap"></div>
   </div>`;
 
@@ -345,4 +485,4 @@ export function buildHTML(self) {
 }
 
 // Exported for dynamic re-render
-export { customLightRow, windowRow, doorRow };
+export { customLightRow, roomItemRow, roomItemsPanelBody, vmPanelBody, vmCard, vmPortRow };

@@ -50,6 +50,20 @@ export class SelectionManager {
         object: rackHit.object
       };
     }
+
+    // Check for room item hit — walk up parent chain to find itemId
+    const itemHit = intersects.find(h => {
+      if (h.object.userData?.itemLabel) return false;
+      let o = h.object;
+      while (o) { if (o.userData?.itemId) return true; o = o.parent; }
+      return false;
+    });
+    if (itemHit) {
+      let o = itemHit.object;
+      while (o && !o.userData?.itemId) o = o.parent;
+      return { type: 'item', id: o.userData.itemId, object: itemHit.object };
+    }
+
     return null;
   }
 

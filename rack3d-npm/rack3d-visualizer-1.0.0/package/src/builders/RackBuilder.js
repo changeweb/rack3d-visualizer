@@ -248,15 +248,44 @@ export class RackBuilder {
     canvas.height = 128;
     const ctx = canvas.getContext('2d');
 
-    ctx.fillStyle = isSelected ? 'rgba(17,85,200,0.9)' : 'rgba(8,16,32,0.88)';
+    // Background color — per-rack override or default
+    let bgFill;
+    if (isSelected) {
+      bgFill = 'rgba(17,85,200,0.9)';
+    } else if (rack.nameplateColor) {
+      const c = rack.nameplateColor;
+      if (typeof c === 'string' && c.startsWith('#')) {
+        const r = parseInt(c.slice(1,3),16);
+        const g = parseInt(c.slice(3,5),16);
+        const b = parseInt(c.slice(5,7),16);
+        bgFill = `rgba(${r},${g},${b},0.88)`;
+      } else {
+        bgFill = c;
+      }
+    } else {
+      bgFill = 'rgba(8,16,32,0.88)';
+    }
+    ctx.fillStyle = bgFill;
+
+    // Shape
+    const shape = rack.nameplateShape ?? 'rounded';
     ctx.beginPath();
-    ctx.roundRect(4, 4, 504, 120, 14);
+    if (shape === 'rect') {
+      ctx.rect(4, 4, 504, 120);
+    } else if (shape === 'pill') {
+      ctx.roundRect(4, 4, 504, 120, 60);
+    } else {
+      ctx.roundRect(4, 4, 504, 120, 14);
+    }
     ctx.fill();
-    ctx.strokeStyle = isSelected ? '#4499ff' : '#2a4a6a';
+
+    const borderColor = isSelected ? '#4499ff' : (rack.nameplateBorderColor || '#2a4a6a');
+    ctx.strokeStyle = borderColor;
     ctx.lineWidth = isSelected ? 4 : 2;
     ctx.stroke();
 
-    ctx.fillStyle = isSelected ? '#79c0ff' : '#88bbdd';
+    const textColor = isSelected ? '#79c0ff' : (rack.nameplateTextColor || '#88bbdd');
+    ctx.fillStyle = textColor;
     ctx.font = 'bold 64px "Courier New",monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';

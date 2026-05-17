@@ -36,8 +36,6 @@
  * @property {boolean} [ceilingGrid=true]    - Show drop-ceiling T-bar grid
  * @property {boolean} [stripLights=true]    - Show ceiling fluorescent strip fixtures
  * @property {boolean} [baseboardLights=true]- Show floor baseboard accent LEDs
- * @property {boolean} [exitSign=true]       - Show exit sign on rear wall
- * @property {boolean} [cableTrays=true]     - Show wall-mounted cable trays
  * @property {number}  [fogNear=22]          - Fog start distance
  * @property {number}  [fogFar=55]           - Fog full-opacity distance
  */
@@ -162,12 +160,10 @@ export const DEFAULT_OPTIONS = {
     ceilingGrid:    true,
     stripLights:    true,
     baseboardLights:true,
-    exitSign:       true,
-    cableTrays:     true,
     fogNear:        22,
     fogFar:         55,
-    windows:        [],  // [{wall:'front'|'back'|'left'|'right', x, y, width, height}]
-    doors:          [],  // [{wall:'front'|'back'|'left'|'right', x, width, height}]
+    wallColor:      null, // null = use theme's wallColor
+    showNorthCompass: true,
   },
 
   rack: {

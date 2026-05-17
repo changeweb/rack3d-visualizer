@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Guideline
 
-- No need to provide explanation of your thinking, reasoning, and of the output.
+- **No need to provide explanation** of your thinking, reasoning, and of the output and do not need to tell what issues have been solved.
 - Always stop the running node server after I give my prompt.
 
 ## Two-Project Structure
