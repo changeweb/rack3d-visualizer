@@ -5,7 +5,7 @@ import { DEFAULT_OPTIONS, mergeOptions } from './options.js';
 import { resolveTheme } from './themes.js';
 import { DEVICE_TYPES } from './constants.js';
 import { buildCSS } from './css.js';
-import { buildHTML, customLightRow, roomItemRow, vmPanelBody, vmCard, vmPortRow } from './html.js';
+import { buildHTML, customLightRow, roomItemRow, vmPanelBody, vmCard, vmPortRow, wallRow, pillarRow } from './html.js';
 import { makeUnitLabel } from './geometry.js';
 import { createLabel, updateLabels } from './labels.js';
 import { render2D, on2DDragStart, on2DDragEnd, on2DDrop, dropUnit, exportImage, dlBlob, gen2DCanvas, gen2DSVG } from './render2d.js';
@@ -78,7 +78,7 @@ export class Rack3DVisualizer {
       el:  this._opts.camera.elevation,
       r:   this._opts.camera.distance === 'auto' ? 22 : this._opts.camera.distance,
       // FPS
-      pos:    { x: 0, y: 16, z: -18 },
+      pos:    this._opts.camera.initialPos ? { ...this._opts.camera.initialPos } : { x: 0, y: 16, z: -26 },
       yaw:    0,
       pitch:  -0.08,
       keys:   {},
@@ -95,12 +95,18 @@ export class Rack3DVisualizer {
     this._selectionManager = null;
     this._geometryManager  = null;
 
-    // Rack drag state
-    this._rackDragState = null;
+    // Drag / rotate states
+    this._rackDragState  = null;
+    this._itemDragState  = null;
+    this._rotateDragState = null;
+    // Transform mode: null | 'move' | 'rotate'
+    this._transformMode  = null;
 
     this._injectStyles();
     this._el.id = this._id;
     this._el.innerHTML = this._buildHTML();
+    const themeSel = document.getElementById(this._id + '-theme-sel');
+    if (themeSel && typeof this._opts.theme === 'string') themeSel.value = this._opts.theme;
     this._bindSidebarEvents();
     this._restorePanelState();
 
@@ -520,22 +526,58 @@ export class Rack3DVisualizer {
     cv.addEventListener('mousedown', e => {
       if (e.button !== 0) return;
 
-      // In orbit mode: check if mousedown hits the selected rack → start rack drag
-      if (this._ctrl.mode !== 'fps' && !this._ctrl.pointerLocked && this._selRackId && this._room) {
+      // Transform mode: MOVE or ROTATE — explicit activation required
+      if (this._transformMode && !this._ctrl.pointerLocked && this._room) {
         const rect = cv.getBoundingClientRect();
         const hit = this._selectionManager?.raycast(
           e.clientX - rect.left, e.clientY - rect.top, cv.clientWidth, cv.clientHeight
         );
-        if (hit && (hit.rackId === this._selRackId || hit.id === this._selRackId)) {
-          const floorHit = this._raycastFloor(e.clientX, e.clientY, cv);
-          if (floorHit) {
-            const rackGroup = this._rackGroups[this._selRackId];
-            const curX = rackGroup?.position.x ?? 0;
-            const curZ = rackGroup?.position.z ?? 0;
-            this._rackDragState = { active: true, rackId: this._selRackId,
-              offsetX: floorHit.x - curX, offsetZ: floorHit.z - curZ, lastRebuild: 0 };
-            cv.style.cursor = 'move';
-            return;
+        if (hit) {
+          const isRack = hit.type === 'rack' || (hit.rackId && hit.type !== 'item');
+          const isItem = hit.type === 'item';
+
+          if (this._transformMode === 'move') {
+            const floorHit = this._raycastFloor(e.clientX, e.clientY, cv);
+            if (floorHit) {
+              if (isRack) {
+                const rack = this._room.racks.find(r => r.id === (hit.rackId || hit.id));
+                if (rack) {
+                  this._selRackId = rack.id; this._rack = rack;
+                  const rackGroup = this._rackGroups[rack.id];
+                  this._rackDragState = { active: true, rackId: rack.id,
+                    offsetX: floorHit.x - (rackGroup?.position.x ?? 0),
+                    offsetZ: floorHit.z - (rackGroup?.position.z ?? 0), lastRebuild: 0 };
+                  cv.style.cursor = 'move'; return;
+                }
+              } else if (isItem) {
+                const item = this._room.room_items?.find(it => it.id === hit.id);
+                if (item) {
+                  this._selItemId = hit.id;
+                  this._itemDragState = { active: true, itemId: hit.id,
+                    offsetX: floorHit.x - (item.x || 0), offsetZ: floorHit.z - (item.z || 0),
+                    lastRebuild: 0 };
+                  cv.style.cursor = 'move'; return;
+                }
+              }
+            }
+          } else if (this._transformMode === 'rotate') {
+            if (isRack) {
+              const rack = this._room.racks.find(r => r.id === (hit.rackId || hit.id));
+              if (rack) {
+                this._selRackId = rack.id; this._rack = rack;
+                this._rotateDragState = { active: true, type: 'rack', id: rack.id,
+                  startX: e.clientX, startAngle: rack.facingAngle || 0, lastRebuild: 0 };
+                cv.style.cursor = 'ew-resize'; return;
+              }
+            } else if (isItem) {
+              const item = this._room.room_items?.find(it => it.id === hit.id);
+              if (item) {
+                this._selItemId = hit.id;
+                this._rotateDragState = { active: true, type: 'item', id: hit.id,
+                  startX: e.clientX, startAngle: item.angle || 0, lastRebuild: 0 };
+                cv.style.cursor = 'ew-resize'; return;
+              }
+            }
           }
         }
       }
@@ -567,6 +609,52 @@ export class Rack3DVisualizer {
     document.addEventListener('pointerlockchange', onPointerLockChange);
 
     const onMouseMove = e => {
+      // Rotate drag mode
+      if (this._rotateDragState?.active) {
+        const deltaX = e.clientX - this._rotateDragState.startX;
+        const now = Date.now();
+        if (this._rotateDragState.type === 'rack') {
+          const rack = this._room?.racks.find(r => r.id === this._rotateDragState.id);
+          if (rack) {
+            rack.facingAngle = this._rotateDragState.startAngle + deltaX * 0.008;
+            if (now - this._rotateDragState.lastRebuild > 50) {
+              this._rotateDragState.lastRebuild = now;
+              this._buildRack();
+            }
+          }
+        } else {
+          const item = this._room?.room_items?.find(it => it.id === this._rotateDragState.id);
+          if (item) {
+            item.angle = this._rotateDragState.startAngle + deltaX * 0.45;
+            if (now - this._rotateDragState.lastRebuild > 50) {
+              this._rotateDragState.lastRebuild = now;
+              this._geometryManager?.clearRoomItems();
+              this._geometryManager?.buildRoomItems(this._room?.room_items || []);
+            }
+          }
+        }
+        return;
+      }
+
+      // Item drag mode
+      if (this._itemDragState?.active) {
+        const floorHit = this._raycastFloor(e.clientX, e.clientY, cv);
+        if (floorHit) {
+          const item = this._room?.room_items?.find(it => it.id === this._itemDragState.itemId);
+          if (item) {
+            item.x = floorHit.x - this._itemDragState.offsetX;
+            item.z = floorHit.z - this._itemDragState.offsetZ;
+            const now = Date.now();
+            if (now - this._itemDragState.lastRebuild > 50) {
+              this._itemDragState.lastRebuild = now;
+              this._geometryManager?.clearRoomItems();
+              this._geometryManager?.buildRoomItems(this._room?.room_items || []);
+            }
+          }
+        }
+        return;
+      }
+
       // Rack drag mode
       if (this._rackDragState?.active) {
         const floorHit = this._raycastFloor(e.clientX, e.clientY, cv);
@@ -617,6 +705,25 @@ export class Rack3DVisualizer {
     };
 
     const onMouseUp = e => {
+      // Finalize rotate drag
+      if (this._rotateDragState?.active) {
+        const wasRack = this._rotateDragState.type === 'rack';
+        this._rotateDragState = null;
+        cv.style.cursor = 'crosshair';
+        if (wasRack) { this._buildRack(); this._refresh(); }
+        else { this._buildRoomItems(); this._renderRoomItems(); }
+        return;
+      }
+
+      // Finalize item drag
+      if (this._itemDragState?.active) {
+        this._itemDragState = null;
+        cv.style.cursor = 'crosshair';
+        this._buildRoomItems();
+        this._renderRoomItems();
+        return;
+      }
+
       // Finalize rack drag
       if (this._rackDragState?.active) {
         this._rackDragState = null;
@@ -811,6 +918,7 @@ export class Rack3DVisualizer {
       // Labels are CSS divs projected from 3D — only update when camera or selection moves
       if (camChange || selChange || fpsMoving) this._updateLabels();
       this._updateCompass();
+      if (camChange || fpsMoving) this._updateAxisGizmo();
     };
     requestAnimationFrame(loop);
   }
@@ -928,6 +1036,7 @@ export class Rack3DVisualizer {
   getConfig() {
     const sb = this._opts.sidebar;
     return {
+      theme: typeof this._opts.theme === 'string' ? this._opts.theme : 'dark',
       sidebar: {
         showLeft:     sb.showLeft,
         showRight:    sb.showRight,
@@ -977,6 +1086,7 @@ export class Rack3DVisualizer {
   _applyConfig(cfg) {
     if (!cfg) return;
     const { sidebar, lighting } = cfg;
+    if (cfg.theme) this._onThemeChange(cfg.theme);
     if (sidebar) {
       if (sidebar.leftWidth  !== undefined) {
         this._opts.sidebar.leftWidth = sidebar.leftWidth;
@@ -1092,6 +1202,203 @@ export class Rack3DVisualizer {
       nLabel.style.color = facingNorth ? '#00ff88' : '';
       nLabel.style.textShadow = facingNorth ? '0 0 8px #00ff8888' : '';
     }
+  }
+
+  // ─── Axis gizmo ───────────────────────────────────────────
+  _updateAxisGizmo() {
+    const canvas = document.getElementById(this._id + '-axis-gizmo');
+    if (!canvas || !this._cam) return;
+    const ctx = canvas.getContext('2d');
+    const W = 64, H = 64, cx = 32, cy = 36, r = 22;
+    ctx.clearRect(0, 0, W, H);
+    this._cam.updateMatrixWorld();
+    const me = this._cam.matrixWorldInverse.elements;
+    const axes = [
+      { label: 'X', color: '#ff4444', vx: 1, vy: 0, vz: 0 },
+      { label: 'Y', color: '#44dd66', vx: 0, vy: 1, vz: 0 },
+      { label: 'Z', color: '#4488ff', vx: 0, vy: 0, vz: 1 },
+    ];
+    const projected = axes.map(a => {
+      const x = me[0]*a.vx + me[4]*a.vy + me[8]*a.vz;
+      const y = me[1]*a.vx + me[5]*a.vy + me[9]*a.vz;
+      const z = me[2]*a.vx + me[6]*a.vy + me[10]*a.vz;
+      return { ...a, x2d: cx + x*r, y2d: cy - y*r, depth: z };
+    });
+    projected.sort((a, b) => b.depth - a.depth);
+    projected.forEach(a => {
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(a.x2d, a.y2d);
+      ctx.strokeStyle = a.color; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.beginPath(); ctx.arc(a.x2d, a.y2d, 3, 0, Math.PI * 2);
+      ctx.fillStyle = a.color; ctx.fill();
+      ctx.fillStyle = a.color; ctx.font = 'bold 9px monospace';
+      ctx.fillText(a.label, a.x2d + (a.x2d - cx) * 0.28, a.y2d + (a.y2d - cy) * 0.28 + 3);
+    });
+  }
+
+  // ─── Room panel tabs ──────────────────────────────────────
+  _switchRoomTab(tabId) {
+    ['racks','layout','walls','pillars'].forEach(t => {
+      const btn  = document.getElementById(this._id + '-rtab-' + t);
+      const body = document.getElementById(this._id + '-rtab-body-' + t);
+      const on = t === tabId;
+      if (btn)  btn.className  = 'r3-tab' + (on ? ' active' : '');
+      if (body) body.style.display = on ? '' : 'none';
+    });
+  }
+
+  // ─── Transform mode ───────────────────────────────────────
+  _setTransformMode(mode) {
+    this._transformMode = this._transformMode === mode ? null : mode;
+    const btnM = document.getElementById(this._id + '-btnMove');
+    const btnR = document.getElementById(this._id + '-btnRotate');
+    if (btnM) btnM.className = 'r3-btn' + (this._transformMode === 'move'   ? ' on' : '');
+    if (btnR) btnR.className = 'r3-btn' + (this._transformMode === 'rotate' ? ' on' : '');
+  }
+
+  // ─── Rack properties tabs ─────────────────────────────────
+  _switchRackPropTab(tabId) {
+    ['config','position','nameplate'].forEach(t => {
+      const btn  = document.getElementById(this._id + '-rpt-' + t);
+      const body = document.getElementById(this._id + '-rpt-body-' + t);
+      const on = t === tabId;
+      if (btn)  btn.className  = 'r3-tab' + (on ? ' active' : '');
+      if (body) body.style.display = on ? '' : 'none';
+    });
+  }
+
+  // ─── Edit device tabs ─────────────────────────────────────
+  _switchEditDevTab(tabId) {
+    ['properties','style','network'].forEach(t => {
+      const btn  = document.getElementById(this._id + '-edt-' + t);
+      const body = document.getElementById(this._id + '-edt-body-' + t);
+      const on = t === tabId;
+      if (btn)  btn.className  = 'r3-tab' + (on ? ' active' : '');
+      if (body) body.style.display = on ? '' : 'none';
+    });
+  }
+
+  _switchLightTab(tabId) {
+    ['scene','overhead','custom'].forEach(t => {
+      const btn  = document.getElementById(this._id + '-lt-' + t);
+      const body = document.getElementById(this._id + '-lt-body-' + t);
+      const on = t === tabId;
+      if (btn)  btn.className  = 'r3-tab' + (on ? ' active' : '');
+      if (body) body.style.display = on ? '' : 'none';
+    });
+  }
+
+  _onThemeChange(name) {
+    this._opts.theme = name;
+    this.setTheme(name);
+    const sel = document.getElementById(this._id + '-theme-sel');
+    if (sel) sel.value = name;
+  }
+
+  toggleHelp() {
+    const el = document.getElementById(this._id + '-help-modal');
+    if (!el) return;
+    el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+  }
+
+  _switchHelpTab(tabId) {
+    ['controls','help','about'].forEach(t => {
+      const btn  = document.getElementById(this._id + '-ht-' + t);
+      const body = document.getElementById(this._id + '-ht-body-' + t);
+      const on = t === tabId;
+      if (btn)  btn.className  = 'r3-tab' + (on ? ' active' : '');
+      if (body) body.style.display = on ? '' : 'none';
+    });
+  }
+
+  // ─── Layout control ───────────────────────────────────────
+  _setLayout(field, value) {
+    if (!this._room) return;
+    if (!this._room.layout) this._room.layout = {};
+    this._room.layout[field] = value;
+    this._buildRack();
+  }
+
+  // ─── Wall CRUD ────────────────────────────────────────────
+  _addWall() {
+    if (!this._room) return;
+    if (!Array.isArray(this._room.room_walls)) this._room.room_walls = [];
+    const ro = this._opts.room;
+    this._room.room_walls.push({
+      id: 'wall-' + Date.now(),
+      name: 'Wall ' + (this._room.room_walls.length + 1),
+      length: ro.width || 20, height: ro.height || 14,
+      x: 0, z: 0, angle: 0, color: null, opacity: 1.0, visible: true
+    });
+    this._buildEnvironment();
+    this._renderWalls();
+  }
+
+  _editWall(idx, field, value) {
+    const wall = this._room?.room_walls?.[idx];
+    if (!wall) return;
+    wall[field] = value;
+    this._buildEnvironment();
+  }
+
+  _removeWall(idx) {
+    this._room?.room_walls?.splice(idx, 1);
+    this._buildEnvironment();
+    this._renderWalls();
+  }
+
+  _autoGenWalls() {
+    if (!this._room) return;
+    const ro = this._opts.room;
+    const W = ro.width, D = ro.depth, H = ro.height;
+    this._room.room_walls = [
+      { id: 'w-back',  name: 'Back',  length: W, height: H, x: 0,      z: D/2,  angle: 0,            color: null, opacity: 1.0, visible: true },
+      { id: 'w-front', name: 'Front', length: W, height: H, x: 0,      z: -D/2+2, angle: 0,           color: null, opacity: 0.6, visible: true },
+      { id: 'w-left',  name: 'Left',  length: D, height: H, x: -W/2,   z: 2,    angle: Math.PI/2,    color: null, opacity: 1.0, visible: true },
+      { id: 'w-right', name: 'Right', length: D, height: H, x: W/2,    z: 2,    angle: -Math.PI/2,   color: null, opacity: 1.0, visible: true },
+    ];
+    this._buildEnvironment();
+    this._renderWalls();
+  }
+
+  _renderWalls() {
+    const el = document.getElementById(this._id + '-walls-list');
+    if (!el) return;
+    const sid = this._id;
+    el.innerHTML = (this._room?.room_walls || []).map((w, i) => wallRow(sid, w, i)).join('');
+  }
+
+  // ─── Pillar CRUD ──────────────────────────────────────────
+  _addPillar() {
+    if (!this._room) return;
+    if (!Array.isArray(this._room.room_pillars)) this._room.room_pillars = [];
+    this._room.room_pillars.push({
+      id: 'pil-' + Date.now(),
+      x: 0, z: 0, shape: 'cylinder', radius: 0.4,
+      width: 0.8, depth: 0.8, height: this._opts.room.height || 14, color: '#2a3a4a'
+    });
+    this._buildEnvironment();
+    this._renderPillars();
+  }
+
+  _editPillar(idx, field, value) {
+    const pillar = this._room?.room_pillars?.[idx];
+    if (!pillar) return;
+    pillar[field] = value;
+    this._buildEnvironment();
+    if (field === 'shape') this._renderPillars();
+  }
+
+  _removePillar(idx) {
+    this._room?.room_pillars?.splice(idx, 1);
+    this._buildEnvironment();
+    this._renderPillars();
+  }
+
+  _renderPillars() {
+    const el = document.getElementById(this._id + '-pillars-list');
+    if (!el) return;
+    const sid = this._id;
+    el.innerHTML = (this._room?.room_pillars || []).map((p, i) => pillarRow(sid, p, i)).join('');
   }
 
   // ─── Room items ───────────────────────────────────────────

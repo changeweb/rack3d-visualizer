@@ -88,7 +88,7 @@ function RoomInstance({ data, theme = 'dark' }) {
       theme,
       camera: { mode: 'fps', fpsSpeed: 0.12, azimuth: Math.PI, elevation: 0.15, distance: 'auto' },
       sidebar: { width: 240 },
-      lighting: { shadows: true, overheadCount: 8, overheadIntensity: 5, ambientIntensity: 0.4, exposure: 1.2 },
+      lighting: { shadows: true, overheadCount: 10, overheadIntensity: 9.5, ambientIntensity: 17, exposure: 2.3 },
       labels: { enabled: true, side: 'auto' },
       room: {
         enabled:         true,
@@ -96,6 +96,7 @@ function RoomInstance({ data, theme = 'dark' }) {
         depth:           60,
         height:          35,
         floorTiles:      true,
+        tileSize:        2,
         ceilingGrid:     true,
         stripLights:     true,
         baseboardLights: true,

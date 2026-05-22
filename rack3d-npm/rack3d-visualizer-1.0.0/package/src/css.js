@@ -85,18 +85,18 @@ export function buildCSS(scope, theme, opts) {
 #${scope} .r3-sb-toggle:hover  { color:var(--r3-dim); border-color:var(--r3-border); }
 #${scope} .r3-sb-toggle.on     { color:var(--r3-accent); border-color:${c.accent}44; background:${c.accent}11; }
 #${scope} .r3-pnl   { padding:8px 10px; border-bottom:1px solid var(--r3-border); }
-#${scope} .r3-pl    { font-family:'Share Tech Mono',monospace; color:var(--r3-dim); font-size:10px; letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+#${scope} .r3-pl    { font-family:'Share Tech Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; display:flex; align-items:center; gap:6px; }
 #${scope} .r3-pl::before { content:''; display:inline-block; width:3px; height:3px; background:var(--r3-accent); border-radius:50%; }
 #${scope} .r3-rw    { display:flex; align-items:center; gap:6px; margin-bottom:4px; }
 #${scope} .r3-inp   { background:${c.bg}; border:1px solid var(--r3-border); color:var(--r3-text); border-radius:2px; padding:4px 7px; font-size:11px; font-family:var(--r3-font); width:100%; transition:border-color .2s; }
 #${scope} .r3-inp:focus  { outline:none; border-color:${c.accent}66; }
-#${scope} .r3-lbl   { color:var(--r3-dim); font-size:11px; min-width:62px; font-family:'Share Tech Mono',monospace; }
+#${scope} .r3-lbl   { font-size:11px; min-width:62px; font-family:'Share Tech Mono',monospace; }
 
 /* ── STAT CARDS ── */
 #${scope} .r3-stat  { background:${c.bg}; border:1px solid var(--r3-border); border-radius:3px; padding:7px 10px; margin-bottom:5px; position:relative; overflow:hidden; }
 #${scope} .r3-stat::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,${c.accent}55,transparent); }
 #${scope} .r3-sv    { font-size:20px; font-weight:700; font-family:'Orbitron',monospace; color:${c.text}; }
-#${scope} .r3-sl    { font-family:'Share Tech Mono',monospace; color:var(--r3-dim); font-size:9px; letter-spacing:1px; text-transform:uppercase; margin-top:2px; }
+#${scope} .r3-sl    { font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1px; text-transform:uppercase; margin-top:2px; }
 #${scope} .r3-sbar  { margin-top:5px; height:2px; background:${c.bg}; border-radius:1px; overflow:hidden; }
 #${scope} .r3-sfill { height:100%; border-radius:1px; transition:width .5s,background .5s; }
 
@@ -106,10 +106,10 @@ export function buildCSS(scope, theme, opts) {
 #${scope} .r3-dc.sel    { border-color:var(--r3-selcol,var(--r3-accent)); background:color-mix(in srgb,var(--r3-selcol,var(--r3-accent)) 8%,${c.bg}); }
 #${scope} .r3-dot   { width:8px; height:8px; border-radius:1px; flex-shrink:0; }
 #${scope} .r3-dn    { color:${c.text}; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; font-family:'Share Tech Mono',monospace; }
-#${scope} .r3-dm    { color:var(--r3-dim); font-size:10px; }
+#${scope} .r3-dm    { font-size:10px; }
 #${scope} .r3-xb    { background:none; border:none; color:${c.border}; cursor:pointer; font-size:14px; padding:0 2px; line-height:1; flex-shrink:0; transition:color .15s; }
 #${scope} .r3-xb:hover  { color:var(--r3-red); }
-#${scope} .r3-no-rack { color:var(--r3-dim); font-size:10px; font-family:'Share Tech Mono',monospace; padding:10px 6px; opacity:.6; text-align:center; }
+#${scope} .r3-no-rack { font-size:10px; font-family:'Share Tech Mono',monospace; padding:10px 6px; opacity:.6; text-align:center; }
 
 /* ── EDIT PANEL ── */
 #${scope} .r3-ep    { padding:8px 10px; border-bottom:1px solid var(--r3-border); background:${c.bg}; }
@@ -148,7 +148,7 @@ export function buildCSS(scope, theme, opts) {
 #${scope} .r3-ltoggle { pointer-events:all !important; }
 
 /* ── TIP ── */
-#${scope} .r3-tip   { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); background:${c.bg}bb; border:1px solid var(--r3-border); border-radius:2px; padding:5px 14px; font-size:11px; color:var(--r3-dim); pointer-events:none; white-space:nowrap; font-family:'Share Tech Mono',monospace; letter-spacing:.5px; z-index:3; }
+#${scope} .r3-tip   { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); background:${c.bg}bb; border:1px solid var(--r3-border); border-radius:2px; padding:5px 14px; font-size:11px; pointer-events:none; white-space:nowrap; font-family:'Share Tech Mono',monospace; letter-spacing:.5px; z-index:3; }
 
 /* ── JSON PANEL ── */
 #${scope} .r3-jp    { position:absolute; top:10px; right:10px; bottom:30px; width:300px; background:${c.bg}f5; border:1px solid var(--r3-border); border-radius:3px; display:flex; flex-direction:column; z-index:10; backdrop-filter:blur(10px); }
@@ -162,7 +162,7 @@ export function buildCSS(scope, theme, opts) {
 #${scope} .r3-2d-unit { display:flex; align-items:center; height:26px; border-bottom:1px solid ${c.bg}; position:relative; transition:background .1s; }
 #${scope} .r3-2d-unit.r3-2d-half-row { align-items:stretch; }
 #${scope} .r3-2d-unit:last-child { border-bottom:none; }
-#${scope} .r3-2d-num  { width:32px; text-align:right; font-size:10px; color:var(--r3-dim); padding-right:5px; flex-shrink:0; }
+#${scope} .r3-2d-num  { width:32px; text-align:right; font-size:10px; padding-right:5px; flex-shrink:0; }
 #${scope} .r3-2d-bar  { flex:1; display:flex; align-items:center; padding:0 6px; font-size:11px; font-weight:600; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 #${scope} .r3-2d-half { transition:background .1s; }
 #${scope} .r3-2d-empty{ background:transparent !important; }
@@ -177,7 +177,7 @@ export function buildCSS(scope, theme, opts) {
   display:flex; align-items:center; gap:5px; padding:3px 6px;
   cursor:pointer; user-select:none; border-radius:2px;
   font-family:'Share Tech Mono',monospace; font-size:10px;
-  color:var(--r3-dim); letter-spacing:1px; text-transform:uppercase;
+  letter-spacing:1px; text-transform:uppercase;
   transition:background .1s;
 }
 #${scope} .r3-cat-group-hdr:hover { background:${c.bg}; }
@@ -339,6 +339,12 @@ export function buildCSS(scope, theme, opts) {
 #${scope} .r3-zoom-btn  { width:30px; height:30px; background:var(--r3-panel); border:1px solid var(--r3-border); color:var(--r3-text); border-radius:4px; cursor:pointer; font-size:18px; line-height:1; display:flex; align-items:center; justify-content:center; transition:all .2s; }
 #${scope} .r3-zoom-btn:hover { border-color:var(--r3-accent); color:var(--r3-accent); background:${c.accent}11; }
 
+/* ── AXIS GIZMO ── */
+#${scope} .r3-axis-gizmo {
+  position:absolute; top:12px; left:12px;
+  width:64px; height:64px; pointer-events:none; z-index:4; opacity:0.82;
+}
+
 /* ── COMPASS ── */
 #${scope} .r3-compass {
   position:absolute; top:12px; right:12px; width:56px; height:56px;
@@ -358,7 +364,7 @@ export function buildCSS(scope, theme, opts) {
 }
 #${scope} .r3-compass-e, #${scope} .r3-compass-s, #${scope} .r3-compass-w {
   position:absolute; font-family:'Share Tech Mono',monospace; font-size:9px;
-  color:var(--r3-dim); line-height:1;
+  line-height:1;
 }
 #${scope} .r3-compass-e { right:3px; top:50%; transform:translateY(-50%); }
 #${scope} .r3-compass-s { bottom:3px; left:50%; transform:translateX(-50%); }
@@ -421,7 +427,7 @@ export function buildCSS(scope, theme, opts) {
   display:flex; align-items:center; gap:4px; font-size:10px;
   font-family:'Share Tech Mono',monospace; color:var(--r3-dim);
 }
-#${scope} .r3-vm-key { min-width:52px; color:var(--r3-dim); flex-shrink:0; font-size:9px; }
+#${scope} .r3-vm-key { min-width:52px; flex-shrink:0; font-size:9px; }
 #${scope} .r3-vm-val { color:${c.text}; flex:1; }
 #${scope} .r3-vm-chips { display:flex; gap:3px; flex-wrap:wrap; }
 #${scope} .r3-vm-chip {
@@ -452,6 +458,40 @@ export function buildCSS(scope, theme, opts) {
 #${scope} .r3-vm-add-bar {
   display:flex; align-items:center; gap:6px; padding:4px 0;
   border-top:1px solid var(--r3-border); margin-top:4px;
+}
+
+/* ── HELP MODAL ── */
+#${scope} .r3-help-modal {
+  position:absolute; inset:0; z-index:100;
+  display:flex; align-items:center; justify-content:center;
+  background:${c.bg}cc; backdrop-filter:blur(6px);
+}
+#${scope} .r3-help-box {
+  background:${c.panel}; border:1px solid var(--r3-border); border-radius:6px;
+  width:420px; max-width:92vw; max-height:80vh;
+  display:flex; flex-direction:column; box-shadow:0 8px 40px #00000066;
+}
+#${scope} .r3-help-hdr {
+  display:flex; align-items:center; gap:8px;
+  padding:10px 14px; border-bottom:1px solid var(--r3-border);
+  font-family:'Share Tech Mono',monospace; color:var(--r3-text);
+}
+#${scope} .r3-help-body {
+  padding:12px 14px; overflow-y:auto; flex:1;
+  font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--r3-text);
+}
+#${scope} .r3-help-sec {
+  font-size:9px; letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--r3-accent); margin:10px 0 5px;
+}
+#${scope} .r3-help-row {
+  display:flex; align-items:flex-start; gap:8px; padding:3px 0;
+  border-bottom:1px solid var(--r3-border)11;
+  font-size:10px; line-height:1.5;
+}
+#${scope} .r3-help-key {
+  min-width:90px; flex-shrink:0;
+  font-size:9px; padding-top:1px;
 }
 `;
 }

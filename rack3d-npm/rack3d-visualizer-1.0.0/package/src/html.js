@@ -62,14 +62,182 @@ function roomItemRow(sid, item, i) {
   </div>`;
 }
 
+// ── Wall row helper ───────────────────────────────────────────
+function wallRow(sid, wall, i) {
+  const colorHex = wall.color ? (typeof wall.color === 'string' ? wall.color : '#' + wall.color.toString(16).padStart(6,'0')) : '#1a2a3f';
+  return `<div style="border:1px solid var(--r3-border,#1a2a3f);border-radius:4px;padding:5px;margin-bottom:4px">
+    <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:3px">
+      <input class="r3-inp r3-inp-xs" value="${wall.name??'Wall'}" placeholder="Name" style="flex:1;min-width:60px" oninput="window._r3['${sid}']._editWall(${i},'name',this.value)">
+      <input type="color" value="${colorHex}" class="r3-color-pick" title="Color" oninput="window._r3['${sid}']._editWall(${i},'color',this.value)">
+      <label style="display:flex;align-items:center;gap:2px;font-size:9px;cursor:pointer">
+        <input type="checkbox"${wall.visible!==false?' checked':''} onchange="window._r3['${sid}']._editWall(${i},'visible',this.checked)" title="Visible">Vis
+      </label>
+      <button class="r3-ph-btn" style="font-size:13px;margin-left:auto" onclick="window._r3['${sid}']._removeWall(${i})">×</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-bottom:3px">
+      <span style="font-size:9px;color:var(--r3-dim);min-width:20px">Pos</span>
+      <input class="r3-inp r3-inp-xs" type="number" step="1" value="${wall.x??0}" title="X" style="width:42px" oninput="window._r3['${sid}']._editWall(${i},'x',+this.value)">
+      <input class="r3-inp r3-inp-xs" type="number" step="1" value="${wall.z??0}" title="Z" style="width:42px" oninput="window._r3['${sid}']._editWall(${i},'z',+this.value)">
+      <input class="r3-inp r3-inp-xs" type="number" step="1" value="${Math.round((wall.angle??0)*180/Math.PI)}" title="Angle°" style="width:42px" oninput="window._r3['${sid}']._editWall(${i},'angle',+this.value*Math.PI/180)">
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-bottom:3px">
+      <span style="font-size:9px;color:var(--r3-dim);min-width:20px">Size</span>
+      <input class="r3-inp r3-inp-xs" type="number" step="1" min="1" value="${wall.length??20}" title="Length" style="width:42px" oninput="window._r3['${sid}']._editWall(${i},'length',+this.value)">
+      <input class="r3-inp r3-inp-xs" type="number" step="1" min="1" value="${wall.height??14}" title="Height" style="width:42px" oninput="window._r3['${sid}']._editWall(${i},'height',+this.value)">
+      <span style="font-size:9px;color:var(--r3-dim)">L×H</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap">
+      <span style="font-size:9px;color:var(--r3-dim);min-width:40px">Opacity</span>
+      <input class="r3-range" type="range" min="0" max="1" step="0.05" value="${wall.opacity??1}" style="flex:1" oninput="window._r3['${sid}']._editWall(${i},'opacity',+this.value)">
+    </div>
+  </div>`;
+}
+
+// ── Pillar row helper ─────────────────────────────────────────
+function pillarRow(sid, pillar, i) {
+  const colorHex = pillar.color ? (typeof pillar.color === 'string' ? pillar.color : '#' + pillar.color.toString(16).padStart(6,'0')) : '#2a3a4a';
+  return `<div style="border:1px solid var(--r3-border,#1a2a3f);border-radius:4px;padding:5px;margin-bottom:4px">
+    <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:3px">
+      <select class="r3-inp r3-inp-xs" style="width:80px" onchange="window._r3['${sid}']._editPillar(${i},'shape',this.value)">
+        <option value="cylinder"${(pillar.shape??'cylinder')==='cylinder'?' selected':''}>Cylinder</option>
+        <option value="square"${pillar.shape==='square'?' selected':''}>Square</option>
+      </select>
+      <input type="color" value="${colorHex}" class="r3-color-pick" title="Color" oninput="window._r3['${sid}']._editPillar(${i},'color',this.value)">
+      <button class="r3-ph-btn" style="font-size:13px;margin-left:auto" onclick="window._r3['${sid}']._removePillar(${i})">×</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-bottom:3px">
+      <span style="font-size:9px;color:var(--r3-dim);min-width:20px">Pos</span>
+      <input class="r3-inp r3-inp-xs" type="number" step="1" value="${pillar.x??0}" title="X" style="width:42px" oninput="window._r3['${sid}']._editPillar(${i},'x',+this.value)">
+      <input class="r3-inp r3-inp-xs" type="number" step="1" value="${pillar.z??0}" title="Z" style="width:42px" oninput="window._r3['${sid}']._editPillar(${i},'z',+this.value)">
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap">
+      <span style="font-size:9px;color:var(--r3-dim);min-width:20px">Size</span>
+      ${(pillar.shape??'cylinder')==='cylinder'
+        ? `<input class="r3-inp r3-inp-xs" type="number" step="0.1" min="0.1" value="${pillar.radius??0.4}" title="Radius" style="width:42px" oninput="window._r3['${sid}']._editPillar(${i},'radius',+this.value)"><span style="font-size:9px;color:var(--r3-dim)">r</span>`
+        : `<input class="r3-inp r3-inp-xs" type="number" step="0.1" min="0.1" value="${pillar.width??0.8}" title="Width" style="width:42px" oninput="window._r3['${sid}']._editPillar(${i},'width',+this.value)"><input class="r3-inp r3-inp-xs" type="number" step="0.1" min="0.1" value="${pillar.depth??0.8}" title="Depth" style="width:42px" oninput="window._r3['${sid}']._editPillar(${i},'depth',+this.value)"><span style="font-size:9px;color:var(--r3-dim)">w×d</span>`
+      }
+      <input class="r3-inp r3-inp-xs" type="number" step="1" min="1" value="${pillar.height??14}" title="Height" style="width:42px" oninput="window._r3['${sid}']._editPillar(${i},'height',+this.value)"><span style="font-size:9px;color:var(--r3-dim)">h</span>
+    </div>
+  </div>`;
+}
+
 // ── Panel body builders ───────────────────────────────────────
 function roomPanelBody(self) {
   const sid = self._id;
-  return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-    <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--r3-dim);letter-spacing:1px;text-transform:uppercase">Racks</span>
-    <button class="r3-btn" style="padding:1px 7px;font-size:9px" onclick="window._r3['${sid}']._addRack()">+ Rack</button>
+  const ro  = self._opts.room;
+  const walls   = self._room?.room_walls   || [];
+  const pillars = self._room?.room_pillars || [];
+  return `<div class="r3-tab-bar">
+    <button class="r3-tab active" id="${sid}-rtab-racks"   onclick="window._r3['${sid}']._switchRoomTab('racks')">Racks</button>
+    <button class="r3-tab"        id="${sid}-rtab-layout"  onclick="window._r3['${sid}']._switchRoomTab('layout')">Layout</button>
+    <button class="r3-tab"        id="${sid}-rtab-walls"   onclick="window._r3['${sid}']._switchRoomTab('walls')">Walls</button>
+    <button class="r3-tab"        id="${sid}-rtab-pillars" onclick="window._r3['${sid}']._switchRoomTab('pillars')">Pillars</button>
   </div>
-  <div id="${sid}-rack-list"></div>`;
+
+  <div id="${sid}-rtab-body-racks">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--r3-dim);letter-spacing:1px;text-transform:uppercase">Racks</span>
+      <button class="r3-btn" style="padding:1px 7px;font-size:9px" onclick="window._r3['${sid}']._addRack()">+ Rack</button>
+    </div>
+    <div id="${sid}-rack-list"></div>
+  </div>
+
+  <div id="${sid}-rtab-body-layout" style="display:none">
+    <div class="r3-env-sec">Grid</div>
+    <div class="r3-env-row">
+      <span class="r3-lbl">Rows</span>
+      <input class="r3-inp r3-env-num" type="number" min="1" max="10" step="1" value="${self._room?.layout?.rows??1}"
+             oninput="window._r3['${sid}']._setLayout('rows',Math.max(1,Math.min(10,+this.value)))">
+    </div>
+    <div class="r3-env-row">
+      <span class="r3-lbl">Cols</span>
+      <input class="r3-inp r3-env-num" type="number" min="1" max="10" step="1" value="${self._room?.layout?.cols??1}"
+             oninput="window._r3['${sid}']._setLayout('cols',Math.max(1,Math.min(10,+this.value)))">
+    </div>
+    <div class="r3-env-row">
+      <span class="r3-lbl">Col Spacing</span>
+      <input class="r3-inp r3-env-num" type="number" min="0.1" max="30" step="0.5" value="${self._room?.layout?.colSpacing??8}"
+             oninput="window._r3['${sid}']._setLayout('colSpacing',Math.max(0.1,+this.value))">
+      <span class="r3-val">m</span>
+    </div>
+    <div class="r3-env-row">
+      <span class="r3-lbl">Row Spacing</span>
+      <input class="r3-inp r3-env-num" type="number" min="0.1" max="30" step="0.5" value="${self._room?.layout?.rowSpacing??10}"
+             oninput="window._r3['${sid}']._setLayout('rowSpacing',Math.max(0.1,+this.value))">
+      <span class="r3-val">m</span>
+    </div>
+    <div class="r3-env-sec">Room</div>
+    <div class="r3-env-row">
+      <span class="r3-lbl">Width</span>
+      <input class="r3-inp r3-env-num" type="number" min="10" max="200" step="1" value="${ro.width}"
+             oninput="window._r3['${sid}']._setRoom('width',Math.max(10,Math.min(200,+this.value)))">
+      <span class="r3-val">m</span>
+    </div>
+    <div class="r3-env-row">
+      <span class="r3-lbl">Depth</span>
+      <input class="r3-inp r3-env-num" type="number" min="10" max="200" step="1" value="${ro.depth}"
+             oninput="window._r3['${sid}']._setRoom('depth',Math.max(10,Math.min(200,+this.value)))">
+      <span class="r3-val">m</span>
+    </div>
+    <div class="r3-env-row"><span class="r3-lbl">Height</span>
+      <input class="r3-range" type="range" min="6" max="50" step="1" value="${ro.height}"
+             oninput="window._r3['${sid}']._setRoom('height',+this.value);document.getElementById('${sid}-ev-r-height').textContent=this.value+'m'">
+      <span class="r3-val" id="${sid}-ev-r-height">${ro.height}m</span>
+    </div>
+    <div class="r3-env-row"><span class="r3-lbl">Fog Near</span>
+      <input class="r3-range" type="range" min="5" max="100" step="1" value="${ro.fogNear}"
+             oninput="window._r3['${sid}']._setRoom('fogNear',+this.value);document.getElementById('${sid}-ev-r-fogNear').textContent=this.value">
+      <span class="r3-val" id="${sid}-ev-r-fogNear">${ro.fogNear}</span>
+    </div>
+    <div class="r3-env-row"><span class="r3-lbl">Fog Far</span>
+      <input class="r3-range" type="range" min="20" max="300" step="5" value="${ro.fogFar}"
+             oninput="window._r3['${sid}']._setRoom('fogFar',+this.value);document.getElementById('${sid}-ev-r-fogFar').textContent=this.value">
+      <span class="r3-val" id="${sid}-ev-r-fogFar">${ro.fogFar}</span>
+    </div>
+    <div class="r3-env-sec">Tiles &amp; Appearance</div>
+    <div class="r3-env-row">
+      <span class="r3-lbl">Tile Size</span>
+      <input class="r3-inp r3-env-num" type="number" min="0.5" max="10" step="0.5" value="${ro.tileSize??2}"
+             oninput="window._r3['${sid}']._setRoom('tileSize',Math.max(0.5,+this.value))">
+      <span class="r3-val">m</span>
+    </div>
+    <div class="r3-env-row">
+      <span class="r3-lbl">Wall Color</span>
+      <input type="color" class="r3-color-pick" value="${ro.wallColor ? (typeof ro.wallColor==='string' ? ro.wallColor : '#'+ro.wallColor.toString(16).padStart(6,'0')) : '#1a2a3f'}"
+             oninput="window._r3['${sid}']._setRoom('wallColor',this.value)">
+    </div>
+    <div class="r3-env-toggles">
+      <label class="r3-sw-label"><span class="r3-lbl">Floor Tiles</span>
+        <label class="r3-sw"><input type="checkbox"${ro.floorTiles?' checked':''} onchange="window._r3['${sid}']._setRoom('floorTiles',this.checked)">
+          <span class="r3-sw-track"><span class="r3-sw-thumb"></span></span></label></label>
+      <label class="r3-sw-label"><span class="r3-lbl">Ceil Grid</span>
+        <label class="r3-sw"><input type="checkbox"${ro.ceilingGrid?' checked':''} onchange="window._r3['${sid}']._setRoom('ceilingGrid',this.checked)">
+          <span class="r3-sw-track"><span class="r3-sw-thumb"></span></span></label></label>
+      <label class="r3-sw-label"><span class="r3-lbl">Strip Lights</span>
+        <label class="r3-sw"><input type="checkbox"${ro.stripLights?' checked':''} onchange="window._r3['${sid}']._setRoom('stripLights',this.checked)">
+          <span class="r3-sw-track"><span class="r3-sw-thumb"></span></span></label></label>
+      <label class="r3-sw-label"><span class="r3-lbl">Baseboard</span>
+        <label class="r3-sw"><input type="checkbox"${ro.baseboardLights?' checked':''} onchange="window._r3['${sid}']._setRoom('baseboardLights',this.checked)">
+          <span class="r3-sw-track"><span class="r3-sw-thumb"></span></span></label></label>
+    </div>
+  </div>
+
+  <div id="${sid}-rtab-body-walls" style="display:none">
+    <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px">
+      <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--r3-dim);flex:1">Walls</span>
+      <button class="r3-btn" style="padding:1px 6px;font-size:9px" onclick="window._r3['${sid}']._autoGenWalls()">⟳ Auto</button>
+      <button class="r3-btn" style="padding:1px 6px;font-size:9px" onclick="window._r3['${sid}']._addWall()">+ Wall</button>
+    </div>
+    <div id="${sid}-walls-list">${walls.map((w,i)=>wallRow(sid,w,i)).join('')}</div>
+  </div>
+
+  <div id="${sid}-rtab-body-pillars" style="display:none">
+    <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px">
+      <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--r3-dim);flex:1">Pillars</span>
+      <button class="r3-btn" style="padding:1px 6px;font-size:9px" onclick="window._r3['${sid}']._addPillar()">+ Pillar</button>
+    </div>
+    <div id="${sid}-pillars-list">${pillars.map((p,i)=>pillarRow(sid,p,i)).join('')}</div>
+  </div>`;
 }
 
 function customLightRow(sid, cl, i) {
@@ -90,28 +258,11 @@ function customLightRow(sid, cl, i) {
 
 function envPanelBody(self) {
   const sid = self._id;
-  const ro  = self._opts.room;
   const lo  = self._opts.lighting;
-  const rf  = self._opts.sidebar.roomFields;    // null = all
-  const lf  = self._opts.sidebar.lightingFields; // null = all
+  const lf  = self._opts.sidebar.lightingFields;
 
-  const showR = f => !rf || rf.includes(f);
   const showL = f => !lf || lf.includes(f);
-
-  const numR = (f, label, val, min, max, step, unit) => !showR(f) ? '' :
-    `<div class="r3-env-row">
-      <span class="r3-lbl">${label}</span>
-      <input class="r3-inp r3-env-num" type="number" min="${min}" max="${max}" step="${step}" value="${val}"
-             oninput="window._r3['${sid}']._setRoom('${f}',Math.max(${min},Math.min(${max},+this.value)))">
-      <span class="r3-val">${unit}</span>
-    </div>`;
-
-  const rngR = (f, label, val, min, max, step, unit) => !showR(f) ? '' :
-    `<div class="r3-env-row"><span class="r3-lbl">${label}</span>
-      <input class="r3-range" type="range" min="${min}" max="${max}" step="${step}" value="${val}"
-             oninput="window._r3['${sid}']._setRoom('${f}',+this.value);document.getElementById('${sid}-ev-r-${f}').textContent=this.value+'${unit}'">
-      <span class="r3-val" id="${sid}-ev-r-${f}">${val}${unit}</span>
-    </div>`;
+  const showCL = !lf || lf.includes('customLights');
 
   const rngL = (f, label, val, min, max, step, unit) => !showL(f) ? '' :
     `<div class="r3-env-row"><span class="r3-lbl">${label}</span>
@@ -120,58 +271,36 @@ function envPanelBody(self) {
       <span class="r3-val" id="${sid}-ev-l-${f}">${val}${unit}</span>
     </div>`;
 
-  const togR = (f, label, val) => !showR(f) ? '' :
-    `<label class="r3-sw-label"><span class="r3-lbl">${label}</span>
-      <label class="r3-sw"><input type="checkbox"${val?' checked':''} onchange="window._r3['${sid}']._setRoom('${f}',this.checked)">
-        <span class="r3-sw-track"><span class="r3-sw-thumb"></span></span></label></label>`;
-
   const togL = (f, label, val) => !showL(f) ? '' :
     `<label class="r3-sw-label"><span class="r3-lbl">${label}</span>
       <label class="r3-sw"><input type="checkbox"${val?' checked':''} onchange="window._r3['${sid}']._setLight('${f}',this.checked)">
         <span class="r3-sw-track"><span class="r3-sw-thumb"></span></span></label></label>`;
 
-  const roomFields = ['width','depth','height','fogNear','fogFar','floorTiles','ceilingGrid','stripLights','baseboardLights','wallColor'];
-  const lightFields = ['ambientIntensity','overheadCount','overheadIntensity','fillIntensity','rackGlowIntensity','floorGlowIntensity','exposure','shadows'];
-  const hasRF = roomFields.some(f => showR(f));
-  const hasLF = lightFields.some(f => showL(f));
-  const showCL = !lf || lf.includes('customLights');
-
-  const toggleRows = [
-    togR('floorTiles','Floor Tiles',ro.floorTiles),
-    togR('ceilingGrid','Ceil Grid',ro.ceilingGrid),
-    togR('stripLights','Strip Lights',ro.stripLights),
-    togR('baseboardLights','Baseboard',ro.baseboardLights),
-  ].filter(Boolean).join('');
-
-  return `
-  ${hasRF ? '<div class="r3-env-sec">Room</div>' : ''}
-  ${numR('width','Width',ro.width,10,60,1,'m')}
-  ${numR('depth','Depth',ro.depth,10,60,1,'m')}
-  ${rngR('height','Height',ro.height,6,20,1,'m')}
-  ${rngR('fogNear','Fog Near',ro.fogNear,5,40,1,'')}
-  ${rngR('fogFar','Fog Far',ro.fogFar,20,120,5,'')}
-  ${toggleRows ? `<div class="r3-env-toggles">${toggleRows}</div>` : ''}
-  ${showR('wallColor') ? `<div class="r3-env-row">
-    <span class="r3-lbl">Wall Color</span>
-    <input type="color" class="r3-color-pick" value="${ro.wallColor ? (typeof ro.wallColor==='string' ? ro.wallColor : '#'+ro.wallColor.toString(16).padStart(6,'0')) : '#1a2a3f'}"
-           oninput="window._r3['${sid}']._setRoom('wallColor',this.value)">
-  </div>` : ''}
-  ${hasLF || showCL ? '<div class="r3-env-sec">Lighting</div>' : ''}
-  ${rngL('ambientIntensity','Ambient',lo.ambientIntensity,0,20,0.5,'')}
-  ${rngL('overheadCount','Overheads',lo.overheadCount,2,12,1,'')}
-  ${rngL('overheadIntensity','OH Intens.',lo.overheadIntensity,0,20,0.5,'')}
-  ${rngL('fillIntensity','Fill',lo.fillIntensity,0,12,0.5,'')}
-  ${rngL('rackGlowIntensity','Rack Glow',lo.rackGlowIntensity,0,12,0.5,'')}
-  ${rngL('floorGlowIntensity','Floor Glow',lo.floorGlowIntensity,0,10,0.5,'')}
-  ${rngL('exposure','Exposure',lo.exposure,0.5,5,0.1,'')}
-  ${togL('shadows','Shadows',lo.shadows)}
-  ${showCL ? `
-  <div class="r3-env-sec" style="display:flex;align-items:center;justify-content:space-between">
-    <span>Custom Lights</span>
-    <button class="r3-btn" style="padding:1px 6px;font-size:9px" onclick="window._r3['${sid}']._addCustomLight()">+ Add</button>
+  return `<div class="r3-tab-bar">
+    <button class="r3-tab active" id="${sid}-lt-scene"    onclick="window._r3['${sid}']._switchLightTab('scene')">Scene</button>
+    <button class="r3-tab"        id="${sid}-lt-overhead" onclick="window._r3['${sid}']._switchLightTab('overhead')">Overhead</button>
+    <button class="r3-tab"        id="${sid}-lt-custom"   onclick="window._r3['${sid}']._switchLightTab('custom')">Custom</button>
   </div>
-  <div class="r3-cl-labels"><span>Type</span><span>X</span><span>Y</span><span>Z</span><span>Int</span><span>Dst</span><span>Col</span></div>
-  <div id="${sid}-custom-lights">${(lo.customLights||[]).map((cl,i) => customLightRow(sid,cl,i)).join('')}</div>` : ''}`;
+
+  <div id="${sid}-lt-body-scene">
+    ${rngL('ambientIntensity','Ambient',lo.ambientIntensity,0,20,0.5,'')}
+    ${rngL('exposure','Exposure',lo.exposure,0.5,5,0.1,'')}
+    ${togL('shadows','Shadows',lo.shadows)}
+  </div>
+
+  <div id="${sid}-lt-body-overhead" style="display:none">
+    ${rngL('overheadCount','Count',lo.overheadCount,2,12,1,'')}
+    ${rngL('overheadIntensity','Intensity',lo.overheadIntensity,0,20,0.5,'')}
+  </div>
+
+  <div id="${sid}-lt-body-custom" style="display:none">
+    ${showCL ? `
+    <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:4px">
+      <button class="r3-btn" style="padding:1px 6px;font-size:9px" onclick="window._r3['${sid}']._addCustomLight()">+ Add</button>
+    </div>
+    <div class="r3-cl-labels"><span>Type</span><span>X</span><span>Y</span><span>Z</span><span>Int</span><span>Dst</span><span>Col</span></div>
+    <div id="${sid}-custom-lights">${(lo.customLights||[]).map((cl,i) => customLightRow(sid,cl,i)).join('')}</div>` : ''}
+  </div>`;
 }
 
 function roomItemsPanelBody(self) {
@@ -193,28 +322,41 @@ function roomItemsPanelBody(self) {
 function rackPropsPanelBody(self) {
   const sid = self._id;
   const ro  = self._opts.rack;
-  return `<div class="r3-rw"><span class="r3-lbl">Name</span><input class="r3-inp" id="${sid}-rn" oninput="window._r3['${sid}']._onRackName(this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Units</span><input class="r3-inp" type="number" id="${sid}-ru" min="4" max="48" style="width:55px" oninput="window._r3['${sid}']._onRackUnits(+this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Width(m)</span><input class="r3-inp" type="number" id="${sid}-rwidth" min="2" max="12" step="0.1" style="width:65px" oninput="window._r3['${sid}']._onRackWidth(+this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Pos X</span><input class="r3-inp" type="number" id="${sid}-rposX" step="0.5" style="width:65px" oninput="window._r3['${sid}']._onRackPos('x',+this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Pos Y</span><input class="r3-inp" type="number" id="${sid}-rposY" step="0.5" style="width:65px" oninput="window._r3['${sid}']._onRackPos('y',+this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Pos Z</span><input class="r3-inp" type="number" id="${sid}-rposZ" step="0.5" style="width:65px" oninput="window._r3['${sid}']._onRackPos('z',+this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Angle°</span><input class="r3-inp" type="number" id="${sid}-rangle" min="-180" max="180" step="5" style="width:65px" oninput="window._r3['${sid}']._onRackAngle(+this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Temp°C</span><input class="r3-inp" type="number" id="${sid}-rtemp" oninput="window._r3['${sid}']._onRackProp('rackTemp',+this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">PDU Cap</span><input class="r3-inp" type="number" id="${sid}-rpduCap" oninput="window._r3['${sid}']._onRackProp('pduCapacity',+this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">PDU Load</span><input class="r3-inp" type="number" id="${sid}-rpduLoad" oninput="window._r3['${sid}']._onRackProp('pduLoad',+this.value)"></div>
-  <div style="margin-top:6px;font-size:10px;color:var(--r3-dim);font-family:'Share Tech Mono',monospace">⟳ Drag rack in 3D to reposition</div>
-  <div class="r3-env-sec">Nameplate</div>
-  <div class="r3-rw"><span class="r3-lbl">Scale</span><input class="r3-inp" type="number" min="0.1" max="5" step="0.1" value="${ro.nameplateScale??1}" style="width:65px" oninput="window._r3['${sid}']._setRackOpt('nameplateScale',+this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Y Offset</span><input class="r3-inp" type="number" step="0.1" value="${ro.nameplateYOffset??0.2}" style="width:65px" oninput="window._r3['${sid}']._setRackOpt('nameplateYOffset',+this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Opacity</span><input class="r3-range" type="range" min="0" max="1" step="0.05" value="${ro.nameplateOpacity??1}" style="flex:1" oninput="window._r3['${sid}']._setRackOpt('nameplateOpacity',+this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Shape</span>
-    <select class="r3-inp" id="${sid}-rnpshape" style="width:85px" onchange="window._r3['${sid}']._onRackProp('nameplateShape',this.value)">
-      <option value="rounded">Rounded</option><option value="rect">Rect</option><option value="pill">Pill</option>
-    </select>
+  return `<div class="r3-tab-bar">
+    <button class="r3-tab active" id="${sid}-rpt-config"    onclick="window._r3['${sid}']._switchRackPropTab('config')">Config</button>
+    <button class="r3-tab"        id="${sid}-rpt-position"  onclick="window._r3['${sid}']._switchRackPropTab('position')">Position</button>
+    <button class="r3-tab"        id="${sid}-rpt-nameplate" onclick="window._r3['${sid}']._switchRackPropTab('nameplate')">Nameplate</button>
   </div>
-  <div class="r3-rw"><span class="r3-lbl">BG Color</span><input type="color" id="${sid}-rnpbg" class="r3-color-pick" oninput="window._r3['${sid}']._onRackProp('nameplateColor',this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Text Color</span><input type="color" id="${sid}-rnptxt" class="r3-color-pick" oninput="window._r3['${sid}']._onRackProp('nameplateTextColor',this.value)"></div>`;
+
+  <div id="${sid}-rpt-body-config">
+    <div class="r3-rw"><span class="r3-lbl">Name</span><input class="r3-inp" id="${sid}-rn" oninput="window._r3['${sid}']._onRackName(this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Units</span><input class="r3-inp" type="number" id="${sid}-ru" min="4" max="48" style="width:55px" oninput="window._r3['${sid}']._onRackUnits(+this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Width(m)</span><input class="r3-inp" type="number" id="${sid}-rwidth" min="2" max="12" step="0.1" style="width:65px" oninput="window._r3['${sid}']._onRackWidth(+this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Temp°C</span><input class="r3-inp" type="number" id="${sid}-rtemp" oninput="window._r3['${sid}']._onRackProp('rackTemp',+this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">PDU Cap</span><input class="r3-inp" type="number" id="${sid}-rpduCap" oninput="window._r3['${sid}']._onRackProp('pduCapacity',+this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">PDU Load</span><input class="r3-inp" type="number" id="${sid}-rpduLoad" oninput="window._r3['${sid}']._onRackProp('pduLoad',+this.value)"></div>
+  </div>
+
+  <div id="${sid}-rpt-body-position" style="display:none">
+    <div class="r3-rw"><span class="r3-lbl">Pos X</span><input class="r3-inp" type="number" id="${sid}-rposX" step="0.5" style="width:65px" oninput="window._r3['${sid}']._onRackPos('x',+this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Pos Y</span><input class="r3-inp" type="number" id="${sid}-rposY" step="0.5" style="width:65px" oninput="window._r3['${sid}']._onRackPos('y',+this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Pos Z</span><input class="r3-inp" type="number" id="${sid}-rposZ" step="0.5" style="width:65px" oninput="window._r3['${sid}']._onRackPos('z',+this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Angle°</span><input class="r3-inp" type="number" id="${sid}-rangle" min="-180" max="180" step="5" style="width:65px" oninput="window._r3['${sid}']._onRackAngle(+this.value)"></div>
+    <div style="margin-top:6px;font-size:10px;color:var(--r3-dim);font-family:'Share Tech Mono',monospace">✥ MOVE mode to drag · ↻ ROTATE mode to spin</div>
+  </div>
+
+  <div id="${sid}-rpt-body-nameplate" style="display:none">
+    <div class="r3-rw"><span class="r3-lbl">Scale</span><input class="r3-inp" type="number" min="0.1" max="5" step="0.1" value="${ro.nameplateScale??1}" style="width:65px" oninput="window._r3['${sid}']._setRackOpt('nameplateScale',+this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Y Offset</span><input class="r3-inp" type="number" step="0.1" value="${ro.nameplateYOffset??0.2}" style="width:65px" oninput="window._r3['${sid}']._setRackOpt('nameplateYOffset',+this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Opacity</span><input class="r3-range" type="range" min="0" max="1" step="0.05" value="${ro.nameplateOpacity??1}" style="flex:1" oninput="window._r3['${sid}']._setRackOpt('nameplateOpacity',+this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Shape</span>
+      <select class="r3-inp" id="${sid}-rnpshape" style="width:85px" onchange="window._r3['${sid}']._onRackProp('nameplateShape',this.value)">
+        <option value="rounded">Rounded</option><option value="rect">Rect</option><option value="pill">Pill</option>
+      </select>
+    </div>
+    <div class="r3-rw"><span class="r3-lbl">BG Color</span><input type="color" id="${sid}-rnpbg" class="r3-color-pick" oninput="window._r3['${sid}']._onRackProp('nameplateColor',this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Text Color</span><input type="color" id="${sid}-rnptxt" class="r3-color-pick" oninput="window._r3['${sid}']._onRackProp('nameplateTextColor',this.value)"></div>
+  </div>`;
 }
 
 function statsPanelBody(self) {
@@ -243,28 +385,42 @@ function devicesPanelBody(self) {
 function editDevicePanelBody(self) {
   const sid = self._id;
   return `<div class="r3-pl" id="${sid}-elbl" style="margin-bottom:5px">Edit Device</div>
-  <div class="r3-rw"><span class="r3-lbl">Name</span><input class="r3-inp" id="${sid}-en" oninput="window._r3['${sid}']._ed('name',this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Type</span>
-    <select class="r3-inp" id="${sid}-et" onchange="window._r3['${sid}']._ed('type',this.value)">
-      ${Object.entries(self._types).map(([k,tv])=>`<option value="${k}">${tv.label}</option>`).join('')}
-    </select>
+  <div class="r3-tab-bar">
+    <button class="r3-tab active" id="${sid}-edt-properties" onclick="window._r3['${sid}']._switchEditDevTab('properties')">Properties</button>
+    <button class="r3-tab"        id="${sid}-edt-style"      onclick="window._r3['${sid}']._switchEditDevTab('style')">Style</button>
+    <button class="r3-tab"        id="${sid}-edt-network"    onclick="window._r3['${sid}']._switchEditDevTab('network')">Network</button>
   </div>
-  <div class="r3-rw"><span class="r3-lbl">Watts</span><input class="r3-inp" type="number" id="${sid}-ew" oninput="window._r3['${sid}']._ed('watts',+this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Height U</span><input class="r3-inp" type="number" min="1" max="12" id="${sid}-eh" oninput="window._r3['${sid}']._ed('heightUnits',+this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Start U</span><input class="r3-inp" type="number" min="1" id="${sid}-es" oninput="window._r3['${sid}']._ed('startUnit',+this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Width</span>
-    <select class="r3-inp" id="${sid}-ehw" onchange="window._r3['${sid}']._ed('halfWidth',this.value||undefined)">
-      <option value="">Full Width</option><option value="left">Half — Left</option><option value="right">Half — Right</option>
-    </select>
+
+  <div id="${sid}-edt-body-properties">
+    <div class="r3-rw"><span class="r3-lbl">Name</span><input class="r3-inp" id="${sid}-en" oninput="window._r3['${sid}']._ed('name',this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Type</span>
+      <select class="r3-inp" id="${sid}-et" onchange="window._r3['${sid}']._ed('type',this.value)">
+        ${Object.entries(self._types).map(([k,tv])=>`<option value="${k}">${tv.label}</option>`).join('')}
+      </select>
+    </div>
+    <div class="r3-rw"><span class="r3-lbl">Watts</span><input class="r3-inp" type="number" id="${sid}-ew" oninput="window._r3['${sid}']._ed('watts',+this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Height U</span><input class="r3-inp" type="number" min="1" max="12" id="${sid}-eh" oninput="window._r3['${sid}']._ed('heightUnits',+this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Start U</span><input class="r3-inp" type="number" min="1" id="${sid}-es" oninput="window._r3['${sid}']._ed('startUnit',+this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Width</span>
+      <select class="r3-inp" id="${sid}-ehw" onchange="window._r3['${sid}']._ed('halfWidth',this.value||undefined)">
+        <option value="">Full Width</option><option value="left">Half — Left</option><option value="right">Half — Right</option>
+      </select>
+    </div>
   </div>
-  <div class="r3-rw"><span class="r3-lbl">Color</span><input class="r3-inp" type="color" id="${sid}-ecolor" style="padding:2px;height:28px" oninput="window._r3['${sid}']._ed('color',this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Front Img</span><input class="r3-inp" id="${sid}-eimg" placeholder="URL" oninput="window._r3['${sid}']._ed('imageUrl',this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Rear Img</span><input class="r3-inp" id="${sid}-eimgr" placeholder="URL" oninput="window._r3['${sid}']._ed('imageUrlRear',this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">IP</span><input class="r3-inp" id="${sid}-eip" oninput="window._r3['${sid}']._ed('ip',this.value)"></div>
-  <div class="r3-rw"><span class="r3-lbl">Status</span><select class="r3-inp" id="${sid}-estat" onchange="window._r3['${sid}']._ed('status',this.value||undefined)"><option value="">-</option><option value="up">Up ▲</option><option value="down">Down ▼</option><option value="warn">Warn ⚠</option></select></div>
-  <div class="r3-rw" style="flex-direction:column;align-items:stretch;gap:4px">
-    <div style="display:flex;align-items:center;justify-content:space-between"><span class="r3-lbl">Custom Fields</span><button class="r3-btn" style="padding:1px 6px;font-size:10px" onclick="window._r3['${sid}']._addCustomField()">+ Add</button></div>
-    <div id="${sid}-efields"></div>
+
+  <div id="${sid}-edt-body-style" style="display:none">
+    <div class="r3-rw"><span class="r3-lbl">Color</span><input class="r3-inp" type="color" id="${sid}-ecolor" style="padding:2px;height:28px" oninput="window._r3['${sid}']._ed('color',this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Front Img</span><input class="r3-inp" id="${sid}-eimg" placeholder="URL" oninput="window._r3['${sid}']._ed('imageUrl',this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Rear Img</span><input class="r3-inp" id="${sid}-eimgr" placeholder="URL" oninput="window._r3['${sid}']._ed('imageUrlRear',this.value)"></div>
+  </div>
+
+  <div id="${sid}-edt-body-network" style="display:none">
+    <div class="r3-rw"><span class="r3-lbl">IP</span><input class="r3-inp" id="${sid}-eip" oninput="window._r3['${sid}']._ed('ip',this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Status</span><select class="r3-inp" id="${sid}-estat" onchange="window._r3['${sid}']._ed('status',this.value||undefined)"><option value="">-</option><option value="up">Up ▲</option><option value="down">Down ▼</option><option value="warn">Warn ⚠</option></select></div>
+    <div class="r3-rw" style="flex-direction:column;align-items:stretch;gap:4px">
+      <div style="display:flex;align-items:center;justify-content:space-between"><span class="r3-lbl">Custom Fields</span><button class="r3-btn" style="padding:1px 6px;font-size:10px" onclick="window._r3['${sid}']._addCustomField()">+ Add</button></div>
+      <div id="${sid}-efields"></div>
+    </div>
   </div>`;
 }
 
@@ -371,7 +527,11 @@ function catalogPanelBody(self) {
     <div style="flex:1"></div>
     <button class="r3-btn" id="${sid}-tab-cat-add" style="padding:1px 7px;font-size:9px" onclick="window._r3['${sid}']._addCatalogItem()">+ New</button>
   </div>
-  <div id="${sid}-tab-body-cat"><div id="${sid}-cat" class="r3-cat-list"></div></div>
+  <div id="${sid}-tab-body-cat">
+    <input class="r3-inp" id="${sid}-cat-search" placeholder="Search catalog…" style="width:100%;box-sizing:border-box;margin-bottom:5px"
+           oninput="window._r3['${sid}']._catQuery=this.value;window._r3['${sid}']._renderCatalog()">
+    <div id="${sid}-cat" class="r3-cat-list"></div>
+  </div>
   ${sb.showUnitMap ? `<div id="${sid}-tab-body-um" style="display:none"><div class="r3-um" id="${sid}-um"></div></div>` : ''}`;
 }
 
@@ -403,7 +563,21 @@ export function buildHTML(self) {
     <button class="r3-btn" id="${sid}-btnW" onclick="window._r3['${sid}'].toggleWire()">◻ WIRE</button>
     <button class="r3-btn" id="${sid}-btnCam" onclick="window._r3['${sid}'].toggleCameraMode()">${self._ctrl?.mode==='fps'?'⊹ FPS':'⊕ ORBIT'}</button>
     <button class="r3-btn" id="${sid}-btn2d" onclick="window._r3['${sid}'].toggleMode()">⊞ ${self._mode==='2d'?'3D':'2D'}</button>
+    <div class="r3-sep"></div>
+    <button class="r3-btn" id="${sid}-btnMove"   onclick="window._r3['${sid}']._setTransformMode('move')"   title="Move items in 3D (drag to reposition)">✥ MOVE</button>
+    <button class="r3-btn" id="${sid}-btnRotate" onclick="window._r3['${sid}']._setTransformMode('rotate')" title="Rotate items in 3D (drag left/right)">↻ ROTATE</button>
+    <div class="r3-sep"></div>
+    <select class="r3-inp r3-inp-xs" id="${sid}-theme-sel" title="Theme"
+            onchange="window._r3['${sid}']._onThemeChange(this.value)"
+            style="height:22px;font-size:10px;padding:0 4px;cursor:pointer">
+      <option value="dark">Dark</option>
+      <option value="light">Light</option>
+      <option value="oled">OLED</option>
+      <option value="warm">Warm</option>
+      <option value="matrix">Matrix</option>
+    </select>
     ${v.allowJsonEdit?`<button class="r3-btn" id="${sid}-btnJ" onclick="window._r3['${sid}'].toggleJson()">{ } JSON</button>`:''}
+    <button class="r3-btn" id="${sid}-btnHelp" onclick="window._r3['${sid}'].toggleHelp()" title="Help &amp; About">? HELP</button>
   </div>`;
 
   const sidebarHtml = !sb.enabled ? '' : `
@@ -411,13 +585,14 @@ export function buildHTML(self) {
        ondragover="event.preventDefault()"
        ondrop="window._r3['${sid}']._onPanelDropSidebar(event,'left')">
     ${panelHtml(self,'room','Room',roomPanelBody(self))}
-    ${panelHtml(self,'env','Environment',envPanelBody(self))}
+    ${panelHtml(self,'env','Lighting',envPanelBody(self))}
     ${panelHtml(self,'catalog','Catalog',catalogPanelBody(self))}
   </div>`;
 
   const canvasHtml = `
   <div class="r3-cv" id="${sid}-cvcont">
     <canvas id="${sid}-cv3" class="r3-canvas"></canvas>
+    <canvas class="r3-axis-gizmo" id="${sid}-axis-gizmo" width="64" height="64"></canvas>
     <div class="r3-scan"></div>
     <div class="r3-labels" id="${sid}-labels"></div>
     <div class="r3-zoom-btns">
@@ -481,8 +656,76 @@ export function buildHTML(self) {
   const leftHandleHtml  = !sb.enabled ? '' : `<div class="r3-sb-handle"  id="${sid}-sb-handle"  style="display:${showL?'flex':'none'}"></div>`;
   const rightHandleHtml = !sb.enabled ? '' : `<div class="r3-sb-handle r3-sbr-handle" id="${sid}-sbr-handle" style="display:${showR?'flex':'none'}"></div>`;
 
-  return `${toolbar}<div class="r3-body">${sidebarHtml}${leftHandleHtml}${self._mode==='2d'?view2dHtml:canvasHtml}${self._mode==='2d'?canvasHtml:view2dHtml}${rightHandleHtml}${rightSidebarHtml}</div>`;
+  const helpModal = `
+  <div class="r3-help-modal" id="${sid}-help-modal" style="display:none">
+    <div class="r3-help-box">
+      <div class="r3-help-hdr">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px">RACK3D HELP</span>
+        <button class="r3-ph-btn" style="font-size:16px;margin-left:auto" onclick="window._r3['${sid}'].toggleHelp()">×</button>
+      </div>
+      <div class="r3-tab-bar" style="margin-bottom:0;border-bottom:1px solid var(--r3-border)">
+        <button class="r3-tab active" id="${sid}-ht-controls" onclick="window._r3['${sid}']._switchHelpTab('controls')">Controls</button>
+        <button class="r3-tab"        id="${sid}-ht-help"     onclick="window._r3['${sid}']._switchHelpTab('help')">Help</button>
+        <button class="r3-tab"        id="${sid}-ht-about"    onclick="window._r3['${sid}']._switchHelpTab('about')">About</button>
+      </div>
+      <div class="r3-help-body">
+        <div id="${sid}-ht-body-controls">
+          <div class="r3-help-sec">Camera</div>
+          <div class="r3-help-row"><span class="r3-help-key">Drag</span><span>Orbit / look around</span></div>
+          <div class="r3-help-row"><span class="r3-help-key">Scroll</span><span>Zoom in/out</span></div>
+          <div class="r3-help-row"><span class="r3-help-key">⊹ FPS</span><span>Switch to FPS walk mode</span></div>
+          <div class="r3-help-row"><span class="r3-help-key">WASD</span><span>Walk in FPS mode</span></div>
+          <div class="r3-help-row"><span class="r3-help-key">Q / E</span><span>Move up / down in FPS mode</span></div>
+          <div class="r3-help-row"><span class="r3-help-key">ESC</span><span>Release mouse lock</span></div>
+          <div class="r3-help-sec">Selection &amp; Transform</div>
+          <div class="r3-help-row"><span class="r3-help-key">Click</span><span>Select rack or device</span></div>
+          <div class="r3-help-row"><span class="r3-help-key">✥ MOVE</span><span>Activate move mode — drag racks / items</span></div>
+          <div class="r3-help-row"><span class="r3-help-key">↻ ROTATE</span><span>Activate rotate mode — drag left/right to spin</span></div>
+          <div class="r3-help-row"><span class="r3-help-key">Click mode btn</span><span>Toggle off move/rotate mode</span></div>
+          <div class="r3-help-sec">Panels</div>
+          <div class="r3-help-row"><span class="r3-help-key">◧ / ◨</span><span>Toggle left / right sidebar</span></div>
+          <div class="r3-help-row"><span class="r3-help-key">◈ LABELS</span><span>Show/hide device labels</span></div>
+          <div class="r3-help-row"><span class="r3-help-key">◻ WIRE</span><span>Wireframe overlay</span></div>
+          <div class="r3-help-row"><span class="r3-help-key">⊞ 2D</span><span>Switch to 2D flat view</span></div>
+        </div>
+        <div id="${sid}-ht-body-help" style="display:none">
+          <div class="r3-help-sec">Getting Started</div>
+          <div class="r3-help-row" style="flex-direction:column;align-items:flex-start;gap:3px">
+            <span>1. Use the <b>Room</b> panel (left) to manage racks, layout, walls, and pillars.</span>
+            <span>2. Click a rack in the scene or the rack list to select it.</span>
+            <span>3. Use <b>Rack Properties</b> (right) to configure the selected rack.</span>
+            <span>4. Use the <b>Devices</b> panel to add/edit devices in the rack.</span>
+            <span>5. Use <b>Catalog</b> to maintain reusable device templates.</span>
+          </div>
+          <div class="r3-help-sec">Moving Items</div>
+          <div class="r3-help-row" style="flex-direction:column;align-items:flex-start;gap:3px">
+            <span>Enable <b>✥ MOVE</b> in the toolbar, then click-drag any rack or room item to reposition it on the floor.</span>
+            <span>Enable <b>↻ ROTATE</b> then drag left/right to rotate the selected item around the Y axis.</span>
+            <span>Click the active button again to deactivate transform mode.</span>
+          </div>
+          <div class="r3-help-sec">JSON Export / Import</div>
+          <div class="r3-help-row" style="flex-direction:column;align-items:flex-start;gap:3px">
+            <span>Use <b>{ } JSON</b> to open the JSON editor. Click <b>↺ EXPORT</b> to populate it with current data, edit as needed, then <b>✓ APPLY</b> to load it.</span>
+          </div>
+        </div>
+        <div id="${sid}-ht-body-about" style="display:none">
+          <div style="display:flex;flex-direction:column;gap:8px;padding-top:4px">
+            <div style="font-size:20px;font-family:'Share Tech Mono',monospace;letter-spacing:3px">RACK<span style="color:var(--r3-accent)">3D</span></div>
+            <div style="font-size:11px;color:var(--r3-dim)">Version 1.0.0</div>
+            <div style="font-size:11px;line-height:1.6">Interactive 3D data center rack visualization library. Build, arrange, and inspect rack infrastructure in real time.</div>
+            <div class="r3-help-sec" style="margin-top:4px">Details</div>
+            <div class="r3-help-row"><span class="r3-help-key">Author</span><span>Rack3D Contributors</span></div>
+            <div class="r3-help-row"><span class="r3-help-key">License</span><span>MIT</span></div>
+            <div class="r3-help-row"><span class="r3-help-key">Engine</span><span>Three.js r128</span></div>
+            <div class="r3-help-row"><span class="r3-help-key">Build</span><span>Rollup · ESM / CJS / UMD</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  return `${toolbar}${helpModal}<div class="r3-body">${sidebarHtml}${leftHandleHtml}${self._mode==='2d'?view2dHtml:canvasHtml}${self._mode==='2d'?canvasHtml:view2dHtml}${rightHandleHtml}${rightSidebarHtml}</div>`;
 }
 
 // Exported for dynamic re-render
-export { customLightRow, roomItemRow, roomItemsPanelBody, vmPanelBody, vmCard, vmPortRow };
+export { customLightRow, roomItemRow, roomItemsPanelBody, vmPanelBody, vmCard, vmPortRow, wallRow, pillarRow };

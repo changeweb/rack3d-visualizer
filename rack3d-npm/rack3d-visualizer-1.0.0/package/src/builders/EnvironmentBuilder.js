@@ -25,6 +25,7 @@ export class EnvironmentBuilder {
     this._buildFloor(scene, W, D, cx, cz, ts2, ts, ro);
     this._buildCeiling(scene, W, D, H, cx, cz, ts);
     this._buildWalls(scene, W, D, H, cx, cz, ts, ro);
+    this._buildPillars(scene, ro);
     this._buildStripLights(scene, W, D, H, cx, cz, ts, ro);
     this._buildBaseboardLights(scene, W, D, cx, cz, ts, ro);
     this._buildLights(scene, lo, ts);
@@ -120,6 +121,24 @@ export class EnvironmentBuilder {
   }
 
   _buildWalls(scene, W, D, H, cx, cz, ts, ro) {
+    if (ro.walls && ro.walls.length > 0) {
+      ro.walls.forEach(wall => {
+        if (wall.visible === false) return;
+        const color = wall.color
+          ? (typeof wall.color === 'string' ? parseInt(wall.color.replace('#', ''), 16) : wall.color)
+          : (ro.wallColor ? (typeof ro.wallColor === 'string' ? parseInt(ro.wallColor.replace('#', ''), 16) : ro.wallColor) : ts.wallColor);
+        const opacity = wall.opacity ?? 1.0;
+        const mat = new this.THREE.MeshStandardMaterial({
+          color, roughness: 0.8, metalness: 0.05, side: this.THREE.DoubleSide,
+          transparent: opacity < 1.0, opacity
+        });
+        const mesh = new this.THREE.Mesh(new this.THREE.PlaneGeometry(wall.length || W, wall.height || H), mat);
+        mesh.position.set(wall.x || cx, (wall.height || H) / 2, wall.z || cz);
+        mesh.rotation.y = wall.angle || 0;
+        scene.add(mesh);
+      });
+      return;
+    }
     const baseColor = ro.wallColor
       ? (typeof ro.wallColor === 'string' ? parseInt(ro.wallColor.replace('#',''), 16) : ro.wallColor)
       : ts.wallColor;
@@ -143,6 +162,23 @@ export class EnvironmentBuilder {
     rw.rotation.y = -Math.PI / 2;
     rw.position.set(cx + W / 2, H / 2, cz);
     scene.add(rw);
+  }
+
+  _buildPillars(scene, ro) {
+    (ro.pillars || []).forEach(p => {
+      const geo = p.shape === 'cylinder'
+        ? new this.THREE.CylinderGeometry(p.radius || 0.4, p.radius || 0.4, p.height || 14, 16)
+        : new this.THREE.BoxGeometry(p.width || 0.8, p.height || 14, p.depth || 0.8);
+      const color = p.color
+        ? (typeof p.color === 'string' ? parseInt(p.color.replace('#', ''), 16) : p.color)
+        : 0x2a3a4a;
+      const mat = new this.THREE.MeshStandardMaterial({ color, roughness: 0.7, metalness: 0.3 });
+      const mesh = new this.THREE.Mesh(geo, mat);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.position.set(p.x || 0, (p.height || 14) / 2, p.z || 0);
+      scene.add(mesh);
+    });
   }
 
   _buildStripLights(scene, W, D, H, cx, cz, ts, ro) {
@@ -286,7 +322,7 @@ export class EnvironmentBuilder {
     scene.add(fl2);
 
     // Floor accent glow
-    const floorGlow = new this.THREE.PointLight(0x5588ee, lo.floorGlowIntensity ?? 2.0, 22);
+    const floorGlow = new this.THREE.PointLight(0x5588ee, 2.0, 22);
     floorGlow.position.set(0, 0.2, 2);
     scene.add(floorGlow);
 

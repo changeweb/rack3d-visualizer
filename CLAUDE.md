@@ -2,8 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Guideline
+## Development Best Practices
 
+- Use comments sparingly. Only comment complex code.
 - **No need to provide explanation** of your thinking, reasoning, and of the output and do not need to tell what issues have been solved.
 - Always stop the running node server after I give my prompt.
 
@@ -79,6 +80,13 @@ Vite log is written to `/tmp/vite.log` during dev sessions.
 room {
   catalog: [...],          // shared device catalog across all racks
   layout: { rows, cols, colSpacing, rowSpacing },
+  room_items: [...],       // free-standing equipment (UPS, aircon, shelf, etc.)
+  room_walls: [            // optional: individual wall control (omit → auto 4-wall from room dims)
+    { id, name, length, height, x, z, angle, color, opacity, visible }
+  ],
+  room_pillars: [          // optional: structural pillars
+    { id, x, z, shape: 'cylinder'|'square', radius, width, depth, height, color }
+  ],
   racks: [
     {
       id, name, units,
@@ -96,6 +104,7 @@ Key instance state in `Rack3DVisualizer`:
 - `_room` — full room data
 - `_rack` — pointer to currently selected rack (one of `_room.racks[i]`)
 - `_selRackId` / `_selId` — selected rack ID and device ID
+- `_selItemId` — selected room item ID
 - `_rackGroups` — `{ [rackId]: THREE.Group }` — one group per rack in the scene
 
 ## Scale
@@ -114,6 +123,28 @@ Two modes toggled by `toggleCameraMode()`:
 **Orbit mode**: Mouse drag for azimuth/elevation, scroll to zoom.
 
 Both use `_posCamera()` to apply the transform to `this._cam`.
+
+Camera initial FPS position is set via `camera.initialPos: { x, y, z }` option (default `{ x:0, y:16, z:-26 }`).
+
+## UI Panel Structure
+
+**Left sidebar:**
+- **Room** panel — 4 tabs: **Racks** (rack list + add) | **Layout** (grid rows/cols/spacing, room dims, fog, tiles) | **Walls** (per-wall CRUD) | **Pillars** (pillar CRUD)
+- **Lighting** panel — ambient, overhead, exposure, shadows, custom lights
+
+**Right sidebar:**
+- Room Items, Rack Properties, Statistics, Devices, Edit Device, Virtual Machines
+
+## Key Options
+
+`camera.initialPos: { x, y, z }` — FPS start position.
+`room.tileSize` — floor tile size in metres (default 2.0).
+`room_walls` — when present, replaces auto-computed 4 walls. Each: `{ id, name, length, height, x, z, angle, color, opacity, visible }`.
+`room_pillars` — structural pillars. Each: `{ id, x, z, shape:'cylinder'|'square', radius, width, depth, height, color }`.
+
+## Axis Gizmo
+
+64×64 canvas at top-left of the 3D view. Displays X (red), Y (green), Z (blue) axes projected from `camera.matrixWorldInverse`, sorted back-to-front. Updates every frame on camera movement via `_updateAxisGizmo()`.
 
 ## Three.js Loading
 

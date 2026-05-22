@@ -35,7 +35,8 @@ export class GeometryManager {
     // Build into a group so it can be cleared on rebuild
     this._envGroup = new this.THREE.Group();
     this.scene.add(this._envGroup);
-    this.environmentBuilder.build(this._envGroup, roomOptions, lightingOptions, sceneTheme);
+    const mergedRO = { ...roomOptions, walls: room?.room_walls, pillars: room?.room_pillars };
+    this.environmentBuilder.build(this._envGroup, mergedRO, lightingOptions, sceneTheme);
   }
 
   buildRoomItems(items) {

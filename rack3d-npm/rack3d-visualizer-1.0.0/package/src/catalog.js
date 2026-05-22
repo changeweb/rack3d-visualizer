@@ -5,6 +5,7 @@ export function renderCatalog(self) {
   if (!el) return;
   const catalog = self._room?.catalog || [];
   const allowDrag = self._opts.view.allowDragDrop;
+  const query = (self._catQuery || '').toLowerCase().trim();
 
   el.innerHTML = '';
 
@@ -30,6 +31,11 @@ export function renderCatalog(self) {
     const label = typeInfo.label || type;
     const isOpen = self._catCollapsed[type] !== true;
 
+    const filtered = query
+      ? items.filter(i => i.name.toLowerCase().includes(query) || i.type.toLowerCase().includes(query))
+      : items;
+    if (filtered.length === 0) return;
+
     const group = document.createElement('div');
     group.className = 'r3-cat-group';
 
@@ -39,7 +45,7 @@ export function renderCatalog(self) {
       <span style="display:inline-block;width:9px;height:9px;border-radius:1px;background:${col};flex-shrink:0"></span>
       <span style="color:${col}">${icon}</span>
       <span style="flex:1">${label}</span>
-      <span style="opacity:.4;font-size:9px">${items.length}</span>`;
+      <span style="opacity:.4;font-size:9px">${filtered.length}</span>`;
     hdr.addEventListener('click', () => {
       self._catCollapsed[type] = isOpen;
       self._renderCatalog();
@@ -50,7 +56,7 @@ export function renderCatalog(self) {
     body.className = 'r3-cat-group-body';
     body.style.display = isOpen ? '' : 'none';
 
-    items.forEach(item => {
+    filtered.forEach(item => {
       const isSel = self._selCatId === item.id;
       const d = document.createElement('div');
       d.className = 'r3-dc r3-cat-item' + (isSel ? ' sel' : '');

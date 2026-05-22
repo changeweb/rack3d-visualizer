@@ -4,11 +4,6 @@
  * @property {number} [ambientColor=0xd0e8ff]     - Ambient light colour (hex)
  * @property {number} [overheadIntensity=9.0]     - Overhead directional lights intensity
  * @property {number} [overheadCount=6]           - Number of overhead light banks (2–12)
- * @property {number} [frontIntensity=10.0]       - Front-facing key light intensity
- * @property {number} [fillIntensity=6.0]         - Side fill light intensity
- * @property {number} [rimIntensity=4.0]          - Rear rim light intensity
- * @property {number} [rackGlowIntensity=6.0]     - Internal rack LED glow
- * @property {number} [floorGlowIntensity=3.0]    - Floor point-light glow
  * @property {number} [exposure=2.8]              - ACES tone-mapping exposure
  * @property {boolean} [shadows=true]             - Enable shadow maps
  */
@@ -23,6 +18,7 @@
  * @property {number} [maxDistance=80]       - Maximum zoom-out distance
  * @property {number} [orbitSpeed=0.0045]    - Mouse drag orbit speed
  * @property {number} [zoomSpeed=0.035]      - Scroll wheel zoom speed
+ * @property {{x:number,y:number,z:number}} [initialPos] - FPS camera starting position
  */
 
 /**
@@ -131,6 +127,7 @@ export const DEFAULT_OPTIONS = {
     maxDistance: 80,
     orbitSpeed:  0.0045,
     zoomSpeed:   0.035,
+    initialPos:  { x: 0, y: 16, z: -26 },
   },
 
   lighting: {
@@ -138,11 +135,6 @@ export const DEFAULT_OPTIONS = {
     ambientColor:      0xd0e8ff,
     overheadIntensity: 9.0,
     overheadCount:     6,
-    frontIntensity:    10.0,
-    fillIntensity:     6.0,
-    rimIntensity:      4.0,
-    rackGlowIntensity: 6.0,
-    floorGlowIntensity:3.0,
     exposure:          2.8,
     shadows:           true,
     shadowMapSize:     512,
@@ -156,7 +148,7 @@ export const DEFAULT_OPTIONS = {
     depth:          20,
     height:         14,
     floorTiles:     true,
-    tileSize:       0.6,
+    tileSize:       2.0,
     ceilingGrid:    true,
     stripLights:    true,
     baseboardLights:true,
