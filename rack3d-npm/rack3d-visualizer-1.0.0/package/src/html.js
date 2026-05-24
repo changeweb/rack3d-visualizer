@@ -14,6 +14,7 @@ function panelHtml(self, id, title, body, opts = {}) {
       <button class="r3-ph-btn" title="Collapse" onclick="window._r3['${sid}']._togglePanel('${id}')">▾</button>
     </div>
     <div class="r3-pb" id="${sid}-panel-${id}">${body}</div>
+    <div class="r3-pb-resize" onmousedown="window._r3['${sid}']._onPanelResizeStart(event,'${id}')"></div>
   </div>`;
 }
 

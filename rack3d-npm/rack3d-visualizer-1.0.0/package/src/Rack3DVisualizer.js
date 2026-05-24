@@ -327,6 +327,8 @@ export class Rack3DVisualizer {
     this._ren.setSize(W, H);
     this._ren.shadowMap.enabled = this._opts.lighting.shadows;
     this._ren.shadowMap.type = T.PCFSoftShadowMap;
+    this._ren.shadowMap.autoUpdate = false;
+    this._shadowMapDirty = true;
     this._ren.setClearColor(this._theme.scene.clearColor, 1);
     this._ren.physicallyCorrectLights = true;
     this._ren.toneMapping = T.ACESFilmicToneMapping;
@@ -407,6 +409,7 @@ export class Rack3DVisualizer {
   }
 
   _buildRack() {
+    this._shadowMapDirty = true;
     this._clearRack();
     this._geometryManager.buildAllRacks(this._room, this._opts.rack, this._theme.rack, this._selRackId);
 
@@ -901,10 +904,9 @@ export class Rack3DVisualizer {
   _startLoop() {
     cancelAnimationFrame(this._raf);
 
-    const MS_ACTIVE = 1000 / 20;   // max 20 fps when active (was 60)
-    const MS_IDLE   = 800;          // ~1 fps when truly idle — almost no GPU work
-
+    const MS_IDLE = 800;
     let lastTime = 0;
+    let lastMoveTime = 0;
     let lastSelId = null, lastSelRackId = null, lastSelItemId = null;
     let lastAz = this._ctrl.az, lastEl = this._ctrl.el, lastR = this._ctrl.r;
     let lastPosX = this._ctrl.pos.x, lastPosY = this._ctrl.pos.y, lastPosZ = this._ctrl.pos.z;
@@ -913,19 +915,27 @@ export class Rack3DVisualizer {
     const loop = (now) => {
       this._raf = requestAnimationFrame(loop);
 
-      // FPS movement
+      // deltaTime normalised to 60fps; capped so teleportation can't happen on tab-resume
+      const dt = Math.min((now - lastMoveTime) / (1000 / 60), 4);
+      lastMoveTime = now;
+
+      // FPS movement — all distances multiplied by dt for frame-rate-independent speed
       if (this._ctrl.mode === 'fps') {
-        const { keys, pos, yaw } = this._ctrl;
+        const { keys, pos } = this._ctrl;
+        const yaw   = this._ctrl.yaw;
         const fast  = keys['ShiftLeft'] || keys['ShiftRight'];
         const spd   = this._ctrl.moveSpeed * (fast ? 2.5 : 1);
+        const rotSpd = 0.04;
         const fwdX  = Math.sin(yaw), fwdZ = Math.cos(yaw);
         const rtX   = Math.cos(yaw), rtZ  = -Math.sin(yaw);
-        if (keys['KeyW']||keys['ArrowUp'])    { pos.x+=fwdX*spd; pos.z+=fwdZ*spd; }
-        if (keys['KeyS']||keys['ArrowDown'])  { pos.x-=fwdX*spd; pos.z-=fwdZ*spd; }
-        if (keys['KeyA']||keys['ArrowLeft'])  { pos.x-=rtX*spd;  pos.z-=rtZ*spd;  }
-        if (keys['KeyD']||keys['ArrowRight']) { pos.x+=rtX*spd;  pos.z+=rtZ*spd;  }
-        if (keys['KeyQ']||keys['PageUp'])     { pos.y+=spd; }
-        if (keys['KeyE']||keys['PageDown'])   { pos.y-=spd; }
+        if (keys['KeyW']   || keys['ArrowUp'])    { pos.x += fwdX*spd*dt; pos.z += fwdZ*spd*dt; }
+        if (keys['KeyS']   || keys['ArrowDown'])  { pos.x -= fwdX*spd*dt; pos.z -= fwdZ*spd*dt; }
+        if (keys['KeyA'])                         { pos.x -= rtX*spd*dt;  pos.z -= rtZ*spd*dt;  }
+        if (keys['KeyD'])                         { pos.x += rtX*spd*dt;  pos.z += rtZ*spd*dt;  }
+        if (keys['ArrowLeft'])                    { this._ctrl.yaw -= rotSpd*dt; }
+        if (keys['ArrowRight'])                   { this._ctrl.yaw += rotSpd*dt; }
+        if (keys['KeyQ']   || keys['PageUp'])     { pos.y += spd*dt; }
+        if (keys['KeyE']   || keys['PageDown'])   { pos.y -= spd*dt; }
         // Clamp to room bounds (scene room center offset: cx=0, cz=2)
         const ro = this._opts.room;
         const margin = 0.8;
@@ -947,6 +957,7 @@ export class Rack3DVisualizer {
 
       if (camChange || fpsMoving) this._posCamera();
 
+      const MS_ACTIVE  = fpsMoving ? 1000 / 30 : 1000 / 20;
       const interval = dirty ? MS_ACTIVE : MS_IDLE;
       if (now - lastTime < interval) return;
       lastTime = now;
@@ -987,6 +998,10 @@ export class Rack3DVisualizer {
         }
       }
 
+      if (this._shadowMapDirty && !fpsMoving) {
+        this._ren.shadowMap.needsUpdate = true;
+        this._shadowMapDirty = false;
+      }
       this._ren.render(this._scene, this._cam);
 
       // Labels are CSS divs projected from 3D — only update when camera or selection moves
@@ -1800,6 +1815,7 @@ export class Rack3DVisualizer {
 
   // ─── Room items ───────────────────────────────────────────
   _buildRoomItems() {
+    this._shadowMapDirty = true;
     this._geometryManager?.buildRoomItems(this._room?.room_items || []);
   }
 
@@ -2065,6 +2081,27 @@ export class Rack3DVisualizer {
   _togglePanel(panelId) {
     const panel = document.querySelector(`#${this._id} [data-panel-id="${panelId}"]`);
     if (panel) { panel.classList.toggle('r3-collapsed'); this._savePanelState(); }
+  }
+
+  _onPanelResizeStart(e, panelId) {
+    e.preventDefault(); e.stopPropagation();
+    const pbEl = document.getElementById(`${this._id}-panel-${panelId}`);
+    if (!pbEl) return;
+    const handle = e.currentTarget;
+    handle.classList.add('r3-resizing');
+    const startY = e.clientY;
+    const startH = pbEl.offsetHeight;
+    const onMove = ev => {
+      const h = Math.max(40, Math.min(600, startH + ev.clientY - startY));
+      pbEl.style.maxHeight = h + 'px';
+    };
+    const onUp = () => {
+      handle.classList.remove('r3-resizing');
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
   }
 
   _savePanelState() {

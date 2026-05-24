@@ -267,8 +267,14 @@ export function buildCSS(scope, theme, opts) {
   transition:all .2s; transform-origin:center;
 }
 #${scope} .r3-ph-btn:hover { color:var(--r3-dim); }
-#${scope} .r3-pb { padding:8px 10px; }
+#${scope} .r3-pb { padding:8px 10px; overflow-y:auto; max-height:260px; min-height:40px; }
 #${scope} .r3-panel.r3-collapsed .r3-pb { display:none; }
+#${scope} .r3-pb-resize {
+  height:5px; cursor:ns-resize; background:transparent; flex-shrink:0;
+  border-top:1px solid var(--r3-border); transition:background .15s;
+}
+#${scope} .r3-panel.r3-collapsed .r3-pb-resize { display:none; }
+#${scope} .r3-pb-resize:hover, #${scope} .r3-pb-resize.r3-resizing { background:${c.accent}44; }
 #${scope} .r3-panel.r3-collapsed .r3-ph-btn { transform:rotate(-90deg); }
 #${scope} .r3-panel.r3-panel-dragging { opacity:0.4; }
 #${scope} .r3-panel.r3-panel-drop-before { border-top:2px solid var(--r3-accent); }
