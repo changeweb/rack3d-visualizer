@@ -599,10 +599,8 @@ export class Rack3DVisualizer {
                 this._selRackId = rack.id; this._rack = rack;
                 const gid = this._selGroupId && this._itemGroupIds(rackId).includes(this._selGroupId) ? this._selGroupId : null;
                 this._rotateDragState = { active: true, type: 'rack', id: rackId,
-                  startX: e.clientX, startAngle: rack.facingAngle || 0, lastRebuild: 0,
+                  startX: e.clientX, startAngle: rack.facingAngle || 0,
                   groupId: gid,
-                  centroid: gid ? this._groupCentroid(gid) : null,
-                  groupStartPos: gid ? this._snapshotGroupPositions(gid) : null,
                   groupStartAngles: gid ? this._snapshotGroupAngles(gid) : null };
                 cv.style.cursor = 'ew-resize'; return;
               }
@@ -612,10 +610,8 @@ export class Rack3DVisualizer {
                 this._selItemId = hit.id;
                 const gid = this._selGroupId && this._itemGroupIds(hit.id).includes(this._selGroupId) ? this._selGroupId : null;
                 this._rotateDragState = { active: true, type: 'item', id: hit.id,
-                  startX: e.clientX, startAngle: item.angle || 0, lastRebuild: 0,
+                  startX: e.clientX, startAngle: item.angle || 0,
                   groupId: gid,
-                  centroid: gid ? this._groupCentroid(gid) : null,
-                  groupStartPos: gid ? this._snapshotGroupPositions(gid) : null,
                   groupStartAngles: gid ? this._snapshotGroupAngles(gid) : null };
                 cv.style.cursor = 'ew-resize'; return;
               }
@@ -654,27 +650,23 @@ export class Rack3DVisualizer {
       // Rotate drag mode
       if (this._rotateDragState?.active) {
         const deltaX = e.clientX - this._rotateDragState.startX;
-        const now = Date.now();
         const ds = this._rotateDragState;
-        if (ds.groupId && ds.groupStartPos) {
+        if (ds.groupId && ds.groupStartAngles) {
           const dDeg = deltaX * 0.45;
-          this._applyGroupRotationFromSnapshot(ds.groupStartPos, ds.groupStartAngles, ds.centroid, dDeg);
-          if (now - ds.lastRebuild > 50) { ds.lastRebuild = now; this._buildRack(); }
+          this._applyGroupRotationFromSnapshot(ds.groupStartAngles, dDeg);
         } else if (ds.type === 'rack') {
           const rack = this._room?.racks.find(r => r.id === ds.id);
           if (rack) {
             rack.facingAngle = ds.startAngle + deltaX * 0.008;
-            if (now - ds.lastRebuild > 50) { ds.lastRebuild = now; this._buildRack(); }
+            const rg = this._rackGroups?.[ds.id];
+            if (rg) rg.rotation.y = rack.facingAngle;
           }
         } else {
           const item = this._room?.room_items?.find(it => it.id === ds.id);
           if (item) {
             item.angle = ds.startAngle + deltaX * 0.45;
-            if (now - ds.lastRebuild > 50) {
-              ds.lastRebuild = now;
-              this._geometryManager?.clearRoomItems();
-              this._geometryManager?.buildRoomItems(this._room?.room_items || []);
-            }
+            const ig = this._geometryManager?.itemGroups?.[ds.id];
+            if (ig) ig.rotation.y = item.angle * Math.PI / 180;
           }
         }
         return;
@@ -687,19 +679,14 @@ export class Rack3DVisualizer {
           const ds = this._itemDragState;
           const newX = floorHit.x - ds.offsetX;
           const newZ = floorHit.z - ds.offsetZ;
-          const now = Date.now();
           if (ds.groupId && ds.groupStartPos) {
             this._applyGroupDeltaFromSnapshot(ds.groupStartPos, newX - ds.anchorStartX, newZ - ds.anchorStartZ);
-            if (now - ds.lastRebuild > 50) { ds.lastRebuild = now; this._buildRack(); }
           } else {
             const item = this._room?.room_items?.find(it => it.id === ds.itemId);
             if (item) {
               item.x = newX; item.z = newZ;
-              if (now - ds.lastRebuild > 50) {
-                ds.lastRebuild = now;
-                this._geometryManager?.clearRoomItems();
-                this._geometryManager?.buildRoomItems(this._room?.room_items || []);
-              }
+              const ig = this._geometryManager?.itemGroups?.[ds.itemId];
+              if (ig) { ig.position.x = newX; ig.position.z = newZ; }
             }
           }
         }
@@ -711,12 +698,10 @@ export class Rack3DVisualizer {
         const floorHit = this._raycastFloor(e.clientX, e.clientY, cv);
         if (floorHit) {
           const ds = this._rackDragState;
-          const now = Date.now();
           if (ds.groupId && ds.groupStartPos) {
             const newX = floorHit.x - ds.offsetX;
             const newZ = floorHit.z - ds.offsetZ;
             this._applyGroupDeltaFromSnapshot(ds.groupStartPos, newX - ds.anchorStartX, newZ - ds.anchorStartZ);
-            if (now - ds.lastRebuild > 50) { ds.lastRebuild = now; this._buildRack(); }
           } else {
             const rack = this._room?.racks.find(r => r.id === ds.rackId);
             if (rack) {
@@ -729,7 +714,8 @@ export class Rack3DVisualizer {
               nx = Math.max(-ro.width/2 + rHW, Math.min(ro.width/2 - rHW, nx));
               nz = Math.max(2 - ro.depth/2 + rHD, Math.min(2 + ro.depth/2 - rHD, nz));
               rack.position = { x: nx, y: rack.position?.y ?? 0, z: nz };
-              if (now - ds.lastRebuild > 50) { ds.lastRebuild = now; this._buildRack(); }
+              const rg = this._rackGroups?.[ds.rackId];
+              if (rg) { rg.position.x = nx; rg.position.z = nz; }
             }
           }
         }
@@ -957,7 +943,8 @@ export class Rack3DVisualizer {
                       || this._ctrl.pos.x !== lastPosX || this._ctrl.pos.y !== lastPosY || this._ctrl.pos.z !== lastPosZ
                       || this._ctrl.yaw !== lastYaw || this._ctrl.pitch !== lastPitch;
       const fpsMoving  = this._ctrl.mode === 'fps' && Object.values(this._ctrl.keys).some(Boolean);
-      const dirty      = this._ctrl.drag || fpsMoving || this._opts.view.autoRotate || selChange || camChange;
+      const transformDrag = !!(this._rackDragState?.active || this._itemDragState?.active || this._rotateDragState?.active);
+      const dirty      = this._ctrl.drag || fpsMoving || this._opts.view.autoRotate || selChange || camChange || transformDrag;
 
       if (camChange || fpsMoving) this._posCamera();
 
@@ -1009,7 +996,7 @@ export class Rack3DVisualizer {
       this._ren.render(this._scene, this._cam);
 
       // Labels are CSS divs projected from 3D — only update when camera or selection moves
-      if (camChange || selChange || fpsMoving) this._updateLabels();
+      if (camChange || selChange || fpsMoving || transformDrag) this._updateLabels();
       this._updateCompass();
       if (camChange || fpsMoving) this._updateAxisGizmo();
     };
@@ -1583,28 +1570,40 @@ export class Rack3DVisualizer {
     for (const [id, pos] of Object.entries(posSnap)) {
       if (pos.isItem) {
         const item = (this._room?.room_items || []).find(i => i.id === id);
-        if (item) { item.x = pos.x + dx; item.z = pos.z + dz; }
+        if (item) {
+          item.x = pos.x + dx; item.z = pos.z + dz;
+          const ig = this._geometryManager?.itemGroups?.[id];
+          if (ig) { ig.position.x = item.x; ig.position.z = item.z; }
+        }
       } else if (pos.isRack) {
         const rack = (this._room?.racks || []).find(r => r.id === id);
-        if (rack) rack.position = { x: pos.x + dx, y: pos.y ?? 0, z: pos.z + dz };
+        if (rack) {
+          rack.position = { x: pos.x + dx, y: pos.y ?? 0, z: pos.z + dz };
+          const rg = this._rackGroups?.[id];
+          if (rg) { rg.position.x = rack.position.x; rg.position.z = rack.position.z; }
+        }
       }
     }
   }
 
-  _applyGroupRotationFromSnapshot(posSnap, angleSnap, centroid, dDeg) {
+  _applyGroupRotationFromSnapshot(angleSnap, dDeg) {
     const rad = dDeg * Math.PI / 180;
-    const cos = Math.cos(rad), sin = Math.sin(rad);
-    for (const [id, pos] of Object.entries(posSnap)) {
-      const dx = pos.x - centroid.x, dz = pos.z - centroid.z;
-      const nx = centroid.x + dx * cos - dz * sin;
-      const nz = centroid.z + dx * sin + dz * cos;
-      const startAngle = angleSnap[id]?.angle ?? 0;
-      if (pos.isItem) {
+    for (const [id, snap] of Object.entries(angleSnap)) {
+      const startAngle = snap.angle ?? 0;
+      if (snap.isItem) {
         const item = (this._room?.room_items || []).find(i => i.id === id);
-        if (item) { item.x = nx; item.z = nz; item.angle = startAngle + dDeg; }
-      } else if (pos.isRack) {
+        if (item) {
+          item.angle = startAngle + dDeg;
+          const ig = this._geometryManager?.itemGroups?.[id];
+          if (ig) ig.rotation.y = item.angle * Math.PI / 180;
+        }
+      } else if (snap.isRack) {
         const rack = (this._room?.racks || []).find(r => r.id === id);
-        if (rack) { rack.position = { x: nx, y: pos.y ?? 0, z: nz }; rack.facingAngle = startAngle + rad; }
+        if (rack) {
+          rack.facingAngle = startAngle + rad;
+          const rg = this._rackGroups?.[id];
+          if (rg) rg.rotation.y = rack.facingAngle;
+        }
       }
     }
   }

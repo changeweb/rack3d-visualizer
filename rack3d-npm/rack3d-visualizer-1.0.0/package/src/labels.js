@@ -65,8 +65,8 @@ export function updateLabels(self) {
     const sx = (vp.x * 0.5 + 0.5) * W;
     const sy = (-0.5 * vp.y + 0.5) * H;
     const rack = self._devRackMap?.[id];
-    const rackLabels = !rack || rack.showLabels !== false;
-    const visible = rackLabels && vp.z > 0 && vp.z < 1;
+    const isSelected = rack && rack.id === self._selRackId;
+    const visible = isSelected && rack.showLabels !== false && vp.z > 0 && vp.z < 1;
 
     d.style.top    = sy + 'px';
     d.style.transform = 'translateY(-50%)';
