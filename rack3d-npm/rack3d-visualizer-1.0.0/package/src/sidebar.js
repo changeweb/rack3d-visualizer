@@ -12,6 +12,9 @@ export function refresh(self) {
 
   buildRoomPanel(self);
 
+  const rnEl = document.getElementById(self._id + '-room-name');
+  if (rnEl) rnEl.value = self._room?.name ?? '';
+
   if (!r) {
     ['bn','bu','bt','bw'].forEach(id => set(id, '—'));
     const dl = $('dl');

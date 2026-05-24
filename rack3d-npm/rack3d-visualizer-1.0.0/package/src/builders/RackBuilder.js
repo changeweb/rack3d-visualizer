@@ -248,48 +248,46 @@ export class RackBuilder {
     canvas.height = 128;
     const ctx = canvas.getContext('2d');
 
-    // Background color — per-rack override or default
-    let bgFill;
-    if (isSelected) {
-      bgFill = 'rgba(17,85,200,0.9)';
-    } else if (rack.nameplateColor) {
-      const c = rack.nameplateColor;
-      if (typeof c === 'string' && c.startsWith('#')) {
-        const r = parseInt(c.slice(1,3),16);
-        const g = parseInt(c.slice(3,5),16);
-        const b = parseInt(c.slice(5,7),16);
-        bgFill = `rgba(${r},${g},${b},0.88)`;
-      } else {
-        bgFill = c;
-      }
-    } else {
-      bgFill = 'rgba(8,16,32,0.88)';
-    }
-    ctx.fillStyle = bgFill;
+    const bgFill = isSelected ? 'rgba(14,60,160,0.93)' : (rack.nameplateColor || 'rgba(8,14,24,0.92)');
+    const accentColor = isSelected ? '#4488ff' : '#2e6090';
+    const borderColor = isSelected ? '#4499ff' : 'rgba(60,100,150,0.55)';
+    const textColor   = isSelected ? '#c8e8ff' : (rack.nameplateTextColor || '#cce4f8');
 
-    // Shape
+    // Background
     const shape = rack.nameplateShape ?? 'rounded';
+    ctx.fillStyle = bgFill;
     ctx.beginPath();
     if (shape === 'rect') {
       ctx.rect(4, 4, 504, 120);
     } else if (shape === 'pill') {
       ctx.roundRect(4, 4, 504, 120, 60);
     } else {
-      ctx.roundRect(4, 4, 504, 120, 14);
+      ctx.roundRect(4, 4, 504, 120, 12);
     }
     ctx.fill();
 
-    const borderColor = isSelected ? '#4499ff' : (rack.nameplateBorderColor || '#2a4a6a');
+    // Border
     ctx.strokeStyle = borderColor;
-    ctx.lineWidth = isSelected ? 4 : 2;
+    ctx.lineWidth = isSelected ? 3 : 1.5;
     ctx.stroke();
 
-    const textColor = isSelected ? '#79c0ff' : (rack.nameplateTextColor || '#88bbdd');
-    ctx.fillStyle = textColor;
-    ctx.font = 'bold 64px "Courier New",monospace';
+    // Left accent bar
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(4, 4, 16, 120);
+
+    // Icon
+    ctx.fillStyle = '#aad4f8';
+    ctx.font = 'bold 38px "Courier New",monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(rack.name || rack.id, 256, 64);
+    ctx.fillText('▣', 40, 64);
+
+    // Name
+    ctx.fillStyle = textColor;
+    ctx.font = 'bold 58px "Courier New",monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(rack.name || rack.id, 62, 64);
 
     const tex = new this.THREE.CanvasTexture(canvas);
     const mat = new this.THREE.MeshBasicMaterial({

@@ -29,7 +29,8 @@ export function renderCatalog(self) {
     const col   = typeInfo.color || '#2288ff';
     const icon  = typeInfo.icon  || '▣';
     const label = typeInfo.label || type;
-    const isOpen = self._catCollapsed[type] !== true;
+    const hasQuery = query.length > 0;
+    const isOpen = hasQuery || self._catCollapsed[type] === true;
 
     const filtered = query
       ? items.filter(i => i.name.toLowerCase().includes(query) || i.type.toLowerCase().includes(query))
@@ -47,14 +48,14 @@ export function renderCatalog(self) {
       <span style="flex:1">${label}</span>
       <span style="opacity:.4;font-size:9px">${filtered.length}</span>`;
     hdr.addEventListener('click', () => {
-      self._catCollapsed[type] = isOpen;
+      self._catCollapsed[type] = !isOpen;
       self._renderCatalog();
     });
     group.appendChild(hdr);
 
     const body = document.createElement('div');
     body.className = 'r3-cat-group-body';
-    body.style.display = isOpen ? '' : 'none';
+    body.style.display = isOpen ? 'block' : 'none';
 
     filtered.forEach(item => {
       const isSel = self._selCatId === item.id;

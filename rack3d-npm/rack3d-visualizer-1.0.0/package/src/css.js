@@ -460,6 +460,9 @@ export function buildCSS(scope, theme, opts) {
   border-top:1px solid var(--r3-border); margin-top:4px;
 }
 
+/* ── GROUP RINGS ── */
+#${scope} .r3-group-ring { pointer-events: none; }
+
 /* ── HELP MODAL ── */
 #${scope} .r3-help-modal {
   position:absolute; inset:0; z-index:100;
@@ -478,20 +481,33 @@ export function buildCSS(scope, theme, opts) {
 }
 #${scope} .r3-help-body {
   padding:12px 14px; overflow-y:auto; flex:1;
-  font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--r3-text);
+  font-family:'Share Tech Mono',monospace; font-size:12px; color:var(--r3-text);
 }
 #${scope} .r3-help-sec {
-  font-size:9px; letter-spacing:1.5px; text-transform:uppercase;
+  font-size:11px; letter-spacing:1.5px; text-transform:uppercase;
   color:var(--r3-accent); margin:10px 0 5px;
 }
 #${scope} .r3-help-row {
   display:flex; align-items:flex-start; gap:8px; padding:3px 0;
   border-bottom:1px solid var(--r3-border)11;
-  font-size:10px; line-height:1.5;
+  font-size:12px; line-height:1.5;
 }
 #${scope} .r3-help-key {
   min-width:90px; flex-shrink:0;
-  font-size:9px; padding-top:1px;
+  font-size:11px; padding-top:1px;
 }
+.r3-ctx-menu {
+  position:fixed; z-index:9999;
+  background:${c.panel}; border:1px solid ${c.border};
+  border-radius:5px; padding:3px 0; min-width:170px;
+  box-shadow:0 4px 18px rgba(0,0,0,0.55);
+  font-family:${c.font}; user-select:none;
+}
+.r3-ctx-item {
+  padding:5px 13px; cursor:pointer; font-size:10px; color:${c.text};
+  white-space:nowrap;
+}
+.r3-ctx-item:hover { background:${c.accent}18; color:${c.accent}; }
+.r3-ctx-sep { height:1px; background:${c.border}; margin:3px 0; }
 `;
 }

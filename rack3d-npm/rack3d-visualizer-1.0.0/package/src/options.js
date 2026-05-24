@@ -128,6 +128,8 @@ export const DEFAULT_OPTIONS = {
     orbitSpeed:  0.0045,
     zoomSpeed:   0.035,
     initialPos:  { x: 0, y: 16, z: -26 },
+    initialYaw:   0,
+    initialPitch: -0.08,
   },
 
   lighting: {

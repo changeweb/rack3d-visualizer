@@ -7,7 +7,7 @@ export class EnvironmentBuilder {
   }
 
   buildLightsOnly(scene, lightingOptions, sceneTheme) {
-    this._buildLights(scene, lightingOptions, sceneTheme);
+    this._buildLights(scene, lightingOptions, sceneTheme, this._roomH ?? 35);
   }
 
   build(scene, roomOptions, lightingOptions, sceneTheme) {
@@ -20,22 +20,23 @@ export class EnvironmentBuilder {
     const ts2 = ro.tileSize;
     const cx = 0;
     const cz = 2;
+    this._roomH = H;
 
-    this._buildSkyboxAndSun(scene);
+    if (!ts.skipSkybox) this._buildSkyboxAndSun(scene);
     this._buildFloor(scene, W, D, cx, cz, ts2, ts, ro);
     this._buildCeiling(scene, W, D, H, cx, cz, ts);
     this._buildWalls(scene, W, D, H, cx, cz, ts, ro);
     this._buildPillars(scene, ro);
-    this._buildStripLights(scene, W, D, H, cx, cz, ts, ro);
+    this._buildStripLights(scene, W, D, H, cx, cz, ts, ro, lo);
     this._buildBaseboardLights(scene, W, D, cx, cz, ts, ro);
-    this._buildLights(scene, lo, ts);
+    this._buildLights(scene, lo, ts, H);
   }
 
   _buildFloor(scene, W, D, cx, cz, ts2, ts, ro) {
     const floorMat = new this.THREE.MeshStandardMaterial({
       color: ts.floorColor,
-      roughness: 0.65,
-      metalness: 0.25
+      roughness: ts.tileRoughness ?? 0.65,
+      metalness: ts.tileMetalness ?? 0.25
     });
     const floor = new this.THREE.Mesh(new this.THREE.PlaneGeometry(W, D), floorMat);
     floor.rotation.x = -Math.PI / 2;
@@ -44,12 +45,13 @@ export class EnvironmentBuilder {
     scene.add(floor);
 
     if (ro.floorTiles) {
-      this._buildFloorTiles(scene, W, D, cx, cz, ts2);
+      this._buildFloorTiles(scene, W, D, cx, cz, ts2, ts);
     }
   }
 
-  _buildFloorTiles(scene, W, D, cx, cz, ts2) {
-    const gm = new this.THREE.LineBasicMaterial({ color: 0x3a5070 });
+  _buildFloorTiles(scene, W, D, cx, cz, ts2, ts) {
+    const gridColor = ts.gridColor ?? 0x3a5070;
+    const gm = new this.THREE.LineBasicMaterial({ color: gridColor });
     const hw = W / 2;
     const hd = D / 2;
 
@@ -71,8 +73,13 @@ export class EnvironmentBuilder {
       scene.add(new this.THREE.Line(g, gm));
     }
 
-    const pm = new this.THREE.MeshStandardMaterial({ color: 0x243040, roughness: 0.6, metalness: 0.35 });
-    const tileGeo = new this.THREE.BoxGeometry(ts2 - 0.03, 0.04, ts2 - 0.03);
+    const tileColor = ts.tileColor ?? ts.floorColor ?? 0x243040;
+    const pm = new this.THREE.MeshStandardMaterial({
+      color: tileColor,
+      roughness: ts.tileRoughness ?? 0.6,
+      metalness: ts.tileMetalness ?? 0.35
+    });
+    const tileGeo = new this.THREE.BoxGeometry(ts2 - 0.03, 0.003, ts2 - 0.03);
     const minX = -Math.floor(W / 2 / ts2);
     const maxX = Math.floor(W / 2 / ts2);
     const minZ = -Math.floor(D / 2 / ts2);
@@ -85,7 +92,7 @@ export class EnvironmentBuilder {
     let idx = 0;
     for (let pi = minX; pi <= maxX; pi++) {
       for (let pj = minZ; pj <= maxZ; pj++) {
-        dummy.position.set(pi * ts2 + cx, 0.02, pj * ts2 + cz);
+        dummy.position.set(pi * ts2 + cx, 0.001, pj * ts2 + cz);
         dummy.updateMatrix();
         inst.setMatrixAt(idx++, dummy.matrix);
       }
@@ -105,18 +112,21 @@ export class EnvironmentBuilder {
     ceil.position.set(cx, H, cz);
     scene.add(ceil);
 
-    // Ceiling grid
-    const tgm = new this.THREE.LineBasicMaterial({ color: 0x4a6080 });
-    const tw = 1.2;
-    const hw = W / 2;
-    const hd = D / 2;
-    for (let i = 0; i <= Math.ceil(W / tw); i++) {
-      const x = -hw + i * tw + cx;
-      const g = new this.THREE.BufferGeometry().setFromPoints([
-        new this.THREE.Vector3(x, H - 0.01, -hd + cz),
-        new this.THREE.Vector3(x, H - 0.01, hd + cz)
-      ]);
-      scene.add(new this.THREE.Line(g, tgm));
+    // Ceiling grid — skip for light/interior themes
+    if (!ts.skipSkybox) {
+      const ceilGridColor = ts.ceilGridColor ?? 0x4a6080;
+      const tgm = new this.THREE.LineBasicMaterial({ color: ceilGridColor });
+      const tw = 1.2;
+      const hw = W / 2;
+      const hd = D / 2;
+      for (let i = 0; i <= Math.ceil(W / tw); i++) {
+        const x = -hw + i * tw + cx;
+        const g = new this.THREE.BufferGeometry().setFromPoints([
+          new this.THREE.Vector3(x, H - 0.01, -hd + cz),
+          new this.THREE.Vector3(x, H - 0.01, hd + cz)
+        ]);
+        scene.add(new this.THREE.Line(g, tgm));
+      }
     }
   }
 
@@ -146,7 +156,7 @@ export class EnvironmentBuilder {
       color: baseColor, roughness: 0.8, metalness: 0.05, side: this.THREE.DoubleSide
     });
     const frontMat = new this.THREE.MeshStandardMaterial({
-      color: 0x1e2d40, transparent: true, opacity: 0.65, side: this.THREE.DoubleSide
+      color: baseColor, transparent: true, opacity: 0.80, side: this.THREE.DoubleSide
     });
     const bw = new this.THREE.Mesh(new this.THREE.PlaneGeometry(W, H), wallMat);
     bw.position.set(cx, H / 2, cz + D / 2);
@@ -181,42 +191,89 @@ export class EnvironmentBuilder {
     });
   }
 
-  _buildStripLights(scene, W, D, H, cx, cz, ts, ro) {
+  _buildStripLights(scene, W, D, H, cx, cz, ts, ro, lo) {
     if (!ro.stripLights) return;
 
+    const emissive = ts.stripEmissive ?? 20;
     const sm = new this.THREE.MeshStandardMaterial({
       color: 0xffffff,
-      emissive: new this.THREE.Color(0xf0f8ff),
-      emissiveIntensity: ts.stripEmissive ?? 20
-    });
-    const dm = new this.THREE.MeshStandardMaterial({
-      color: 0xe8f4ff,
-      emissive: new this.THREE.Color(0xd0eaff),
-      emissiveIntensity: 8,
-      transparent: true,
-      opacity: 0.85
+      emissive: new this.THREE.Color(0xfffcf5),
+      emissiveIntensity: emissive
     });
 
-    [-7, -2, 3, 8].forEach(z => {
-      [-5.5, 0, 5.5].forEach(x => {
-        const s = new this.THREE.Mesh(new this.THREE.BoxGeometry(0.1, 0.03, 2.2), sm);
-        s.position.set(cx + x, H - 0.02, cz + z);
-        scene.add(s);
+    if (ts.skipSkybox) {
+      // Light / interior theme: single grid for visual panels + SpotLights pointing down
+      const overheadInt = lo?.overheadIntensity ?? ts.overheadIntensity ?? 7;
+      const overheadCount = lo?.overheadCount ?? 6;
+      const aspect = W / D;
+      const cols = Math.max(3, Math.ceil(Math.sqrt(overheadCount * 2 * aspect)));
+      const rows = Math.max(3, Math.ceil((overheadCount * 2) / cols));
 
-        const d = new this.THREE.Mesh(new this.THREE.BoxGeometry(0.35, 0.02, 2.4), dm);
-        d.position.set(cx + x, H - 0.05, cz + z);
-        scene.add(d);
+      const panelW = Math.min(W / cols * 0.55, 2.5);
+      const panelD = Math.min(D / rows * 0.55, 1.5);
+      const panelGeo = new this.THREE.BoxGeometry(panelW, 0.02, panelD);
+      const inst = new this.THREE.InstancedMesh(panelGeo, sm, cols * rows);
+      inst.castShadow = false;
+
+      const dummy = new this.THREE.Object3D();
+      let idx = 0;
+      for (let ci = 0; ci < cols; ci++) {
+        for (let ri = 0; ri < rows; ri++) {
+          const px = cx - W / 2 + (ci + 0.5) * (W / cols);
+          const pz = cz - D / 2 + (ri + 0.5) * (D / rows);
+
+          // Visual panel mesh
+          dummy.position.set(px, H - 0.015, pz);
+          dummy.updateMatrix();
+          inst.setMatrixAt(idx++, dummy.matrix);
+
+          // SpotLight pointing straight down — aligned with this panel
+          const spot = new this.THREE.SpotLight(
+            0xfff8f0,
+            overheadInt * 3,
+            H * 1.8,
+            Math.PI / 4,
+            0.5,
+            1
+          );
+          spot.position.set(px, H - 0.1, pz);
+          spot.target.position.set(px, 0, pz);
+          scene.add(spot);
+          scene.add(spot.target);
+        }
+      }
+      inst.instanceMatrix.needsUpdate = true;
+      scene.add(inst);
+    } else {
+      // Dark theme: thin fluorescent strips (decorative only)
+      const dm = new this.THREE.MeshStandardMaterial({
+        color: 0xe8f4ff,
+        emissive: new this.THREE.Color(0xd0eaff),
+        emissiveIntensity: 8,
+        transparent: true,
+        opacity: 0.85
       });
-    });
+      [-7, -2, 3, 8].forEach(z => {
+        [-5.5, 0, 5.5].forEach(x => {
+          const s = new this.THREE.Mesh(new this.THREE.BoxGeometry(0.1, 0.03, 2.2), sm);
+          s.position.set(cx + x, H - 0.02, cz + z);
+          scene.add(s);
+          const d = new this.THREE.Mesh(new this.THREE.BoxGeometry(0.35, 0.02, 2.4), dm);
+          d.position.set(cx + x, H - 0.05, cz + z);
+          scene.add(d);
+        });
+      });
+    }
   }
 
   _buildBaseboardLights(scene, W, D, cx, cz, ts, ro) {
     if (!ro.baseboardLights) return;
 
+    const baseCol = ts.baseboardColor ?? 0x0044cc;
     const bm = new this.THREE.MeshStandardMaterial({
-      color: ts.baseboardColor ?? 0x0044cc,
-      emissive: new this.THREE.Color(ts.baseboardColor ?? 0x0044cc),
-      emissiveIntensity: 2.0
+      color: baseCol,
+      emissive: new this.THREE.Color(baseCol),
+      emissiveIntensity: ts.baseboardEmissive ?? 2.0
     });
 
     [-W / 2 + cx, W / 2 + cx].forEach(x => {
@@ -280,51 +337,80 @@ export class EnvironmentBuilder {
     scene.add(sunLight);
   }
 
-  _buildLights(scene, lo, ts) {
-    // Low ambient so nothing is pitch black
+  _buildLights(scene, lo, ts, roomH) {
+    const H = roomH ?? this._roomH ?? 35;
+
+    // Ambient: near-zero for interior themes (SpotLights are primary source),
+    // user-controlled for dark themes
+    const ambientInt = ts.skipSkybox
+      ? Math.min(lo.ambientIntensity ?? ts.ambientIntensity ?? 0.2, 0.8)
+      : (lo.ambientIntensity ?? ts.ambientIntensity ?? 3.5);
     scene.add(new this.THREE.AmbientLight(
-      lo.ambientColor ?? ts.ambientColor,
-      lo.ambientIntensity ?? ts.ambientIntensity
+      lo.ambientColor ?? ts.ambientColor ?? 0xffffff,
+      ambientInt
     ));
 
-    const mainIntensity = (lo.overheadIntensity ?? ts.overheadIntensity ?? 5) * 1.2;
+    if (ts.skipSkybox) {
+      // Interior theme: SpotLights (ceiling) are primary. Add:
+      // 1. HemisphereLight — simulates bounced light from white ceiling/walls onto rack sides
+      // 2. Shadow DirectionalLight — purely to cast shadows, not to add much brightness
+      const hemi = new this.THREE.HemisphereLight(0xfff8f0, 0x808080, 1.8);
+      scene.add(hemi);
 
-    if (lo.shadows) {
-      // Single shadow-casting key light from front-right-above angle
-      const sl = new this.THREE.DirectionalLight(0xfff8f0, mainIntensity);
-      sl.position.set(20, 40, -15);
-      sl.castShadow = true;
-      sl.shadow.mapSize.set(2048, 2048);
-      sl.shadow.camera.near = 1;
-      sl.shadow.camera.far = 150;
-      sl.shadow.camera.left  = -45;
-      sl.shadow.camera.right =  45;
-      sl.shadow.camera.top   =  55;
-      sl.shadow.camera.bottom = -20;
-      sl.shadow.bias = -0.002;
-      sl.shadow.camera.updateProjectionMatrix();
-      sl.target.position.set(0, 0, 2);
-      scene.add(sl);
-      scene.add(sl.target);
+      if (lo.shadows) {
+        const sl = new this.THREE.DirectionalLight(0xfff8f0, 1.0);
+        sl.position.set(20, 40, -15);
+        sl.castShadow = true;
+        sl.shadow.mapSize.set(lo.shadowMapSize ?? 2048, lo.shadowMapSize ?? 2048);
+        sl.shadow.camera.near = 1;
+        sl.shadow.camera.far  = 200;
+        sl.shadow.camera.left   = -55;
+        sl.shadow.camera.right  =  55;
+        sl.shadow.camera.top    =  65;
+        sl.shadow.camera.bottom = -30;
+        sl.shadow.bias = -0.002;
+        sl.shadow.camera.updateProjectionMatrix();
+        sl.target.position.set(0, 0, 2);
+        scene.add(sl);
+        scene.add(sl.target);
+      }
     } else {
-      const ml = new this.THREE.DirectionalLight(0xfff8f0, mainIntensity);
-      ml.position.set(10, 30, -10);
-      scene.add(ml);
+      // Dark / exterior themes: directional key light + soft fills + floor glow
+      const mainIntensity = (lo.overheadIntensity ?? ts.overheadIntensity ?? 5) * 1.2;
+
+      if (lo.shadows) {
+        const sl = new this.THREE.DirectionalLight(0xfff8f0, mainIntensity);
+        sl.position.set(20, 40, -15);
+        sl.castShadow = true;
+        sl.shadow.mapSize.set(lo.shadowMapSize ?? 2048, lo.shadowMapSize ?? 2048);
+        sl.shadow.camera.near = 1;
+        sl.shadow.camera.far  = 150;
+        sl.shadow.camera.left   = -45;
+        sl.shadow.camera.right  =  45;
+        sl.shadow.camera.top    =  55;
+        sl.shadow.camera.bottom = -20;
+        sl.shadow.bias = -0.002;
+        sl.shadow.camera.updateProjectionMatrix();
+        sl.target.position.set(0, 0, 2);
+        scene.add(sl);
+        scene.add(sl.target);
+      } else {
+        const ml = new this.THREE.DirectionalLight(0xfff8f0, mainIntensity);
+        ml.position.set(10, 30, -10);
+        scene.add(ml);
+      }
+
+      const fl1 = new this.THREE.DirectionalLight(0xd0e8ff, 0.7);
+      fl1.position.set(-15, 12, 15);
+      scene.add(fl1);
+      const fl2 = new this.THREE.DirectionalLight(0xe8f4ff, 0.5);
+      fl2.position.set(15, 8, 15);
+      scene.add(fl2);
+
+      const floorGlow = new this.THREE.PointLight(0x5588ee, 2.0, 22);
+      floorGlow.position.set(0, 0.2, 2);
+      scene.add(floorGlow);
     }
-
-    // Soft fill lights (much dimmer than key light so shadows remain visible)
-    const fl1 = new this.THREE.DirectionalLight(0xd0e8ff, 0.7);
-    fl1.position.set(-15, 12, 15);
-    scene.add(fl1);
-
-    const fl2 = new this.THREE.DirectionalLight(0xe8f4ff, 0.5);
-    fl2.position.set(15, 8, 15);
-    scene.add(fl2);
-
-    // Floor accent glow
-    const floorGlow = new this.THREE.PointLight(0x5588ee, 2.0, 22);
-    floorGlow.position.set(0, 0.2, 2);
-    scene.add(floorGlow);
 
     // User-defined custom lights
     (lo.customLights || []).forEach(cl => {
@@ -332,20 +418,26 @@ export class EnvironmentBuilder {
         ? parseInt(cl.color.replace('#', ''), 16)
         : (cl.color || 0xffffff);
       const intensity = cl.intensity ?? 5;
-      const x = cl.x ?? 0, z = cl.z ?? 0;
-      const y = cl.type === 'ceiling' ? ((lo.roomHeight ?? 13) - 0.5) : (cl.y ?? 8);
+      const x = cl.x ?? 0;
+      const z = cl.z ?? 0;
+      const y = cl.type === 'ceiling' ? H - 0.5 : (cl.y ?? H * 0.4);
 
-      if (cl.type === 'point' || cl.type === 'ceiling') {
-        const pl = new this.THREE.PointLight(color, intensity, cl.distance ?? 0);
+      if (cl.type === 'point') {
+        const pl = new this.THREE.PointLight(color, intensity, cl.distance ?? 0, cl.decay ?? 1);
         pl.position.set(x, y, z);
         scene.add(pl);
+      } else if (cl.type === 'ceiling') {
+        const spot = new this.THREE.SpotLight(color, intensity, H * 1.8, cl.angle ?? Math.PI / 4, cl.penumbra ?? 0.5, cl.decay ?? 1);
+        spot.position.set(x, y, z);
+        spot.target.position.set(x, 0, z);
+        scene.add(spot);
+        scene.add(spot.target);
       } else if (cl.type === 'spot') {
-        const sl = new this.THREE.SpotLight(color, intensity);
-        sl.position.set(x, y, z);
-        sl.angle = cl.angle ?? Math.PI / 6;
-        sl.penumbra = 0.2;
-        sl.target.position.set(x, 0, z);
-        scene.add(sl); scene.add(sl.target);
+        const spot = new this.THREE.SpotLight(color, intensity, cl.distance ?? 0, cl.angle ?? Math.PI / 6, cl.penumbra ?? 0.3, cl.decay ?? 1);
+        spot.position.set(x, y, z);
+        spot.target.position.set(cl.tx ?? x, cl.ty ?? 0, cl.tz ?? z);
+        scene.add(spot);
+        scene.add(spot.target);
       } else {
         const dl = new this.THREE.DirectionalLight(color, intensity);
         dl.position.set(x, y, z);

@@ -143,6 +143,12 @@ function roomPanelBody(self) {
   </div>
 
   <div id="${sid}-rtab-body-layout" style="display:none">
+    <div class="r3-env-sec">Room Name</div>
+    <div class="r3-env-row">
+      <input class="r3-inp" id="${sid}-room-name-inp" value="${self._room?.name ?? ''}" placeholder="Room name…"
+             style="width:100%;box-sizing:border-box"
+             oninput="window._r3['${sid}']._setRoomName(this.value)">
+    </div>
     <div class="r3-env-sec">Grid</div>
     <div class="r3-env-row">
       <span class="r3-lbl">Rows</span>
@@ -184,16 +190,6 @@ function roomPanelBody(self) {
              oninput="window._r3['${sid}']._setRoom('height',+this.value);document.getElementById('${sid}-ev-r-height').textContent=this.value+'m'">
       <span class="r3-val" id="${sid}-ev-r-height">${ro.height}m</span>
     </div>
-    <div class="r3-env-row"><span class="r3-lbl">Fog Near</span>
-      <input class="r3-range" type="range" min="5" max="100" step="1" value="${ro.fogNear}"
-             oninput="window._r3['${sid}']._setRoom('fogNear',+this.value);document.getElementById('${sid}-ev-r-fogNear').textContent=this.value">
-      <span class="r3-val" id="${sid}-ev-r-fogNear">${ro.fogNear}</span>
-    </div>
-    <div class="r3-env-row"><span class="r3-lbl">Fog Far</span>
-      <input class="r3-range" type="range" min="20" max="300" step="5" value="${ro.fogFar}"
-             oninput="window._r3['${sid}']._setRoom('fogFar',+this.value);document.getElementById('${sid}-ev-r-fogFar').textContent=this.value">
-      <span class="r3-val" id="${sid}-ev-r-fogFar">${ro.fogFar}</span>
-    </div>
     <div class="r3-env-sec">Tiles &amp; Appearance</div>
     <div class="r3-env-row">
       <span class="r3-lbl">Tile Size</span>
@@ -209,15 +205,6 @@ function roomPanelBody(self) {
     <div class="r3-env-toggles">
       <label class="r3-sw-label"><span class="r3-lbl">Floor Tiles</span>
         <label class="r3-sw"><input type="checkbox"${ro.floorTiles?' checked':''} onchange="window._r3['${sid}']._setRoom('floorTiles',this.checked)">
-          <span class="r3-sw-track"><span class="r3-sw-thumb"></span></span></label></label>
-      <label class="r3-sw-label"><span class="r3-lbl">Ceil Grid</span>
-        <label class="r3-sw"><input type="checkbox"${ro.ceilingGrid?' checked':''} onchange="window._r3['${sid}']._setRoom('ceilingGrid',this.checked)">
-          <span class="r3-sw-track"><span class="r3-sw-thumb"></span></span></label></label>
-      <label class="r3-sw-label"><span class="r3-lbl">Strip Lights</span>
-        <label class="r3-sw"><input type="checkbox"${ro.stripLights?' checked':''} onchange="window._r3['${sid}']._setRoom('stripLights',this.checked)">
-          <span class="r3-sw-track"><span class="r3-sw-thumb"></span></span></label></label>
-      <label class="r3-sw-label"><span class="r3-lbl">Baseboard</span>
-        <label class="r3-sw"><input type="checkbox"${ro.baseboardLights?' checked':''} onchange="window._r3['${sid}']._setRoom('baseboardLights',this.checked)">
           <span class="r3-sw-track"><span class="r3-sw-thumb"></span></span></label></label>
     </div>
   </div>
@@ -549,6 +536,8 @@ export function buildHTML(self) {
   const toolbar = !v.showToolbar ? '' : `
   <div class="r3-hdr">
     <span class="r3-logo">RACK<span>3D</span></span>
+    <span class="r3-sep"></span>
+    <span id="${sid}-room-name" style="font-size:10px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;color:var(--r3-text);opacity:0.75;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px">${self._room?.name ?? ''}</span>
     <div class="r3-sep"></div>
     ${sb.enabled ? `
     <button class="r3-sb-toggle${showL?' on':''}" id="${sid}-btnSbL" onclick="window._r3['${sid}']._toggleSidebarLeft()" title="Toggle left panel">◧</button>
@@ -560,16 +549,15 @@ export function buildHTML(self) {
     <span class="r3-badge" id="${sid}-bw" style="color:#cc88ff;border-color:#cc88ff55;background:#cc88ff11">—</span>
     <div class="r3-spacer"></div>
     ${self._mode!=='2d'?`<button class="r3-btn on" id="${sid}-btnL" onclick="window._r3['${sid}'].toggleLabels()">◈ LABELS</button>`:''}
-    <button class="r3-btn" id="${sid}-btnW" onclick="window._r3['${sid}'].toggleWire()">◻ WIRE</button>
     <button class="r3-btn" id="${sid}-btnCam" onclick="window._r3['${sid}'].toggleCameraMode()">${self._ctrl?.mode==='fps'?'⊹ FPS':'⊕ ORBIT'}</button>
     <button class="r3-btn" id="${sid}-btn2d" onclick="window._r3['${sid}'].toggleMode()">⊞ ${self._mode==='2d'?'3D':'2D'}</button>
     <div class="r3-sep"></div>
     <button class="r3-btn" id="${sid}-btnMove"   onclick="window._r3['${sid}']._setTransformMode('move')"   title="Move items in 3D (drag to reposition)">✥ MOVE</button>
     <button class="r3-btn" id="${sid}-btnRotate" onclick="window._r3['${sid}']._setTransformMode('rotate')" title="Rotate items in 3D (drag left/right)">↻ ROTATE</button>
     <div class="r3-sep"></div>
-    <select class="r3-inp r3-inp-xs" id="${sid}-theme-sel" title="Theme"
+    <select class="r3-inp" id="${sid}-theme-sel" title="Theme"
             onchange="window._r3['${sid}']._onThemeChange(this.value)"
-            style="height:22px;font-size:10px;padding:0 4px;cursor:pointer">
+            style="height:22px;font-size:10px;padding:0 4px;cursor:pointer;min-width:90px;width:auto">
       <option value="dark">Dark</option>
       <option value="light">Light</option>
       <option value="oled">OLED</option>
@@ -603,6 +591,7 @@ export function buildHTML(self) {
       <button class="r3-legend-toggle-btn" onclick="window._r3['${sid}']._toggleLegend()">⬡ Types</button>
       <div class="r3-legend-body" id="${sid}-legend" style="display:none"></div>
     </div>
+    <div id="${sid}-ctx-menu" class="r3-ctx-menu" style="display:none"></div>
     <div class="r3-tip" id="${sid}-tip">${self._ctrl?.mode==='fps'?'🖱 Drag to look · WASD walk · Click ⊹FPS button to lock mouse':'🖱 Drag to orbit · Scroll to zoom · Click to select · Drag selected rack to move'}</div>
     <div class="r3-compass" id="${sid}-compass">
       <div class="r3-compass-ring">
@@ -644,6 +633,7 @@ export function buildHTML(self) {
   <div class="r3-sb r3-sb-right" id="${sid}-sbr" style="width:${rW}px;min-width:${rW}px;display:${showR?'flex':'none'}"
        ondragover="event.preventDefault()"
        ondrop="window._r3['${sid}']._onPanelDropSidebar(event,'right')">
+    ${panelHtml(self,'groups','Groups',groupsPanelBody(self))}
     ${panelHtml(self,'roomItems','Room Items',roomItemsPanelBody(self))}
     ${panelHtml(self,'rackProps','Rack Properties',rackPropsPanelBody(self))}
     ${panelHtml(self,'stats','Statistics',statsPanelBody(self))}
@@ -725,6 +715,45 @@ export function buildHTML(self) {
   </div>`;
 
   return `${toolbar}${helpModal}<div class="r3-body">${sidebarHtml}${leftHandleHtml}${self._mode==='2d'?view2dHtml:canvasHtml}${self._mode==='2d'?canvasHtml:view2dHtml}${rightHandleHtml}${rightSidebarHtml}</div>`;
+}
+
+export function groupsPanelBody(self) {
+  const sid = self._id;
+  const groups = self._groupsArr ? self._groupsArr() : (self._room?.groups || []);
+
+  let html = `<div style="font-size:9px;color:var(--r3-dim);margin-bottom:6px">Right-click items in 3D to group/ungroup. Select a group then use ✥MOVE or ↻ROTATE.</div>`;
+
+  if (groups.length === 0) {
+    html += `<div style="font-size:9px;color:var(--r3-dim);padding:4px 0">No groups yet.</div>`;
+  } else {
+    groups.forEach(grp => {
+      const isSel = self._selGroupId === grp.id;
+      html += `<div style="border:1px solid ${isSel ? 'var(--r3-accent)' : 'var(--r3-border)'};border-radius:4px;padding:5px;margin-bottom:4px;cursor:pointer"
+                    onclick="window._r3['${sid}']._selectGroup('${grp.id}')">`;
+      html += `<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px">`;
+      html += `<span style="font-size:9px;color:var(--r3-accent);margin-right:2px">⊞</span>`;
+      html += `<input class="r3-inp r3-inp-xs" value="${grp.name}" placeholder="Group name" style="flex:1"
+                      onclick="event.stopPropagation()"
+                      oninput="window._r3['${sid}']._renameGroup('${grp.id}',this.value)">`;
+      html += `<button class="r3-ph-btn" style="font-size:11px" onclick="event.stopPropagation();window._r3['${sid}']._disbandGroup('${grp.id}')" title="Disband group">⊗</button>`;
+      html += `</div>`;
+      grp.members.forEach(mid => {
+        const item = (self._room?.room_items || []).find(i => i.id === mid);
+        const rack = (self._room?.racks || []).find(r => r.id === mid);
+        const nestedGrp = (self._room?.groups || []).find(g => g.id === mid);
+        const label = item ? (item.name || item.type) : rack ? rack.name : nestedGrp ? ('⊞ ' + nestedGrp.name) : mid;
+        html += `<div style="display:flex;align-items:center;gap:3px;margin-bottom:2px;padding-left:4px">`;
+        html += `<span style="font-size:9px;flex:1;color:var(--r3-text)">${label}</span>`;
+        html += `<button class="r3-ph-btn" style="font-size:10px" onclick="event.stopPropagation();window._r3['${sid}']._removeMemberFromGroup('${grp.id}','${mid}')" title="Remove from group">×</button>`;
+        html += `</div>`;
+      });
+      if (isSel) {
+        html += `<div style="font-size:9px;color:var(--r3-accent);margin-top:4px;padding-top:3px;border-top:1px solid var(--r3-border)">Active — drag any member with ✥MOVE / ↻ROTATE</div>`;
+      }
+      html += `</div>`;
+    });
+  }
+  return html;
 }
 
 // Exported for dynamic re-render

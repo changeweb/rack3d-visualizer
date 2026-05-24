@@ -5,7 +5,7 @@ import { DEFAULT_OPTIONS, mergeOptions } from './options.js';
 import { resolveTheme } from './themes.js';
 import { DEVICE_TYPES } from './constants.js';
 import { buildCSS } from './css.js';
-import { buildHTML, customLightRow, roomItemRow, vmPanelBody, vmCard, vmPortRow, wallRow, pillarRow } from './html.js';
+import { buildHTML, customLightRow, roomItemRow, roomItemsPanelBody, groupsPanelBody, vmPanelBody, vmCard, vmPortRow, wallRow, pillarRow } from './html.js';
 import { makeUnitLabel } from './geometry.js';
 import { createLabel, updateLabels } from './labels.js';
 import { render2D, on2DDragStart, on2DDragEnd, on2DDrop, dropUnit, exportImage, dlBlob, gen2DCanvas, gen2DSVG } from './render2d.js';
@@ -60,6 +60,9 @@ export class Rack3DVisualizer {
     this._showWire   = this._opts.view.wireframe;
     this._showLabels = this._opts.view.showLabels;
     this._mode       = this._opts.view.mode;
+    this._selGroupId = null;
+    this._multiSel   = new Set();
+    this._groupHighlightRings = [];
 
     // Three.js handles
     this._T3    = null;
@@ -79,8 +82,8 @@ export class Rack3DVisualizer {
       r:   this._opts.camera.distance === 'auto' ? 22 : this._opts.camera.distance,
       // FPS
       pos:    this._opts.camera.initialPos ? { ...this._opts.camera.initialPos } : { x: 0, y: 16, z: -26 },
-      yaw:    0,
-      pitch:  -0.08,
+      yaw:    this._opts.camera.initialYaw   ?? 0,
+      pitch:  this._opts.camera.initialPitch ?? -0.08,
       keys:   {},
       moveSpeed: this._opts.camera.fpsSpeed || 0.12,
     };
@@ -152,6 +155,7 @@ export class Rack3DVisualizer {
     if (!Array.isArray(this._room.catalog))     this._room.catalog    = [...DEFAULT_CATALOG];
     if (!Array.isArray(this._room.racks))       this._room.racks      = [];
     if (!Array.isArray(this._room.room_items))  this._room.room_items = [];
+    if (!Array.isArray(this._room.groups))      this._room.groups     = [];
     this._room.room_items.forEach(item => {
       if (!item.id) item.id = 'item-' + Date.now() + Math.random().toString(36).slice(2,6);
     });
@@ -220,8 +224,10 @@ export class Rack3DVisualizer {
   resetCamera() {
     const o = this._opts.camera;
     if (this._ctrl.mode === 'fps') {
-      this._ctrl.pos = { x:0, y:16, z:-18 };
-      this._ctrl.yaw = 0; this._ctrl.pitch = -0.08;
+      const ip = o.initialPos || { x: 0, y: 16, z: -26 };
+      this._ctrl.pos = { ...ip };
+      this._ctrl.yaw   = o.initialYaw   ?? 0;
+      this._ctrl.pitch = o.initialPitch ?? -0.08;
     } else {
       this._ctrl.az = o.azimuth; this._ctrl.el = o.elevation;
       this._ctrl.r = o.distance === 'auto' ? Math.max(22, this._rackH()*2.2) : o.distance;
@@ -371,7 +377,7 @@ export class Rack3DVisualizer {
     const deviceBuilder = new DeviceBuilder(T, this._materialFactory, this._types);
     const envBuilder = new EnvironmentBuilder(T, this._theme);
 
-    this._geometryManager = new GeometryManager(T, this._scene, rackBuilder, deviceBuilder, envBuilder, this._materialFactory);
+    this._geometryManager = new GeometryManager(T, this._scene, rackBuilder, deviceBuilder, envBuilder, this._materialFactory, this._theme);
     this._geometryManager.labelSide = this._opts.labels?.side || 'auto';
   }
 
@@ -391,6 +397,13 @@ export class Rack3DVisualizer {
     this._rackGroups = {};
     this._devMeshes  = {};
     this._labelPositions = {};
+    // Remove group highlight rings
+    (this._groupHighlightRings || []).forEach(r => {
+      if (r.geometry) r.geometry.dispose();
+      if (r.material) r.material.dispose();
+      this._scene?.remove(r);
+    });
+    this._groupHighlightRings = [];
   }
 
   _buildRack() {
@@ -420,6 +433,7 @@ export class Rack3DVisualizer {
     this._posCamera();
     this._buildRoomItems();
     this._renderRoomItems();
+    this._buildGroupHighlights();
   }
 
   _makeUnitLabel(u, y, hw, hd, UH, POST, ox, oz, rackId) { return makeUnitLabel(this, u, y, hw, hd, UH, POST, ox, oz, rackId); }
@@ -540,21 +554,31 @@ export class Rack3DVisualizer {
             const floorHit = this._raycastFloor(e.clientX, e.clientY, cv);
             if (floorHit) {
               if (isRack) {
-                const rack = this._room.racks.find(r => r.id === (hit.rackId || hit.id));
+                const rackId = hit.rackId || hit.id;
+                const rack = this._room.racks.find(r => r.id === rackId);
                 if (rack) {
                   this._selRackId = rack.id; this._rack = rack;
-                  const rackGroup = this._rackGroups[rack.id];
+                  const rg = this._rackGroups[rack.id];
+                  const gid = this._selGroupId && this._itemGroupIds(rackId).includes(this._selGroupId) ? this._selGroupId : null;
                   this._rackDragState = { active: true, rackId: rack.id,
-                    offsetX: floorHit.x - (rackGroup?.position.x ?? 0),
-                    offsetZ: floorHit.z - (rackGroup?.position.z ?? 0), lastRebuild: 0 };
+                    offsetX: floorHit.x - (rg?.position.x ?? 0),
+                    offsetZ: floorHit.z - (rg?.position.z ?? 0),
+                    groupId: gid,
+                    anchorStartX: rg?.position.x ?? 0, anchorStartZ: rg?.position.z ?? 0,
+                    groupStartPos: gid ? this._snapshotGroupPositions(gid) : null,
+                    lastRebuild: 0 };
                   cv.style.cursor = 'move'; return;
                 }
               } else if (isItem) {
                 const item = this._room.room_items?.find(it => it.id === hit.id);
                 if (item) {
                   this._selItemId = hit.id;
+                  const gid = this._selGroupId && this._itemGroupIds(hit.id).includes(this._selGroupId) ? this._selGroupId : null;
                   this._itemDragState = { active: true, itemId: hit.id,
                     offsetX: floorHit.x - (item.x || 0), offsetZ: floorHit.z - (item.z || 0),
+                    groupId: gid,
+                    anchorStartX: item.x ?? 0, anchorStartZ: item.z ?? 0,
+                    groupStartPos: gid ? this._snapshotGroupPositions(gid) : null,
                     lastRebuild: 0 };
                   cv.style.cursor = 'move'; return;
                 }
@@ -562,19 +586,30 @@ export class Rack3DVisualizer {
             }
           } else if (this._transformMode === 'rotate') {
             if (isRack) {
-              const rack = this._room.racks.find(r => r.id === (hit.rackId || hit.id));
+              const rackId = hit.rackId || hit.id;
+              const rack = this._room.racks.find(r => r.id === rackId);
               if (rack) {
                 this._selRackId = rack.id; this._rack = rack;
-                this._rotateDragState = { active: true, type: 'rack', id: rack.id,
-                  startX: e.clientX, startAngle: rack.facingAngle || 0, lastRebuild: 0 };
+                const gid = this._selGroupId && this._itemGroupIds(rackId).includes(this._selGroupId) ? this._selGroupId : null;
+                this._rotateDragState = { active: true, type: 'rack', id: rackId,
+                  startX: e.clientX, startAngle: rack.facingAngle || 0, lastRebuild: 0,
+                  groupId: gid,
+                  centroid: gid ? this._groupCentroid(gid) : null,
+                  groupStartPos: gid ? this._snapshotGroupPositions(gid) : null,
+                  groupStartAngles: gid ? this._snapshotGroupAngles(gid) : null };
                 cv.style.cursor = 'ew-resize'; return;
               }
             } else if (isItem) {
               const item = this._room.room_items?.find(it => it.id === hit.id);
               if (item) {
                 this._selItemId = hit.id;
+                const gid = this._selGroupId && this._itemGroupIds(hit.id).includes(this._selGroupId) ? this._selGroupId : null;
                 this._rotateDragState = { active: true, type: 'item', id: hit.id,
-                  startX: e.clientX, startAngle: item.angle || 0, lastRebuild: 0 };
+                  startX: e.clientX, startAngle: item.angle || 0, lastRebuild: 0,
+                  groupId: gid,
+                  centroid: gid ? this._groupCentroid(gid) : null,
+                  groupStartPos: gid ? this._snapshotGroupPositions(gid) : null,
+                  groupStartAngles: gid ? this._snapshotGroupAngles(gid) : null };
                 cv.style.cursor = 'ew-resize'; return;
               }
             }
@@ -613,21 +648,23 @@ export class Rack3DVisualizer {
       if (this._rotateDragState?.active) {
         const deltaX = e.clientX - this._rotateDragState.startX;
         const now = Date.now();
-        if (this._rotateDragState.type === 'rack') {
-          const rack = this._room?.racks.find(r => r.id === this._rotateDragState.id);
+        const ds = this._rotateDragState;
+        if (ds.groupId && ds.groupStartPos) {
+          const dDeg = deltaX * 0.45;
+          this._applyGroupRotationFromSnapshot(ds.groupStartPos, ds.groupStartAngles, ds.centroid, dDeg);
+          if (now - ds.lastRebuild > 50) { ds.lastRebuild = now; this._buildRack(); }
+        } else if (ds.type === 'rack') {
+          const rack = this._room?.racks.find(r => r.id === ds.id);
           if (rack) {
-            rack.facingAngle = this._rotateDragState.startAngle + deltaX * 0.008;
-            if (now - this._rotateDragState.lastRebuild > 50) {
-              this._rotateDragState.lastRebuild = now;
-              this._buildRack();
-            }
+            rack.facingAngle = ds.startAngle + deltaX * 0.008;
+            if (now - ds.lastRebuild > 50) { ds.lastRebuild = now; this._buildRack(); }
           }
         } else {
-          const item = this._room?.room_items?.find(it => it.id === this._rotateDragState.id);
+          const item = this._room?.room_items?.find(it => it.id === ds.id);
           if (item) {
-            item.angle = this._rotateDragState.startAngle + deltaX * 0.45;
-            if (now - this._rotateDragState.lastRebuild > 50) {
-              this._rotateDragState.lastRebuild = now;
+            item.angle = ds.startAngle + deltaX * 0.45;
+            if (now - ds.lastRebuild > 50) {
+              ds.lastRebuild = now;
               this._geometryManager?.clearRoomItems();
               this._geometryManager?.buildRoomItems(this._room?.room_items || []);
             }
@@ -640,15 +677,22 @@ export class Rack3DVisualizer {
       if (this._itemDragState?.active) {
         const floorHit = this._raycastFloor(e.clientX, e.clientY, cv);
         if (floorHit) {
-          const item = this._room?.room_items?.find(it => it.id === this._itemDragState.itemId);
-          if (item) {
-            item.x = floorHit.x - this._itemDragState.offsetX;
-            item.z = floorHit.z - this._itemDragState.offsetZ;
-            const now = Date.now();
-            if (now - this._itemDragState.lastRebuild > 50) {
-              this._itemDragState.lastRebuild = now;
-              this._geometryManager?.clearRoomItems();
-              this._geometryManager?.buildRoomItems(this._room?.room_items || []);
+          const ds = this._itemDragState;
+          const newX = floorHit.x - ds.offsetX;
+          const newZ = floorHit.z - ds.offsetZ;
+          const now = Date.now();
+          if (ds.groupId && ds.groupStartPos) {
+            this._applyGroupDeltaFromSnapshot(ds.groupStartPos, newX - ds.anchorStartX, newZ - ds.anchorStartZ);
+            if (now - ds.lastRebuild > 50) { ds.lastRebuild = now; this._buildRack(); }
+          } else {
+            const item = this._room?.room_items?.find(it => it.id === ds.itemId);
+            if (item) {
+              item.x = newX; item.z = newZ;
+              if (now - ds.lastRebuild > 50) {
+                ds.lastRebuild = now;
+                this._geometryManager?.clearRoomItems();
+                this._geometryManager?.buildRoomItems(this._room?.room_items || []);
+              }
             }
           }
         }
@@ -659,24 +703,26 @@ export class Rack3DVisualizer {
       if (this._rackDragState?.active) {
         const floorHit = this._raycastFloor(e.clientX, e.clientY, cv);
         if (floorHit) {
-          const rack = this._room?.racks.find(r => r.id === this._rackDragState.rackId);
-          if (rack) {
-            let nx = floorHit.x - this._rackDragState.offsetX;
-            let nz = floorHit.z - this._rackDragState.offsetZ;
-            // Wall snap
-            const snapped = this._snapRackPos(nx, nz);
-            nx = snapped.x; nz = snapped.z;
-            // Clamp to room bounds
-            const ro = this._opts.room;
-            const rHW = this._opts.rack.width / 2, rHD = this._opts.rack.depth / 2;
-            nx = Math.max(-ro.width/2 + rHW, Math.min(ro.width/2 - rHW, nx));
-            nz = Math.max(2 - ro.depth/2 + rHD, Math.min(2 + ro.depth/2 - rHD, nz));
-            rack.position = { x: nx, y: rack.position?.y ?? 0, z: nz };
-            // Throttled rebuild (50ms)
-            const now = Date.now();
-            if (now - this._rackDragState.lastRebuild > 50) {
-              this._rackDragState.lastRebuild = now;
-              this._buildRack();
+          const ds = this._rackDragState;
+          const now = Date.now();
+          if (ds.groupId && ds.groupStartPos) {
+            const newX = floorHit.x - ds.offsetX;
+            const newZ = floorHit.z - ds.offsetZ;
+            this._applyGroupDeltaFromSnapshot(ds.groupStartPos, newX - ds.anchorStartX, newZ - ds.anchorStartZ);
+            if (now - ds.lastRebuild > 50) { ds.lastRebuild = now; this._buildRack(); }
+          } else {
+            const rack = this._room?.racks.find(r => r.id === ds.rackId);
+            if (rack) {
+              let nx = floorHit.x - ds.offsetX;
+              let nz = floorHit.z - ds.offsetZ;
+              const snapped = this._snapRackPos(nx, nz);
+              nx = snapped.x; nz = snapped.z;
+              const ro = this._opts.room;
+              const rHW = this._opts.rack.width / 2, rHD = this._opts.rack.depth / 2;
+              nx = Math.max(-ro.width/2 + rHW, Math.min(ro.width/2 - rHW, nx));
+              nz = Math.max(2 - ro.depth/2 + rHD, Math.min(2 + ro.depth/2 - rHD, nz));
+              rack.position = { x: nx, y: rack.position?.y ?? 0, z: nz };
+              if (now - ds.lastRebuild > 50) { ds.lastRebuild = now; this._buildRack(); }
             }
           }
         }
@@ -778,6 +824,27 @@ export class Rack3DVisualizer {
     const onKeyUp = e => { this._ctrl.keys[e.code] = false; };
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup',   onKeyUp);
+
+    // Right-click context menu for grouping
+    cv.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      const rect = cv.getBoundingClientRect();
+      const result = this._selectionManager?.raycast(
+        e.clientX - rect.left, e.clientY - rect.top, cv.clientWidth, cv.clientHeight
+      );
+      let targetId = null;
+      if (result) {
+        if (result.type === 'rack') targetId = result.id;
+        else if (result.type === 'item') targetId = result.id;
+        else if (result.rackId) targetId = result.rackId;
+      }
+      this._showContextMenu(e, targetId);
+    });
+    document.addEventListener('mousedown', e => {
+      const menu = document.getElementById(this._id + '-ctx-menu');
+      if (menu && !menu.contains(e.target)) this._hideContextMenu();
+    }, true);
+
     this._unbindKeys = () => {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup',   onMouseUp);
@@ -794,19 +861,33 @@ export class Rack3DVisualizer {
       cv.clientWidth, cv.clientHeight
     );
 
+    const ctrlKey = e.ctrlKey || e.metaKey;
+
     if (result?.type === 'device') {
-      const rack = this._room?.racks.find(r => r.id === result.rackId);
-      if (rack) {
-        this._selRackId = result.rackId; this._rack = rack;
-        this._selId = result.id; this._selItemId = null;
-        const dev = rack.devices?.find(d => d.id === this._selId);
-        if (dev) { this._openEdit(dev); if (this._opts.onSelect) this._opts.onSelect(dev, rack); }
+      if (ctrlKey) {
+        // Ctrl+click on device does nothing for multi-sel (devices aren't group members directly)
+      } else {
+        const rack = this._room?.racks.find(r => r.id === result.rackId);
+        if (rack) {
+          this._selRackId = result.rackId; this._rack = rack;
+          this._selId = result.id; this._selItemId = null;
+          const dev = rack.devices?.find(d => d.id === this._selId);
+          if (dev) { this._openEdit(dev); if (this._opts.onSelect) this._opts.onSelect(dev, rack); }
+        }
       }
     } else if (result?.type === 'rack') {
+      if (ctrlKey) {
+        this._toggleMultiSel(result.id);
+        return;
+      }
       const rack = this._room?.racks.find(r => r.id === result.id);
       if (rack) { this._selRackId = result.id; this._rack = rack; }
       this._selId = null; this._selItemId = null; this._closeEdit();
     } else if (result?.type === 'item') {
+      if (ctrlKey) {
+        this._toggleMultiSel(result.id);
+        return;
+      }
       this._selItemId = result.id;
       this._selId = null; this._closeEdit();
     } else {
@@ -907,13 +988,6 @@ export class Rack3DVisualizer {
       }
 
       this._ren.render(this._scene, this._cam);
-
-      // Billboard: make label meshes face the camera (they are world-space objects)
-      if (this._geometryManager?.itemLabelMeshes) {
-        this._geometryManager.itemLabelMeshes.forEach(m => {
-          m.lookAt(this._cam.position);
-        });
-      }
 
       // Labels are CSS divs projected from 3D — only update when camera or selection moves
       if (camChange || selChange || fpsMoving) this._updateLabels();
@@ -1318,6 +1392,329 @@ export class Rack3DVisualizer {
     this._buildRack();
   }
 
+  // ─── Room name ────────────────────────────────────────────
+  _setRoomName(name) {
+    if (this._room) this._room.name = name;
+    const span = document.getElementById(this._id + '-room-name');
+    if (span) span.textContent = name;
+    const inp = document.getElementById(this._id + '-room-name-inp');
+    if (inp && inp !== document.activeElement) inp.value = name;
+  }
+
+  // ─── Groups ───────────────────────────────────────────────
+  _groupsArr() { return this._room?.groups || []; }
+
+  _groupMembersFlat(groupId) {
+    const grp = this._groupsArr().find(g => g.id === groupId);
+    if (!grp) return [];
+    const result = [];
+    for (const mid of grp.members) {
+      if (this._groupsArr().find(g => g.id === mid)) result.push(...this._groupMembersFlat(mid));
+      else result.push(mid);
+    }
+    return result;
+  }
+
+  _itemGroupIds(id) {
+    return this._groupsArr().filter(g => g.members.includes(id)).map(g => g.id);
+  }
+
+  _autoUngroup(id) {
+    if (!this._room?.groups) return;
+    this._room.groups.forEach(g => {
+      g.members = g.members.filter(m => m !== id);
+    });
+    this._room.groups = this._room.groups.filter(g => g.members.length > 0);
+    this._refreshGroupPanel();
+  }
+
+  _createGroup(name) {
+    if (this._multiSel.size < 2) { alert('Select at least 2 items first'); return; }
+    const id = 'grp-' + Date.now().toString(36);
+    this._room.groups.push({ id, name: name || 'Group ' + (this._groupsArr().length), members: [...this._multiSel] });
+    this._multiSel.clear();
+    this._selGroupId = id;
+    this._refreshGroupPanel();
+    this._buildRack();
+  }
+
+  _disbandGroup(groupId) {
+    this._room.groups = this._room.groups.filter(g => g.id !== groupId);
+    if (this._selGroupId === groupId) this._selGroupId = null;
+    this._refreshGroupPanel();
+    this._buildRack();
+  }
+
+  _addMemberToGroup(groupId, memberId) {
+    const grp = this._groupsArr().find(g => g.id === groupId);
+    if (!grp) return;
+    if (!grp.members.includes(memberId)) grp.members.push(memberId);
+    this._refreshGroupPanel();
+  }
+
+  _removeMemberFromGroup(groupId, memberId) {
+    const grp = this._groupsArr().find(g => g.id === groupId);
+    if (!grp) return;
+    grp.members = grp.members.filter(m => m !== memberId);
+    if (grp.members.length === 0) this._disbandGroup(groupId);
+    else this._refreshGroupPanel();
+  }
+
+  _renameGroup(groupId, name) {
+    const grp = this._groupsArr().find(g => g.id === groupId);
+    if (grp) grp.name = name;
+    this._refreshGroupPanel();
+  }
+
+  _toggleMultiSel(id) {
+    if (this._multiSel.has(id)) this._multiSel.delete(id);
+    else this._multiSel.add(id);
+    this._refreshGroupPanel();
+    this._buildRack();
+  }
+
+  _selectGroup(groupId) {
+    this._selGroupId = groupId;
+    this._multiSel.clear();
+    this._refreshGroupPanel();
+    this._buildRack();
+  }
+
+  _groupCentroid(groupId) {
+    const ids = this._groupMembersFlat(groupId);
+    let x = 0, z = 0, count = 0;
+    for (const id of ids) {
+      const item = (this._room.room_items || []).find(i => i.id === id);
+      if (item) { x += item.x ?? 0; z += item.z ?? 0; count++; continue; }
+      const rack = (this._room.racks || []).find(r => r.id === id);
+      if (rack) {
+        const rg = this._geometryManager?.rackGroups[id];
+        if (rg) { x += rg.position.x; z += rg.position.z; count++; }
+      }
+    }
+    return count > 0 ? { x: x / count, z: z / count } : { x: 0, z: 0 };
+  }
+
+  _moveGroupDelta(groupId, dx, dz) {
+    const ids = this._groupMembersFlat(groupId);
+    for (const id of ids) {
+      const item = (this._room.room_items || []).find(i => i.id === id);
+      if (item) { item.x = (item.x ?? 0) + dx; item.z = (item.z ?? 0) + dz; continue; }
+      const rack = (this._room.racks || []).find(r => r.id === id);
+      if (rack) {
+        const rg = this._geometryManager?.rackGroups[id];
+        if (rg) {
+          rack.position = { x: rg.position.x + dx, y: rg.position.y, z: rg.position.z + dz };
+        }
+      }
+    }
+    this._buildRack();
+  }
+
+  _rotateGroupDelta(groupId, dDeg) {
+    const c = this._groupCentroid(groupId);
+    const rad = dDeg * Math.PI / 180;
+    const cos = Math.cos(rad), sin = Math.sin(rad);
+    const ids = this._groupMembersFlat(groupId);
+    for (const id of ids) {
+      const item = (this._room.room_items || []).find(i => i.id === id);
+      if (item) {
+        const dx = (item.x ?? 0) - c.x, dz = (item.z ?? 0) - c.z;
+        item.x = c.x + dx * cos - dz * sin;
+        item.z = c.z + dx * sin + dz * cos;
+        item.angle = ((item.angle ?? 0) + dDeg + 360) % 360;
+        continue;
+      }
+      const rack = (this._room.racks || []).find(r => r.id === id);
+      if (rack) {
+        const rg = this._geometryManager?.rackGroups[id];
+        if (!rg) continue;
+        const dx = rg.position.x - c.x, dz = rg.position.z - c.z;
+        const nx = c.x + dx * cos - dz * sin, nz = c.z + dx * sin + dz * cos;
+        rack.position = { x: nx, y: rg.position.y, z: nz };
+        rack.facingAngle = (rack.facingAngle || 0) + rad;
+      }
+    }
+    this._buildRack();
+  }
+
+  _snapshotGroupPositions(groupId) {
+    const snap = {};
+    this._groupMembersFlat(groupId).forEach(id => {
+      const item = (this._room?.room_items || []).find(i => i.id === id);
+      if (item) { snap[id] = { x: item.x ?? 0, z: item.z ?? 0, isItem: true }; return; }
+      const rg = this._geometryManager?.rackGroups[id];
+      if (rg) snap[id] = { x: rg.position.x, y: rg.position.y, z: rg.position.z, isRack: true };
+    });
+    return snap;
+  }
+
+  _snapshotGroupAngles(groupId) {
+    const snap = {};
+    this._groupMembersFlat(groupId).forEach(id => {
+      const item = (this._room?.room_items || []).find(i => i.id === id);
+      if (item) { snap[id] = { angle: item.angle ?? 0, isItem: true }; return; }
+      const rack = (this._room?.racks || []).find(r => r.id === id);
+      if (rack) snap[id] = { angle: rack.facingAngle ?? 0, isRack: true };
+    });
+    return snap;
+  }
+
+  _applyGroupDeltaFromSnapshot(posSnap, dx, dz) {
+    for (const [id, pos] of Object.entries(posSnap)) {
+      if (pos.isItem) {
+        const item = (this._room?.room_items || []).find(i => i.id === id);
+        if (item) { item.x = pos.x + dx; item.z = pos.z + dz; }
+      } else if (pos.isRack) {
+        const rack = (this._room?.racks || []).find(r => r.id === id);
+        if (rack) rack.position = { x: pos.x + dx, y: pos.y ?? 0, z: pos.z + dz };
+      }
+    }
+  }
+
+  _applyGroupRotationFromSnapshot(posSnap, angleSnap, centroid, dDeg) {
+    const rad = dDeg * Math.PI / 180;
+    const cos = Math.cos(rad), sin = Math.sin(rad);
+    for (const [id, pos] of Object.entries(posSnap)) {
+      const dx = pos.x - centroid.x, dz = pos.z - centroid.z;
+      const nx = centroid.x + dx * cos - dz * sin;
+      const nz = centroid.z + dx * sin + dz * cos;
+      const startAngle = angleSnap[id]?.angle ?? 0;
+      if (pos.isItem) {
+        const item = (this._room?.room_items || []).find(i => i.id === id);
+        if (item) { item.x = nx; item.z = nz; item.angle = startAngle + dDeg; }
+      } else if (pos.isRack) {
+        const rack = (this._room?.racks || []).find(r => r.id === id);
+        if (rack) { rack.position = { x: nx, y: pos.y ?? 0, z: nz }; rack.facingAngle = startAngle + rad; }
+      }
+    }
+  }
+
+  // ─── Context menu ─────────────────────────────────────────
+  _showContextMenu(e, targetId) {
+    const menu = document.getElementById(this._id + '-ctx-menu');
+    if (!menu) return;
+    menu.innerHTML = '';
+
+    const addItem = (label, cb) => {
+      const d = document.createElement('div');
+      d.className = 'r3-ctx-item';
+      d.textContent = label;
+      d.onclick = () => { menu.style.display = 'none'; cb(); };
+      menu.appendChild(d);
+    };
+    const addSep = () => {
+      const d = document.createElement('div');
+      d.className = 'r3-ctx-sep';
+      menu.appendChild(d);
+    };
+
+    const groups = this._groupsArr();
+    const hasMultiSel = this._multiSel.size >= 2;
+    const itemGroupIds = targetId ? this._itemGroupIds(targetId) : [];
+
+    if (hasMultiSel) {
+      if (targetId && !this._multiSel.has(targetId)) {
+        addItem(`⊞ Group with ${this._multiSel.size} selected`, () => {
+          this._multiSel.add(targetId);
+          this._createGroup();
+        });
+      } else {
+        addItem(`⊞ Group ${this._multiSel.size} selected`, () => this._createGroup());
+      }
+      addItem('✕ Clear selection', () => { this._multiSel.clear(); this._refreshGroupPanel(); this._buildRack(); });
+      if (targetId) addSep();
+    }
+
+    if (targetId) {
+      const inGroups = groups.filter(g => g.members.includes(targetId));
+      const notInGroups = groups.filter(g => !g.members.includes(targetId));
+
+      if (!hasMultiSel) {
+        addItem('⊞ Create group with this', () => {
+          const id = 'grp-' + Date.now().toString(36);
+          if (!this._room.groups) this._room.groups = [];
+          this._room.groups.push({ id, name: 'Group ' + (this._groupsArr().length), members: [targetId] });
+          this._selGroupId = id;
+          this._refreshGroupPanel();
+          this._buildRack();
+        });
+      }
+
+      notInGroups.forEach(grp => {
+        addItem(`Add to "${grp.name}"`, () => this._addMemberToGroup(grp.id, targetId));
+      });
+
+      if (itemGroupIds.length > 0) {
+        addSep();
+        inGroups.forEach(grp => {
+          addItem(`Remove from "${grp.name}"`, () => this._removeMemberFromGroup(grp.id, targetId));
+          addItem(`Disband "${grp.name}"`, () => this._disbandGroup(grp.id));
+        });
+      }
+    }
+
+    if (menu.children.length === 0) return;
+    const vW = window.innerWidth, vH = window.innerHeight;
+    const mW = 180, mH = menu.children.length * 28;
+    menu.style.left = Math.min(e.clientX, vW - mW - 8) + 'px';
+    menu.style.top  = Math.min(e.clientY, vH - mH - 8) + 'px';
+    menu.style.display = 'block';
+  }
+
+  _hideContextMenu() {
+    const menu = document.getElementById(this._id + '-ctx-menu');
+    if (menu) menu.style.display = 'none';
+  }
+
+  _refreshGroupPanel() {
+    const el = document.getElementById(this._id + '-panel-groups');
+    if (el) el.innerHTML = groupsPanelBody(this);
+    const el2 = document.getElementById(this._id + '-panel-roomItems');
+    if (el2) el2.innerHTML = roomItemsPanelBody(this);
+  }
+
+  _buildGroupHighlights() {
+    if (!this._scene || !this._T3) return;
+    const T = this._T3;
+    const highlightIds = new Set();
+    if (this._selGroupId) {
+      this._groupMembersFlat(this._selGroupId).forEach(id => highlightIds.add(id));
+    }
+    this._multiSel.forEach(id => highlightIds.add(id));
+    if (highlightIds.size === 0) return;
+
+    for (const id of highlightIds) {
+      const isMultiSel = this._multiSel.has(id) && !this._selGroupId;
+      const color = isMultiSel ? 0xffaa00 : 0x00aaff;
+      const item = (this._room?.room_items || []).find(i => i.id === id);
+      let px = 0, pz = 0;
+      if (item) { px = item.x ?? 0; pz = item.z ?? 0; }
+      else {
+        const rg = this._geometryManager?.rackGroups[id];
+        if (rg) { px = rg.position.x; pz = rg.position.z; }
+        else continue;
+      }
+      const mat = new T.MeshStandardMaterial({ color, emissive: new T.Color(color), emissiveIntensity: 1.5, transparent: true, opacity: 0.7 });
+      const geo = new T.TorusGeometry(1.2, 0.05, 8, 32);
+      const ring = new T.Mesh(geo, mat);
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(px, 0.05, pz);
+      ring.userData.r3GroupRing = true;
+      this._scene.add(ring);
+      this._groupHighlightRings.push(ring);
+    }
+  }
+
+  _removeRack(rackId) {
+    if (!this._room) return;
+    this._autoUngroup(rackId);
+    this._room.racks = this._room.racks.filter(r => r.id !== rackId);
+    if (this._selRackId === rackId) { this._selRackId = null; this._rack = null; }
+    this._buildRack();
+    this._refresh();
+  }
+
   // ─── Wall CRUD ────────────────────────────────────────────
   _addWall() {
     if (!this._room) return;
@@ -1423,6 +1820,8 @@ export class Rack3DVisualizer {
   }
 
   _removeRoomItem(idx) {
+    const item = this._room?.room_items?.[idx];
+    if (item?.id) this._autoUngroup(item.id);
     this._room?.room_items?.splice(idx, 1);
     this._buildRoomItems();
     this._renderRoomItems();

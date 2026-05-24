@@ -1,8 +1,11 @@
 // ── ROOM ITEM BUILDER ── Builds non-rack room items (UPS, Battery, Shelf, PDU, Aircon, Sensor)
 
+const ITEM_ICONS = { ups: '⚡', battery: '🔋', shelf: '⊞', pdu: '⚡', aircon: '❄', sensor: '◉' };
+
 export class RoomItemBuilder {
-  constructor(THREE) {
+  constructor(THREE, theme) {
     this.THREE = THREE;
+    this.theme = theme || null;
   }
 
   build(item) {
@@ -239,60 +242,58 @@ export class RoomItemBuilder {
     group.add(body);
   }
 
-  /** Returns a standalone billboard label mesh (not attached to any group). */
+  /** Returns a standalone label mesh for the item. Battery labels are small and face the item front. */
   buildLabel(item) {
+    const isBattery = item.type === 'battery';
     const text = item.label || item.name || item.type;
-    const subtext = item.type.toUpperCase();
+    const icon = ITEM_ICONS[item.type] || '▣';
 
     const canvas = document.createElement('canvas');
     canvas.width = 512; canvas.height = 128;
     const ctx = canvas.getContext('2d');
 
-    // Background shape
-    const shape = item.nameplateShape ?? 'rounded';
-    const bgColor = item.nameplateColor ?? 'rgba(8,16,32,0.88)';
-    // Convert hex color to rgba if needed
-    let fillStyle = bgColor;
-    if (typeof bgColor === 'string' && bgColor.startsWith('#')) {
-      const r = parseInt(bgColor.slice(1,3),16);
-      const g = parseInt(bgColor.slice(3,5),16);
-      const b = parseInt(bgColor.slice(5,7),16);
-      fillStyle = `rgba(${r},${g},${b},0.88)`;
+    let accentColor = '#2e6090';
+    if (item.color && typeof item.color === 'string' && item.color.startsWith('#')) {
+      accentColor = item.color;
     }
-    ctx.fillStyle = fillStyle;
+
+    ctx.fillStyle = isBattery ? 'rgba(8,20,8,0.88)' : 'rgba(8,14,24,0.92)';
     ctx.beginPath();
-    if (shape === 'rect') {
-      ctx.rect(4, 4, 504, 120);
-    } else if (shape === 'pill') {
-      ctx.roundRect(4, 4, 504, 120, 60);
-    } else {
-      ctx.roundRect(4, 4, 504, 120, 12);
-    }
+    ctx.roundRect(4, 4, 504, 120, isBattery ? 6 : 12);
     ctx.fill();
-    ctx.strokeStyle = '#2a5080';
-    ctx.lineWidth = 2;
+
+    ctx.strokeStyle = isBattery ? 'rgba(40,100,40,0.6)' : 'rgba(60,100,150,0.55)';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    const textColor = item.nameplateTextColor ?? '#88ccff';
-    ctx.fillStyle = textColor;
-    ctx.font = 'bold 52px "Share Tech Mono",monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(text, 256, 48);
+    ctx.fillStyle = isBattery ? '#2a8a2a' : accentColor;
+    ctx.fillRect(4, 4, 12, 120);
 
-    ctx.fillStyle = '#4a7090';
-    ctx.font = '30px "Share Tech Mono",monospace';
-    ctx.fillText(subtext, 256, 95);
+    if (!isBattery) {
+      ctx.fillStyle = '#aad4f8';
+      ctx.font = '40px "Share Tech Mono",monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(icon, 40, 64);
+    }
+
+    const textColor = item.nameplateTextColor ?? (isBattery ? '#88dd88' : '#cce4f8');
+    ctx.fillStyle = textColor;
+    ctx.font = isBattery ? 'bold 44px "Share Tech Mono",monospace' : 'bold 50px "Share Tech Mono",monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, isBattery ? 24 : 62, 64);
 
     const tex = new this.THREE.CanvasTexture(canvas);
     const mat = new this.THREE.MeshBasicMaterial({
       map: tex, transparent: true, depthWrite: false, side: this.THREE.FrontSide
     });
 
-    const planeW = 2.8, planeH = planeW * (128 / 512);
+    const planeW = isBattery ? 1.0 : 2.8;
+    const planeH = planeW * (128 / 512);
     const mesh = new this.THREE.Mesh(new this.THREE.PlaneGeometry(planeW, planeH), mat);
+    mesh.rotation.y = isBattery ? 0 : Math.PI;
     mesh.userData.itemLabel = true;
-    // No position set here — caller positions it in world space
     return mesh;
   }
 

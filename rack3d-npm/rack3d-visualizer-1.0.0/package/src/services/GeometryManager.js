@@ -2,13 +2,14 @@
 import { RoomItemBuilder } from '../builders/RoomItemBuilder.js';
 
 export class GeometryManager {
-  constructor(THREE, scene, rackBuilder, deviceBuilder, environmentBuilder, materialFactory) {
+  constructor(THREE, scene, rackBuilder, deviceBuilder, environmentBuilder, materialFactory, theme) {
     this.THREE = THREE;
     this.scene = scene;
     this.rackBuilder = rackBuilder;
     this.deviceBuilder = deviceBuilder;
     this.environmentBuilder = environmentBuilder;
     this.materialFactory = materialFactory;
+    this.theme = theme || null;
     this.rackGroups = {};
     this.deviceMeshes = {};
     this.labelPositions = {};
@@ -16,7 +17,7 @@ export class GeometryManager {
     this._envGroup = null;
     this.itemGroups = {};
     this.itemLabelMeshes = [];
-    this.roomItemBuilder = new RoomItemBuilder(THREE);
+    this.roomItemBuilder = new RoomItemBuilder(THREE, theme);
   }
 
   buildEnvironment(room, roomOptions, lightingOptions, sceneTheme) {
@@ -47,17 +48,18 @@ export class GeometryManager {
       this.scene.add(group);
       this.itemGroups[item.id] = group;
 
-      // Build standalone billboard label in world space
       const labelMesh = this.roomItemBuilder.buildLabel(item);
       if (labelMesh) {
-        const itemH = item.height ?? this.roomItemBuilder._defaultHeight(item.type);
-        const planeH = 2.8 * (128 / 512);
-        labelMesh.position.set(
-          group.position.x,
-          group.position.y + itemH + planeH * 0.5 + 0.4,
-          group.position.z
-        );
-        this.scene.add(labelMesh);
+        if (item.type === 'battery') {
+          const D = item.depth ?? 2.0;
+          const H = item.height ?? 2.5;
+          labelMesh.position.set(0, H * 0.45, -(D / 2) - 0.02);
+        } else {
+          const itemH = item.height ?? this.roomItemBuilder._defaultHeight(item.type);
+          const planeH = 2.8 * (128 / 512);
+          labelMesh.position.set(0, itemH + planeH * 0.5 + 0.4, 0);
+        }
+        group.add(labelMesh);
         this.itemLabelMeshes.push(labelMesh);
       }
     });
@@ -73,12 +75,6 @@ export class GeometryManager {
         }
       });
       this.scene.remove(group);
-    });
-    this.itemLabelMeshes.forEach(m => {
-      if (m.geometry) m.geometry.dispose();
-      if (m.material?.map) m.material.map.dispose();
-      if (m.material) m.material.dispose();
-      this.scene.remove(m);
     });
     this.itemLabelMeshes = [];
     this.itemGroups = {};
