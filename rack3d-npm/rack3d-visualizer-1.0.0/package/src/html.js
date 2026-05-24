@@ -3,7 +3,7 @@
 // ── Panel wrapper ────────────────────────────────────────────
 function panelHtml(self, id, title, body, opts = {}) {
   const sid = self._id;
-  return `<div class="r3-panel${opts.hidden ? ' r3-panel-hidden' : ''}" data-panel-id="${id}">
+  return `<div class="r3-panel${opts.hidden ? ' r3-panel-hidden' : ''}" data-panel-id="${id}" id="${sid}-panel-wrap-${id}">
     <div class="r3-ph" draggable="true"
          ondragstart="window._r3['${sid}']._onPanelDragStart(event,'${id}')"
          ondragend="window._r3['${sid}']._onPanelDragEnd(event)"
@@ -576,6 +576,7 @@ export function buildHTML(self) {
     ${panelHtml(self,'room','Room',roomPanelBody(self))}
     ${panelHtml(self,'env','Lighting',envPanelBody(self))}
     ${panelHtml(self,'catalog','Catalog',catalogPanelBody(self))}
+    ${panelHtml(self,'catalogEdit','Catalog Item',`<div id="${sid}-cat-edit-wrap"></div>`,{hidden:true})}
   </div>`;
 
   const canvasHtml = `
@@ -593,7 +594,7 @@ export function buildHTML(self) {
       <div class="r3-legend-body" id="${sid}-legend" style="display:none"></div>
     </div>
     <div id="${sid}-ctx-menu" class="r3-ctx-menu" style="display:none"></div>
-    <div class="r3-tip" id="${sid}-tip">${self._ctrl?.mode==='fps'?'🖱 Drag to look · WASD walk · Click ⊹FPS button to lock mouse':'🖱 Drag to orbit · Scroll to zoom · Click to select · Drag selected rack to move'}</div>
+    <div class="r3-tip" id="${sid}-tip">${self._ctrl?.mode==='fps'?'🖱 Drag to rotate · WASD walk · ← → rotate · Click ⊹FPS button to lock mouse':'🖱 Drag to orbit · Scroll to zoom · Click to select · Drag selected rack to move'}</div>
     <div class="r3-compass" id="${sid}-compass">
       <div class="r3-compass-ring">
         <span class="r3-compass-n" id="${sid}-compass-n">N</span>
@@ -641,7 +642,6 @@ export function buildHTML(self) {
     ${panelHtml(self,'devices','Devices',devicesPanelBody(self))}
     ${sb.showEditPanel && v.allowEdit ? panelHtml(self,'editDevice','Edit Device',editDevicePanelBody(self),{hidden:true}) : ''}
     ${panelHtml(self,'vms','Virtual Machines',vmPanelBody(self),{hidden:true})}
-    <div id="${sid}-cat-edit-wrap"></div>
   </div>`;
 
   const leftHandleHtml  = !sb.enabled ? '' : `<div class="r3-sb-handle"  id="${sid}-sb-handle"  style="display:${showL?'flex':'none'}"></div>`;

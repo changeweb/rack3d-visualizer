@@ -635,12 +635,12 @@ export class Rack3DVisualizer {
       if (this._ctrl.pointerLocked) {
         cv.style.cursor = 'none';
         if (b)   b.textContent = '🔓 UNLOCK';
-        if (tip) tip.textContent = 'Mouse locked · WASD walk · Q/E up/down · Click to select · ESC to release';
+        if (tip) tip.textContent = 'Mouse locked · WASD walk · Q/E up/down · ← → rotate · Click to select · ESC to release';
       } else {
         cv.style.cursor = 'crosshair';
         if (b)   b.textContent = this._ctrl.mode === 'fps' ? '⊹ FPS' : '⊕ ORBIT';
         if (tip) tip.textContent = this._ctrl.mode === 'fps'
-          ? '🖱 Drag to look · WASD walk · Click ⊹FPS button to lock mouse'
+          ? '🖱 Drag to rotate · WASD walk · ← → rotate · Click ⊹FPS button to lock mouse'
           : '🖱 Drag to orbit · Scroll to zoom · Click to select';
       }
     };
@@ -1111,7 +1111,7 @@ export class Rack3DVisualizer {
       this._ctrl.pitch = -0.08;
     }
     if (b)   b.textContent = '⊹ FPS';
-    if (tip) tip.textContent = '🖱 Drag to look · WASD walk · Click ⊹FPS again to lock mouse';
+    if (tip) tip.textContent = '🖱 Drag to rotate · WASD walk · ← → rotate · Click ⊹FPS again to lock mouse';
     this._posCamera();
   }
   toggleJson() {
@@ -2070,10 +2070,7 @@ export class Rack3DVisualizer {
     if (!panel) return;
     const targetSb = document.getElementById(sidebar === 'left' ? this._id + '-sb' : this._id + '-sbr');
     if (!targetSb) return;
-    // Insert before cat-edit-wrap if present, otherwise append
-    const catWrap = targetSb.querySelector(`#${this._id}-cat-edit-wrap`);
-    if (catWrap) targetSb.insertBefore(panel, catWrap);
-    else targetSb.appendChild(panel);
+    targetSb.appendChild(panel);
     document.querySelectorAll(`#${this._id} .r3-panel-drop-before`).forEach(el => el.classList.remove('r3-panel-drop-before'));
     this._savePanelState();
   }
@@ -2139,9 +2136,7 @@ export class Rack3DVisualizer {
       const inRight  = (saved.right || []).includes(panelId);
       const targetSb = inRight ? rightSb : leftSb;
       if (!targetSb) return;
-      const catWrap = targetSb.querySelector(`#${this._id}-cat-edit-wrap`);
-      if (catWrap) targetSb.insertBefore(panel, catWrap);
-      else targetSb.appendChild(panel);
+      targetSb.appendChild(panel);
     });
     Object.keys(saved.collapsed || {}).forEach(panelId => {
       const panel = document.querySelector(`#${this._id} [data-panel-id="${panelId}"]`);

@@ -133,7 +133,8 @@ export function removeCatalogItem(self, id) {
     self._selCatId = null;
     const wrap = document.getElementById(self._id + '-cat-edit-wrap');
     if (wrap) wrap.innerHTML = '';
-    _closeSbrIfEmpty(self);
+    const panel = document.getElementById(self._id + '-panel-wrap-catalogEdit');
+    if (panel) panel.classList.add('r3-panel-hidden');
   }
   self._renderCatalog();
 }
@@ -142,8 +143,11 @@ export function openCatalogEdit(self, item) {
   const wrap = document.getElementById(self._id + '-cat-edit-wrap');
   if (!wrap) return;
   wrap.innerHTML = '';
-  const sbr = document.getElementById(self._id + '-sbr');
-  if (sbr) sbr.classList.add('r3-sbr-open');
+  const panel = document.getElementById(self._id + '-panel-wrap-catalogEdit');
+  if (panel) {
+    panel.classList.remove('r3-panel-hidden');
+    setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+  }
 
   const typeOptions = Object.entries(self._types)
     .map(([k,v]) => `<option value="${k}" ${k===item.type?'selected':''}>${v.label}</option>`)
@@ -182,14 +186,16 @@ export function openCatalogEdit(self, item) {
     if (hw) item.halfWidth = hw; else delete item.halfWidth;
     wrap.innerHTML = '';
     self._selCatId = null;
-    _closeSbrIfEmpty(self);
+    const savePanel = document.getElementById(self._id + '-panel-wrap-catalogEdit');
+    if (savePanel) savePanel.classList.add('r3-panel-hidden');
     self._renderCatalog();
   });
 
   document.getElementById(self._id + '-cat-cancel').addEventListener('click', () => {
     wrap.innerHTML = '';
     self._selCatId = null;
-    _closeSbrIfEmpty(self);
+    const cancelPanel = document.getElementById(self._id + '-panel-wrap-catalogEdit');
+    if (cancelPanel) cancelPanel.classList.add('r3-panel-hidden');
     self._renderCatalog();
   });
 }
