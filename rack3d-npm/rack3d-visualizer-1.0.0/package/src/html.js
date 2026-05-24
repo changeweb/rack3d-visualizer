@@ -323,6 +323,9 @@ function rackPropsPanelBody(self) {
     <div class="r3-rw"><span class="r3-lbl">Temp°C</span><input class="r3-inp" type="number" id="${sid}-rtemp" oninput="window._r3['${sid}']._onRackProp('rackTemp',+this.value)"></div>
     <div class="r3-rw"><span class="r3-lbl">PDU Cap</span><input class="r3-inp" type="number" id="${sid}-rpduCap" oninput="window._r3['${sid}']._onRackProp('pduCapacity',+this.value)"></div>
     <div class="r3-rw"><span class="r3-lbl">PDU Load</span><input class="r3-inp" type="number" id="${sid}-rpduLoad" oninput="window._r3['${sid}']._onRackProp('pduLoad',+this.value)"></div>
+    <div class="r3-rw"><span class="r3-lbl">Labels</span>
+      <label class="r3-sw"><input type="checkbox" id="${sid}-rshowlabels" onchange="window._r3['${sid}']._onRackProp('showLabels',this.checked)">
+        <span class="r3-sw-track"><span class="r3-sw-thumb"></span></span></label></div>
   </div>
 
   <div id="${sid}-rpt-body-position" style="display:none">
@@ -549,7 +552,6 @@ export function buildHTML(self) {
     <span class="r3-badge" id="${sid}-bt" style="color:#e3b341;border-color:#ffaa0055;background:#ffaa0011">—</span>
     <span class="r3-badge" id="${sid}-bw" style="color:#cc88ff;border-color:#cc88ff55;background:#cc88ff11">—</span>
     <div class="r3-spacer"></div>
-    ${self._mode!=='2d'?`<button class="r3-btn on" id="${sid}-btnL" onclick="window._r3['${sid}'].toggleLabels()">◈ LABELS</button>`:''}
     <button class="r3-btn" id="${sid}-btnCam" onclick="window._r3['${sid}'].toggleCameraMode()">${self._ctrl?.mode==='fps'?'⊹ FPS':'⊕ ORBIT'}</button>
     <button class="r3-btn" id="${sid}-btn2d" onclick="window._r3['${sid}'].toggleMode()">⊞ ${self._mode==='2d'?'3D':'2D'}</button>
     <div class="r3-sep"></div>

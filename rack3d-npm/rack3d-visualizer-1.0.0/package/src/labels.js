@@ -64,7 +64,9 @@ export function updateLabels(self) {
     vp.copy(entry.pos); vp.project(self._cam);
     const sx = (vp.x * 0.5 + 0.5) * W;
     const sy = (-0.5 * vp.y + 0.5) * H;
-    const visible = self._showLabels && vp.z > 0 && vp.z < 1;
+    const rack = self._devRackMap?.[id];
+    const rackLabels = !rack || rack.showLabels !== false;
+    const visible = rackLabels && vp.z > 0 && vp.z < 1;
 
     d.style.top    = sy + 'px';
     d.style.transform = 'translateY(-50%)';

@@ -175,6 +175,8 @@ export class Rack3DVisualizer {
     this._selItemId = null;
     this._closeEdit();
     this._refresh();
+    this._renderWalls();
+    this._renderPillars();
     if (this._scene) this._buildRack();
     if (this._mode === '2d') this._render2D();
     return this;
@@ -418,10 +420,12 @@ export class Rack3DVisualizer {
     this._devMeshes      = this._geometryManager.deviceMeshes;
     this._labelPositions = this._geometryManager.labelPositions;
 
-    // Create CSS labels for every device
+    // Create CSS labels and build device→rack map for per-rack label visibility
+    this._devRackMap = {};
     if (this._room?.racks) {
       this._room.racks.forEach(rack => {
         (rack.devices || []).forEach(dev => {
+          this._devRackMap[dev.id] = rack;
           const lp = this._labelPositions[dev.id];
           if (!lp) return;
           const typeInfo = this._types[dev.type] || this._types.server;
@@ -1790,20 +1794,23 @@ export class Rack3DVisualizer {
     });
     this._buildEnvironment();
     this._renderPillars();
+    if (this._opts.onChange) this._opts.onChange(this.getData());
   }
 
   _editPillar(idx, field, value) {
     const pillar = this._room?.room_pillars?.[idx];
     if (!pillar) return;
-    pillar[field] = value;
+    pillar[field] = typeof value === 'string' && !isNaN(value) && field !== 'shape' && field !== 'color' ? parseFloat(value) : value;
     this._buildEnvironment();
     if (field === 'shape') this._renderPillars();
+    if (this._opts.onChange) this._opts.onChange(this.getData());
   }
 
   _removePillar(idx) {
     this._room?.room_pillars?.splice(idx, 1);
     this._buildEnvironment();
     this._renderPillars();
+    if (this._opts.onChange) this._opts.onChange(this.getData());
   }
 
   _renderPillars() {

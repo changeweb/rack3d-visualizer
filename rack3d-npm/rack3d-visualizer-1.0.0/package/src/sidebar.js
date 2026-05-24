@@ -50,6 +50,8 @@ export function refresh(self) {
   if (rnpbg) rnpbg.value = r.nameplateColor ?? '#081020';
   const rnptxt = $('rnptxt');
   if (rnptxt) rnptxt.value = r.nameplateTextColor ?? '#88bbdd';
+  const rsl = $('rshowlabels');
+  if (rsl) rsl.checked = r.showLabels !== false;
 
   const sw = $('sw'); if (sw) sw.innerHTML = `<span style="font-family:'Orbitron',monospace">${r.pduLoad||0}</span><span style="font-size:10px;opacity:.6"> / ${r.pduCapacity||0}W (${pct}%)</span>`;
   const st = $('st'); if (st) st.innerHTML = `<span style="font-family:'Orbitron',monospace;color:${tc2}">${r.rackTemp||0}</span><span style="font-size:10px;opacity:.6">°C</span>`;
@@ -118,6 +120,8 @@ export function buildRoomPanel(self) {
     });
     el.appendChild(d);
   });
+  if (self._renderWalls)   self._renderWalls();
+  if (self._renderPillars) self._renderPillars();
 }
 
 export function buildUnitMap(self) {
@@ -241,10 +245,10 @@ export function onRackUnits(self, v) {
 export function onRackProp(self, p, v) {
   if (!self._rack) return;
   self._rack[p] = v;
-  // Nameplate appearance props require a full rack rebuild to re-render the canvas texture
   if (p === 'nameplateShape' || p === 'nameplateColor' || p === 'nameplateTextColor' || p === 'nameplateBorderColor') {
     self._buildRack();
   }
+  if (p === 'showLabels') self._updateLabels?.();
   self._refresh();
 }
 export function onRackWidth(self, v) {
