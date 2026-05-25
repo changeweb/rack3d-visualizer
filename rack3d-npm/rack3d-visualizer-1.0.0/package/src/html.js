@@ -384,25 +384,12 @@ function editDevicePanelBody(self) {
 
   <div id="${sid}-edt-body-properties">
     <div class="r3-rw"><span class="r3-lbl">Name</span><input class="r3-inp" id="${sid}-en" oninput="window._r3['${sid}']._ed('name',this.value)"></div>
-    <div class="r3-rw"><span class="r3-lbl">Type</span>
-      <select class="r3-inp" id="${sid}-et" onchange="window._r3['${sid}']._ed('type',this.value)">
-        ${Object.entries(self._types).map(([k,tv])=>`<option value="${k}">${tv.label}</option>`).join('')}
-      </select>
-    </div>
-    <div class="r3-rw"><span class="r3-lbl">Watts</span><input class="r3-inp" type="number" id="${sid}-ew" oninput="window._r3['${sid}']._ed('watts',+this.value)"></div>
-    <div class="r3-rw"><span class="r3-lbl">Height U</span><input class="r3-inp" type="number" min="1" max="12" id="${sid}-eh" oninput="window._r3['${sid}']._ed('heightUnits',+this.value)"></div>
     <div class="r3-rw"><span class="r3-lbl">Start U</span><input class="r3-inp" type="number" min="1" id="${sid}-es" oninput="window._r3['${sid}']._ed('startUnit',+this.value)"></div>
-    <div class="r3-rw"><span class="r3-lbl">Width</span>
-      <select class="r3-inp" id="${sid}-ehw" onchange="window._r3['${sid}']._ed('halfWidth',this.value||undefined)">
-        <option value="">Full Width</option><option value="left">Half — Left</option><option value="right">Half — Right</option>
-      </select>
-    </div>
+    <div id="${sid}-einfo" style="margin-top:6px;padding:5px 7px;border:1px solid var(--r3-border);border-radius:2px;font-family:'Share Tech Mono',monospace;font-size:10px;opacity:.7;line-height:1.6"></div>
   </div>
 
   <div id="${sid}-edt-body-style" style="display:none">
     <div class="r3-rw"><span class="r3-lbl">Color</span><input class="r3-inp" type="color" id="${sid}-ecolor" style="padding:2px;height:28px" oninput="window._r3['${sid}']._ed('color',this.value)"></div>
-    <div class="r3-rw"><span class="r3-lbl">Front Img</span><input class="r3-inp" id="${sid}-eimg" placeholder="URL" oninput="window._r3['${sid}']._ed('imageUrl',this.value)"></div>
-    <div class="r3-rw"><span class="r3-lbl">Rear Img</span><input class="r3-inp" id="${sid}-eimgr" placeholder="URL" oninput="window._r3['${sid}']._ed('imageUrlRear',this.value)"></div>
   </div>
 
   <div id="${sid}-edt-body-network" style="display:none">
@@ -596,7 +583,7 @@ export function buildHTML(self) {
       <div class="r3-legend-body" id="${sid}-legend" style="display:none"></div>
     </div>
     <div id="${sid}-ctx-menu" class="r3-ctx-menu" style="display:none"></div>
-    <div class="r3-tip" id="${sid}-tip">${self._ctrl?.mode==='fps'?'🖱 Drag to rotate · WASD walk · ← → rotate · Click ⊹FPS button to lock mouse':'🖱 Drag to orbit · Scroll to zoom · Click to select · Drag selected rack to move'}</div>
+    <div class="r3-tip" id="${sid}-tip">${self._ctrl?.mode==='fps'?'🖱 Drag to rotate · WS walk · A/D or ← → rotate · Click ⊹FPS button to lock mouse':'🖱 Drag to orbit · Scroll to zoom · Click to select · Drag selected rack to move'}</div>
     <div class="r3-compass" id="${sid}-compass">
       <div class="r3-compass-ring">
         <span class="r3-compass-n" id="${sid}-compass-n">N</span>
@@ -667,7 +654,8 @@ export function buildHTML(self) {
           <div class="r3-help-row"><span class="r3-help-key">Drag</span><span>Orbit / look around</span></div>
           <div class="r3-help-row"><span class="r3-help-key">Scroll</span><span>Zoom in/out</span></div>
           <div class="r3-help-row"><span class="r3-help-key">⊹ FPS</span><span>Switch to FPS walk mode</span></div>
-          <div class="r3-help-row"><span class="r3-help-key">WASD</span><span>Walk in FPS mode</span></div>
+          <div class="r3-help-row"><span class="r3-help-key">W/S</span><span>Walk forward / back in FPS mode</span></div>
+          <div class="r3-help-row"><span class="r3-help-key">A/D or ← →</span><span>Rotate camera left / right</span></div>
           <div class="r3-help-row"><span class="r3-help-key">Q / E</span><span>Move up / down in FPS mode</span></div>
           <div class="r3-help-row"><span class="r3-help-key">ESC</span><span>Release mouse lock</span></div>
           <div class="r3-help-sec">Selection &amp; Transform</div>

@@ -168,14 +168,17 @@ export function openEdit(self, dev) {
   if (editPanel) editPanel.classList.remove('r3-panel-hidden');
   const el = document.getElementById(self._id + '-elbl'); if (el) el.textContent = '▸ '+dev.name;
   const set = (id, v) => { const e = document.getElementById(self._id+'-'+id); if (e) e.value = v; };
-  set('en',dev.name); set('et',dev.type); set('ew',dev.watts);
-  set('eh',dev.heightUnits); set('es',dev.startUnit);
-  set('ehw',dev.halfWidth||'');
-  set('ecolor',dev.color||(self._types[dev.type]?.color||'#2288ff'));
-  set('eimg',dev.imageUrl||'');
-  set('eimgr',dev.imageUrlRear||'');
-  set('eip',dev.ip||'');
-  set('estat',dev.status||'');
+  set('en', dev.name);
+  set('es', dev.startUnit);
+  set('ecolor', dev.color || (self._types[dev.type]?.color || '#2288ff'));
+  set('eip', dev.ip || '');
+  set('estat', dev.status || '');
+  const infoEl = document.getElementById(self._id + '-einfo');
+  if (infoEl) {
+    const typeLabel = self._types[dev.type]?.label || dev.type;
+    const wLabel    = dev.halfWidth === 'left' ? 'Half-Left' : dev.halfWidth === 'right' ? 'Half-Right' : 'Full';
+    infoEl.textContent = `${typeLabel} · ${dev.heightUnits}U · ${dev.watts}W · ${wLabel}`;
+  }
   renderCustomFieldsEditor(self, dev);
 }
 

@@ -1,5 +1,21 @@
 // ── CATALOG ── device template library
 
+function _syncCatalogToDevices(self, item) {
+  (self._room?.racks || []).forEach(rack => {
+    (rack.devices || []).forEach(dev => {
+      // Match by catalogId if set, otherwise fall back to matching by type
+      const matches = dev.catalogId ? dev.catalogId === item.id : dev.type === item.type;
+      if (!matches) return;
+      dev.type         = item.type;
+      dev.heightUnits  = item.heightUnits;
+      dev.watts        = item.watts;
+      dev.imageUrl     = item.imageUrl     || '';
+      dev.imageUrlRear = item.imageUrlRear || '';
+      if (item.halfWidth) dev.halfWidth = item.halfWidth; else delete dev.halfWidth;
+    });
+  });
+}
+
 export function renderCatalog(self) {
   const el = document.getElementById(self._id + '-cat');
   if (!el) return;
@@ -103,7 +119,13 @@ export function addFromCatalog(self, catId) {
   }
   const item = (self._room?.catalog || []).find(c => c.id === catId);
   if (!item) return null;
-  return self._addDev(item.type, item.halfWidth || null, item.name, item.heightUnits, item.watts);
+  const dev = self._addDev(item.type, item.halfWidth || null, item.name, item.heightUnits, item.watts);
+  if (dev) {
+    dev.imageUrl     = item.imageUrl     || '';
+    dev.imageUrlRear = item.imageUrlRear || '';
+    dev.catalogId    = catId;
+  }
+  return dev;
 }
 
 function _flashMsg(self, text) {
@@ -118,7 +140,7 @@ function _flashMsg(self, text) {
 
 export function addCatalogItem(self) {
   if (!self._room) return;
-  const newItem = { id:'cat-'+Date.now(), name:'New Device', type:'server', heightUnits:1, watts:200 };
+  const newItem = { id:'cat-'+Date.now(), name:'New Device', type:'server', heightUnits:1, watts:200, imageUrl:'', imageUrlRear:'' };
   if (!Array.isArray(self._room.catalog)) self._room.catalog = [];
   self._room.catalog.push(newItem);
   self._selCatId = newItem.id;
@@ -169,6 +191,8 @@ export function openCatalogEdit(self, item) {
         <option value="right" ${item.halfWidth==='right'?'selected':''}>Half — Right</option>
       </select>
     </div>
+    <div class="r3-rw"><span class="r3-lbl">Front Img</span><input class="r3-inp" id="${self._id}-ceimg"  placeholder="URL" value="${item.imageUrl||''}"></div>
+    <div class="r3-rw"><span class="r3-lbl">Rear Img</span><input class="r3-inp" id="${self._id}-ceimgr" placeholder="URL" value="${item.imageUrlRear||''}"></div>
     <div style="display:flex;gap:5px;margin-top:8px">
       <button class="r3-btn on" id="${self._id}-cat-save" style="flex:1">✓ Save</button>
       <button class="r3-btn" id="${self._id}-cat-cancel" style="flex:1">✕ Cancel</button>
@@ -184,11 +208,20 @@ export function openCatalogEdit(self, item) {
     item.watts = parseInt(get('ew'), 10) || 0;
     const hw = get('ehw');
     if (hw) item.halfWidth = hw; else delete item.halfWidth;
+    item.imageUrl     = get('eimg')  ?? item.imageUrl     ?? '';
+    item.imageUrlRear = get('eimgr') ?? item.imageUrlRear ?? '';
+
+    // Propagate structural fields to all devices referencing this catalog item
+    _syncCatalogToDevices(self, item);
+
     wrap.innerHTML = '';
     self._selCatId = null;
     const savePanel = document.getElementById(self._id + '-panel-wrap-catalogEdit');
     if (savePanel) savePanel.classList.add('r3-panel-hidden');
     self._renderCatalog();
+    self._buildRack?.();
+    self._refresh?.();
+    if (self._opts?.onChange) self._opts.onChange(self.getData());
   });
 
   document.getElementById(self._id + '-cat-cancel').addEventListener('click', () => {

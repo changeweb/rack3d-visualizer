@@ -21,18 +21,18 @@ import { EnvironmentBuilder } from './builders/EnvironmentBuilder.js';
 let _instanceCount = 0;
 
 const DEFAULT_CATALOG = [
-  { id:'cat-sv1',  name:'Server 1U',    type:'server',   heightUnits:1, watts:300 },
-  { id:'cat-sv2',  name:'Server 2U',    type:'server',   heightUnits:2, watts:620 },
-  { id:'cat-sw',   name:'Switch 48p',   type:'switch',   heightUnits:1, watts:180 },
-  { id:'cat-rt',   name:'Router',       type:'router',   heightUnits:2, watts:450 },
-  { id:'cat-fw',   name:'Firewall',     type:'firewall', heightUnits:2, watts:320 },
-  { id:'cat-st',   name:'NAS Storage',  type:'storage',  heightUnits:3, watts:290 },
-  { id:'cat-pdu',  name:'PDU',          type:'pdu',      heightUnits:1, watts:30  },
-  { id:'cat-pat',  name:'Patch Panel',  type:'patch',    heightUnits:1, watts:0   },
-  { id:'cat-ups',  name:'UPS Unit',     type:'ups',      heightUnits:3, watts:180 },
-  { id:'cat-kvm',  name:'KVM Switch',   type:'kvm',      heightUnits:1, watts:45  },
-  { id:'cat-lb',   name:'Load Balancer',type:'loadbal',  heightUnits:1, watts:200 },
-  { id:'cat-sec',  name:'IDS Sensor',   type:'security', heightUnits:1, watts:95  },
+  { id:'cat-sv1',  name:'Server 1U',    type:'server',   heightUnits:1, watts:300, imageUrl:'', imageUrlRear:'' },
+  { id:'cat-sv2',  name:'Server 2U',    type:'server',   heightUnits:2, watts:620, imageUrl:'', imageUrlRear:'' },
+  { id:'cat-sw',   name:'Switch 48p',   type:'switch',   heightUnits:1, watts:180, imageUrl:'', imageUrlRear:'' },
+  { id:'cat-rt',   name:'Router',       type:'router',   heightUnits:2, watts:450, imageUrl:'', imageUrlRear:'' },
+  { id:'cat-fw',   name:'Firewall',     type:'firewall', heightUnits:2, watts:320, imageUrl:'', imageUrlRear:'' },
+  { id:'cat-st',   name:'NAS Storage',  type:'storage',  heightUnits:3, watts:290, imageUrl:'', imageUrlRear:'' },
+  { id:'cat-pdu',  name:'PDU',          type:'pdu',      heightUnits:1, watts:30,  imageUrl:'', imageUrlRear:'' },
+  { id:'cat-pat',  name:'Patch Panel',  type:'patch',    heightUnits:1, watts:0,   imageUrl:'', imageUrlRear:'' },
+  { id:'cat-ups',  name:'UPS Unit',     type:'ups',      heightUnits:3, watts:180, imageUrl:'', imageUrlRear:'' },
+  { id:'cat-kvm',  name:'KVM Switch',   type:'kvm',      heightUnits:1, watts:45,  imageUrl:'', imageUrlRear:'' },
+  { id:'cat-lb',   name:'Load Balancer',type:'loadbal',  heightUnits:1, watts:200, imageUrl:'', imageUrlRear:'' },
+  { id:'cat-sec',  name:'IDS Sensor',   type:'security', heightUnits:1, watts:95,  imageUrl:'', imageUrlRear:'' },
 ];
 
 export class Rack3DVisualizer {
@@ -163,6 +163,19 @@ export class Rack3DVisualizer {
       if (!r.id) r.id = 'rack-' + Date.now() + Math.random().toString(36).slice(2,6);
       if (!Array.isArray(r.devices)) r.devices = [];
       if (!r.units) r.units = 24;
+    });
+    // Sync catalog structural properties to devices (by catalogId, or by type for legacy devices)
+    const catMap = Object.fromEntries((this._room.catalog || []).map(c => [c.id, c]));
+    const catByType = {};
+    (this._room.catalog || []).forEach(c => { catByType[c.type] = c; });
+    this._room.racks.forEach(r => {
+      (r.devices || []).forEach(dev => {
+        const cat = dev.catalogId ? catMap[dev.catalogId] : catByType[dev.type];
+        if (!cat) return;
+        dev.type = cat.type; dev.heightUnits = cat.heightUnits; dev.watts = cat.watts;
+        dev.imageUrl = cat.imageUrl || ''; dev.imageUrlRear = cat.imageUrlRear || '';
+        if (cat.halfWidth) dev.halfWidth = cat.halfWidth; else delete dev.halfWidth;
+      });
     });
     // Auto-select first rack
     if (this._room.racks.length > 0) {
@@ -635,12 +648,12 @@ export class Rack3DVisualizer {
       if (this._ctrl.pointerLocked) {
         cv.style.cursor = 'none';
         if (b)   b.textContent = '🔓 UNLOCK';
-        if (tip) tip.textContent = 'Mouse locked · WASD walk · Q/E up/down · ← → rotate · Click to select · ESC to release';
+        if (tip) tip.textContent = 'Mouse locked · WS walk · A/D or ← → rotate · Q/E up/down · Click to select · ESC to release';
       } else {
         cv.style.cursor = 'crosshair';
         if (b)   b.textContent = this._ctrl.mode === 'fps' ? '⊹ FPS' : '⊕ ORBIT';
         if (tip) tip.textContent = this._ctrl.mode === 'fps'
-          ? '🖱 Drag to rotate · WASD walk · ← → rotate · Click ⊹FPS button to lock mouse'
+          ? '🖱 Drag to rotate · WS walk · A/D or ← → rotate · Click ⊹FPS button to lock mouse'
           : '🖱 Drag to orbit · Scroll to zoom · Click to select';
       }
     };
@@ -920,10 +933,8 @@ export class Rack3DVisualizer {
         const rtX   = Math.cos(yaw), rtZ  = -Math.sin(yaw);
         if (keys['KeyW']   || keys['ArrowUp'])    { pos.x += fwdX*spd*dt; pos.z += fwdZ*spd*dt; }
         if (keys['KeyS']   || keys['ArrowDown'])  { pos.x -= fwdX*spd*dt; pos.z -= fwdZ*spd*dt; }
-        if (keys['KeyA'])                         { pos.x -= rtX*spd*dt;  pos.z -= rtZ*spd*dt;  }
-        if (keys['KeyD'])                         { pos.x += rtX*spd*dt;  pos.z += rtZ*spd*dt;  }
-        if (keys['ArrowLeft'])                    { this._ctrl.yaw -= rotSpd*dt; }
-        if (keys['ArrowRight'])                   { this._ctrl.yaw += rotSpd*dt; }
+        if (keys['KeyA']   || keys['ArrowLeft'])  { this._ctrl.yaw -= rotSpd*dt; }
+        if (keys['KeyD']   || keys['ArrowRight']) { this._ctrl.yaw += rotSpd*dt; }
         if (keys['KeyQ']   || keys['PageUp'])     { pos.y += spd*dt; }
         if (keys['KeyE']   || keys['PageDown'])   { pos.y -= spd*dt; }
         // Clamp to room bounds (scene room center offset: cx=0, cz=2)
@@ -1102,7 +1113,7 @@ export class Rack3DVisualizer {
       this._ctrl.pitch = -0.08;
     }
     if (b)   b.textContent = '⊹ FPS';
-    if (tip) tip.textContent = '🖱 Drag to rotate · WASD walk · ← → rotate · Click ⊹FPS again to lock mouse';
+    if (tip) tip.textContent = '🖱 Drag to rotate · WS walk · A/D or ← → rotate · Click ⊹FPS again to lock mouse';
     this._posCamera();
   }
   toggleJson() {
