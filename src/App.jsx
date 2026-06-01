@@ -731,6 +731,7 @@ function RoomInstance({ data, theme = 'light' }) {
 
   useEffect(() => {
     if (!containerRef.current) return;
+    let liveInterval = null;
     vizRef.current = new Rack3DVisualizer(containerRef.current, {
       theme,
       camera: { mode: 'fps', fpsSpeed: 0.14, azimuth: Math.PI, elevation: 0.15, distance: 'auto',
@@ -759,9 +760,30 @@ function RoomInstance({ data, theme = 'light' }) {
         fogNear:         60,
         fogFar:          140,
       },
+      onReady: (viz) => {
+        liveInterval = setInterval(() => {
+          data.racks.forEach(r => {
+            viz.updateRackStats(r.id, {
+              rackTemp: +(18 + Math.random() * 25).toFixed(1),
+              pduLoad:  Math.floor(r.pduCapacity * (0.3 + Math.random() * 0.7)),
+            });
+            (r.devices || []).slice(0, 3).forEach(dev => {
+              const s = ['up', 'up', 'up', 'warn', 'down'][Math.floor(Math.random() * 5)];
+              viz.updateDeviceFields(r.id, dev.id, {
+                status: s,
+                fields: [
+                  { icon: '💻', label: 'CPU', value: Math.round(Math.random() * 100) + '%' },
+                  { icon: '💾', label: 'MEM', value: Math.round(Math.random() * 100) + '%' },
+                ],
+              });
+            });
+          });
+        }, 2000);
+      },
     });
     vizRef.current.setRoomData(data);
-    return () => { vizRef.current?.destroy(); vizRef.current = null; };
+
+    return () => { clearInterval(liveInterval); vizRef.current?.destroy(); vizRef.current = null; };
   }, []);
 
   useEffect(() => { vizRef.current?.setRoomData(data); }, [data]);

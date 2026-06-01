@@ -98,6 +98,26 @@ export function refresh(self) {
   if (self._opts.onChange && self._room) self._opts.onChange(self.getData());
 }
 
+export function updateRackStatsDom(self, r) {
+  const $ = id => document.getElementById(self._id + '-' + id);
+  const set = (id, v) => { const el = $(id); if (el) el.textContent = v; };
+  const css = (id, p, v) => { const el = $(id); if (el) el.style[p] = v; };
+
+  const pct = r.pduCapacity > 0 ? Math.round(r.pduLoad / r.pduCapacity * 100) : 0;
+  const tc2 = tempColor(r.rackTemp);
+  const pwc = pct > 90 ? '#ff3344' : pct > 70 ? '#ffaa00' : '#00ff88';
+
+  set('bt', (r.rackTemp || 0) + '°C');
+  set('bw', (r.pduLoad || 0) + 'W');
+
+  const sw = $('sw');
+  if (sw) sw.innerHTML = `<span style="font-family:'Orbitron',monospace">${r.pduLoad || 0}</span><span style="font-size:10px;opacity:.6"> / ${r.pduCapacity || 0}W (${pct}%)</span>`;
+  const st = $('st');
+  if (st) st.innerHTML = `<span style="font-family:'Orbitron',monospace;color:${tc2}">${r.rackTemp || 0}</span><span style="font-size:10px;opacity:.6">°C</span>`;
+  css('sfW', 'width', Math.min(100, pct) + '%'); css('sfW', 'background', pwc);
+  css('sfT', 'width', Math.min(100, (r.rackTemp || 0) * 1.8) + '%'); css('sfT', 'background', tc2);
+}
+
 export function buildRoomPanel(self) {
   const el = document.getElementById(self._id + '-rack-list');
   if (!el || !self._room) return;

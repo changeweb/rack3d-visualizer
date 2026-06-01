@@ -8,7 +8,7 @@ export function createLabel(self, dev, col, side) {
   const statusMap = { up: ['#00ff88','▲'], down: ['#ff3344','▼'], warn: ['#ffaa00','⚠'] };
   const [sc, si]  = (dev.status && statusMap[dev.status]) || [];
   const statusHtml = sc
-    ? `<span style="color:${sc};font-size:11px;margin-left:3px" title="${dev.status}">${si}</span>`
+    ? `<span class="r3-lstatus" style="color:${sc};font-size:11px;margin-left:3px" title="${dev.status}">${si}</span>`
     : '';
 
   const detailLines = [];
@@ -52,6 +52,76 @@ export function createLabel(self, dev, col, side) {
   const labelsEl = document.getElementById(self._id + '-labels');
   if (labelsEl) labelsEl.appendChild(d);
   self._labelDivs[dev.id] = d;
+}
+
+export function refreshLabel(self, dev) {
+  const d = self._labelDivs[dev.id];
+  if (!d) return;
+
+  const lo = self._opts.labels;
+  const statusMap = { up: ['#00ff88','▲'], down: ['#ff3344','▼'], warn: ['#ffaa00','⚠'] };
+  const [sc, si] = (dev.status && statusMap[dev.status]) || [];
+
+  const ltag = d.querySelector('.r3-ltag');
+  if (ltag) {
+    const existing = ltag.querySelector('.r3-lstatus');
+    if (existing) existing.remove();
+    if (sc) {
+      const span = document.createElement('span');
+      span.className = 'r3-lstatus';
+      span.style.cssText = `color:${sc};font-size:11px;margin-left:3px`;
+      span.title = dev.status;
+      span.textContent = si;
+      const lname = ltag.querySelector('.r3-lname');
+      if (lname?.nextSibling) ltag.insertBefore(span, lname.nextSibling);
+      else ltag.appendChild(span);
+    }
+  }
+
+  const detailId = self._id + '-det-' + dev.id;
+  const detailLines = [];
+  if (lo.showWatts && dev.watts != null) detailLines.push(`<span>⚡ ${dev.watts}W</span>`);
+  if (lo.showUnits) detailLines.push(`<span>📌 U${dev.startUnit}–${dev.startUnit + dev.heightUnits - 1}</span>`);
+  if (dev.ip) detailLines.push(`<span>🔌 ${dev.ip}</span>`);
+  if (Array.isArray(dev.fields)) {
+    dev.fields.forEach(f => {
+      const parts = [f.icon || '', f.label ? `<span style="opacity:.65">${f.label}:</span>` : '', `<b>${f.value ?? ''}</b>`].filter(Boolean);
+      detailLines.push(parts.join(' '));
+    });
+  }
+
+  const lcard = d.querySelector('.r3-lcard');
+  let detailEl = document.getElementById(detailId);
+  const col = d.querySelector('.r3-ldot')?.style.color || '#2288ff';
+  const fontSize = lo.fontSize ? lo.fontSize - 1 : 10;
+
+  if (detailLines.length > 0) {
+    const rows = detailLines.map(l => `<div class="r3-ldetail-row" style="font-size:${fontSize}px">${l}</div>`).join('');
+    if (detailEl) {
+      detailEl.innerHTML = rows;
+    } else if (lcard) {
+      detailEl = document.createElement('div');
+      detailEl.id = detailId;
+      detailEl.className = 'r3-ldetail';
+      detailEl.style.cssText = `border-color:${col}44;color:${col}cc;display:none`;
+      detailEl.innerHTML = rows;
+      lcard.appendChild(detailEl);
+      if (ltag && !ltag.querySelector('.r3-ltoggle')) {
+        const tog = document.createElement('span');
+        tog.className = 'r3-ltoggle';
+        tog.style.cssText = 'cursor:pointer;margin-left:4px;opacity:.7;font-size:10px;user-select:none';
+        tog.textContent = '⊞';
+        tog.onclick = function() {
+          const el = document.getElementById(detailId);
+          if (el) { el.style.display = el.style.display === 'none' ? 'flex' : 'none'; tog.textContent = el.style.display === 'none' ? '⊞' : '⊟'; }
+        };
+        ltag.appendChild(tog);
+      }
+    }
+  } else if (detailEl) {
+    detailEl.remove();
+    ltag?.querySelector('.r3-ltoggle')?.remove();
+  }
 }
 
 export function updateLabels(self) {

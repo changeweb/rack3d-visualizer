@@ -7,10 +7,10 @@ import { DEVICE_TYPES } from './constants.js';
 import { buildCSS } from './css.js';
 import { buildHTML, customLightRow, roomItemRow, roomItemsPanelBody, groupsPanelBody, vmPanelBody, vmCard, vmPortRow, wallRow, pillarRow } from './html.js';
 import { makeUnitLabel } from './geometry.js';
-import { createLabel, updateLabels } from './labels.js';
+import { createLabel, updateLabels, refreshLabel } from './labels.js';
 import { render2D, on2DDragStart, on2DDragEnd, on2DDrop, dropUnit, exportImage, dlBlob, gen2DCanvas, gen2DSVG } from './render2d.js';
 import { renderCatalog, addFromCatalog, addCatalogItem, removeCatalogItem, openCatalogEdit } from './catalog.js';
-import { refresh, buildRoomPanel, buildUnitMap, buildLegendOverlay, openEdit, closeEdit, ed, addDev, rmDev, onRackName, onRackUnits, onRackProp, onRackWidth, onRackPos, onRackAngle, renderCustomFieldsEditor, addCustomField, editField, removeField } from './sidebar.js';
+import { refresh, buildRoomPanel, buildUnitMap, buildLegendOverlay, updateRackStatsDom, openEdit, closeEdit, ed, addDev, rmDev, onRackName, onRackUnits, onRackProp, onRackWidth, onRackPos, onRackAngle, renderCustomFieldsEditor, addCustomField, editField, removeField } from './sidebar.js';
 import { MaterialFactory } from './services/MaterialFactory.js';
 import { SelectionManager } from './services/SelectionManager.js';
 import { GeometryManager } from './services/GeometryManager.js';
@@ -228,6 +228,31 @@ export class Rack3DVisualizer {
   setMode(mode) { return this.setOptions({ view: { mode } }); }
   setWireframe(e) { this._showWire = e; if (this._scene) this._buildRack(); return this; }
   setLabels(e) { this._showLabels = e; return this; }
+
+  updateRackStats(rackId, stats) {
+    if (!this._room) return this;
+    const rack = this._room.racks.find(r => r.id === rackId);
+    if (!rack) return this;
+    if (stats.rackTemp    != null) rack.rackTemp    = stats.rackTemp;
+    if (stats.pduCapacity != null) rack.pduCapacity = stats.pduCapacity;
+    if (stats.pduLoad     != null) rack.pduLoad     = stats.pduLoad;
+    if (rackId === this._selRackId) updateRackStatsDom(this, rack);
+    return this;
+  }
+
+  updateDeviceFields(rackId, deviceId, updates) {
+    if (!this._room) return this;
+    const rack = this._room.racks.find(r => r.id === rackId);
+    if (!rack) return this;
+    const dev = rack.devices?.find(d => d.id === deviceId);
+    if (!dev) return this;
+    if (updates.status != null) dev.status = updates.status;
+    if (updates.watts  != null) dev.watts  = updates.watts;
+    if (updates.ip     != null) dev.ip     = updates.ip;
+    if (updates.fields != null) dev.fields = updates.fields;
+    refreshLabel(this, dev);
+    return this;
+  }
 
   setCameraAngle(az, el, dist) {
     this._ctrl.az = az ?? this._ctrl.az;
