@@ -1,62 +1,62 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import terser from '@rollup/plugin-terser';
+import typescript from '@rollup/plugin-typescript';
+import dts from 'rollup-plugin-dts';
 import { visualizer } from 'rollup-plugin-visualizer';
 
-// Shared plugin stack to keep the config DRY (Don't Repeat Yourself)
+const tsPlugin = () => typescript({
+  tsconfig: './tsconfig.json',
+  declaration: false,
+  sourceMap: true,
+});
+
 const getPlugins = (isEsm = false) => [
+  tsPlugin(),
   resolve(),
   commonjs(),
   terser(),
-  // Only generate the size report during the ESM build to save time
-  ...(isEsm ? [visualizer({ 
-    filename: 'stats.html', 
-    gzipSize: true,
-    open: false // Set to true if you want it to pop up in the browser every build
-  })] : [])
+  ...(isEsm ? [visualizer({ filename: 'stats.html', gzipSize: true, open: false })] : []),
 ];
 
 const external = ['three'];
 
 export default [
-  // 1. CommonJS build (for older Node.js/Tools)
+  // 1. CommonJS
   {
-    input: 'src/index.js',
+    input: 'src/index.ts',
     external,
-    output: {
-      file: 'dist/rack3d-visualizer.cjs.js',
-      format: 'cjs',
-      sourcemap: true,
-      exports: 'auto',
-    },
+    output: { file: 'dist/rack3d-visualizer.cjs.js', format: 'cjs', sourcemap: true, exports: 'auto' },
     plugins: getPlugins(),
   },
 
-  // 2. ES Module build (for modern Bundlers like Vite/Webpack)
+  // 2. ES Module
   {
-    input: 'src/index.js',
+    input: 'src/index.ts',
     external,
-    output: {
-      file: 'dist/rack3d-visualizer.esm.js',
-      format: 'es',
-      sourcemap: true,
-    },
-    plugins: getPlugins(true), // Generates stats.html here
+    output: { file: 'dist/rack3d-visualizer.esm.js', format: 'es', sourcemap: true },
+    plugins: getPlugins(true),
   },
 
-  // 3. UMD build (for direct Browser <script> tags)
+  // 3. UMD
   {
-    input: 'src/index.js',
+    input: 'src/index.ts',
     external,
     output: {
       file: 'dist/rack3d-visualizer.umd.js',
       format: 'umd',
       name: 'Rack3DVisualizer',
-      globals: {
-        three: 'THREE', // Maps the external 'three' to the global 'THREE' variable
-      },
+      globals: { three: 'THREE' },
       sourcemap: true,
     },
     plugins: getPlugins(),
+  },
+
+  // 4. Type declarations bundle
+  {
+    input: 'src/index.ts',
+    external,
+    output: { file: 'dist/index.d.ts', format: 'es', sourcemap: false },
+    plugins: [typescript({ tsconfig: './tsconfig.json', declaration: false, sourceMap: false }), dts()],
   },
 ];
