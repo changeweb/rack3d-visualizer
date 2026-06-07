@@ -48,6 +48,7 @@ export class GroupManager {
     self._room!.groups.push({ id, name: name || 'Group ' + this.groupsArr().length, members: [...this.multiSel] })
     this.multiSel.clear()
     this.selGroupId = id
+    self._selGroupId = id
     this.refreshGroupPanel()
     self._buildRack()
   }
@@ -55,7 +56,7 @@ export class GroupManager {
   disbandGroup(groupId: string): void {
     const self = this.viz
     if (self._room!.groups) self._room!.groups = self._room!.groups.filter((g: { id: string }) => g.id !== groupId)
-    if (this.selGroupId === groupId) this.selGroupId = null
+    if (this.selGroupId === groupId) { this.selGroupId = null; self._selGroupId = null }
     this.refreshGroupPanel()
     self._buildRack()
   }
@@ -92,6 +93,7 @@ export class GroupManager {
   selectGroup(groupId: string): void {
     const self = this.viz
     this.selGroupId = groupId
+    self._selGroupId = groupId
     this.multiSel.clear()
     this.refreshGroupPanel()
     self._buildRack()
@@ -196,7 +198,7 @@ export class GroupManager {
         const rack = (self._room?.racks || []).find((r: { id: string }) => r.id === id)
         if (rack) {
           rack.position = { x: pos.x + dx, y: pos.y ?? 0, z: pos.z + dz }
-          const rg = self._rackGroups?.[id]
+          const rg = self._geometryManager?.rackGroups[id]
           if (rg) { rg.position.x = rack.position.x; rg.position.z = rack.position.z }
         }
       }
@@ -219,7 +221,7 @@ export class GroupManager {
         const rack = (self._room?.racks || []).find((r: { id: string }) => r.id === id)
         if (rack) {
           rack.facingAngle = startAngle + rad
-          const rg = self._rackGroups?.[id]
+          const rg = self._geometryManager?.rackGroups[id]
           if (rg) rg.rotation.y = rack.facingAngle
         }
       }
@@ -272,6 +274,7 @@ export class GroupManager {
           if (!self._room!.groups) self._room!.groups = []
           self._room!.groups.push({ id, name: 'Group ' + this.groupsArr().length, members: [targetId!] })
           this.selGroupId = id
+          self._selGroupId = id
           this.refreshGroupPanel()
           self._buildRack()
         })
