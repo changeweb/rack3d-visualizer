@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 100">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0e1a1a"/>
+      <stop offset="100%" stop-color="#081010"/>
+    </linearGradient>
+    <linearGradient id="ear" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#162828"/>
+      <stop offset="100%" stop-color="#0e1818"/>
+    </linearGradient>
+  </defs>
+  <rect width="576" height="100" fill="url(#bg)"/>
+  <rect width="576" height="1.5" fill="#1e3030"/>
+  <rect y="98.5" width="576" height="1.5" fill="#1e3030"/>
+  <rect width="22" height="100" fill="url(#ear)"/>
+  <rect x="554" width="22" height="100" fill="url(#ear)"/>
+  <circle cx="11" cy="25" r="5" fill="#111" stroke="#1e3030" stroke-width="1"/>
+  <circle cx="11" cy="75" r="5" fill="#111" stroke="#1e3030" stroke-width="1"/>
+  <circle cx="565" cy="25" r="5" fill="#111" stroke="#1e3030" stroke-width="1"/>
+  <circle cx="565" cy="75" r="5" fill="#111" stroke="#1e3030" stroke-width="1"/>
+  <!-- APC Brand -->
+  <text x="30" y="34" fill="#00ddcc" font-family="Arial,sans-serif" font-size="11" font-weight="bold" letter-spacing="1">APC</text>
+  <text x="30" y="48" fill="#80c0c0" font-family="Arial,sans-serif" font-size="8">Rack PDU AP8853</text>
+  <!-- Load display -->
+  <rect x="28" y="54" width="60" height="30" rx="2" fill="#040e0e" stroke="#00ddcc" stroke-width="0.8"/>
+  <text x="32" y="66" fill="#00ddcc" font-family="'Courier New',monospace" font-size="7">LOAD</text>
+  <text x="32" y="78" fill="#00ddcc" font-family="'Courier New',monospace" font-size="9" font-weight="bold">4.2A</text>
+  <!-- Breaker switch -->
+  <rect x="96" y="30" width="16" height="40" rx="2" fill="#060e0e" stroke="#00ddcc" stroke-width="1"/>
+  <rect x="100" y="48" width="8" height="14" rx="1" fill="#00ddcc" opacity="0.8"/>
+  <!-- 8 C13 outlets -->
+  <rect x="120" y="20" width="28" height="60" rx="2" fill="#060e0e" stroke="#1e3030" stroke-width="0.5"/>
+  <ellipse cx="134" cy="36" rx="8" ry="8" fill="#040c0c" stroke="#00ddcc" stroke-width="0.8"/>
+  <ellipse cx="134" cy="36" rx="3" ry="4" fill="none" stroke="#00ddcc" stroke-width="0.8"/>
+  <line x1="128" y1="42" x2="140" y2="42" stroke="#00ddcc" stroke-width="0.8"/>
+  <ellipse cx="134" cy="58" rx="8" ry="8" fill="#040c0c" stroke="#1e3030" stroke-width="0.8"/>
+  <ellipse cx="134" cy="58" rx="3" ry="4" fill="none" stroke="#00ddcc" stroke-width="0.5"/>
+  <line x1="128" y1="64" x2="140" y2="64" stroke="#00ddcc" stroke-width="0.5"/>
+
+  <rect x="152" y="20" width="28" height="60" rx="2" fill="#060e0e" stroke="#1e3030" stroke-width="0.5"/>
+  <ellipse cx="166" cy="36" rx="8" ry="8" fill="#040c0c" stroke="#00ddcc" stroke-width="0.8"/>
+  <ellipse cx="166" cy="36" rx="3" ry="4" fill="none" stroke="#00ddcc" stroke-width="0.8"/>
+  <line x1="160" y1="42" x2="172" y2="42" stroke="#00ddcc" stroke-width="0.8"/>
+  <ellipse cx="166" cy="58" rx="8" ry="8" fill="#040c0c" stroke="#1e3030" stroke-width="0.8"/>
+  <ellipse cx="166" cy="58" rx="3" ry="4" fill="none" stroke="#00ddcc" stroke-width="0.5"/>
+  <line x1="160" y1="64" x2="172" y2="64" stroke="#00ddcc" stroke-width="0.5"/>
+
+  <rect x="184" y="20" width="28" height="60" rx="2" fill="#060e0e" stroke="#1e3030" stroke-width="0.5"/>
+  <ellipse cx="198" cy="36" rx="8" ry="8" fill="#040c0c" stroke="#00ddcc" stroke-width="0.8"/>
+  <ellipse cx="198" cy="36" rx="3" ry="4" fill="none" stroke="#00ddcc" stroke-width="0.8"/>
+  <line x1="192" y1="42" x2="204" y2="42" stroke="#00ddcc" stroke-width="0.8"/>
+  <ellipse cx="198" cy="58" rx="8" ry="8" fill="#040c0c" stroke="#1e3030" stroke-width="0.8"/>
+  <ellipse cx="198" cy="58" rx="3" ry="4" fill="none" stroke="#00ddcc" stroke-width="0.5"/>
+  <line x1="192" y1="64" x2="204" y2="64" stroke="#00ddcc" stroke-width="0.5"/>
+
+  <rect x="216" y="20" width="28" height="60" rx="2" fill="#060e0e" stroke="#1e3030" stroke-width="0.5"/>
+  <ellipse cx="230" cy="36" rx="8" ry="8" fill="#040c0c" stroke="#00ddcc" stroke-width="0.8"/>
+  <ellipse cx="230" cy="36" rx="3" ry="4" fill="none" stroke="#00ddcc" stroke-width="0.8"/>
+  <line x1="224" y1="42" x2="236" y2="42" stroke="#00ddcc" stroke-width="0.8"/>
+  <ellipse cx="230" cy="58" rx="8" ry="8" fill="#040c0c" stroke="#1e3030" stroke-width="0.8"/>
+  <ellipse cx="230" cy="58" rx="3" ry="4" fill="none" stroke="#00ddcc" stroke-width="0.5"/>
+  <line x1="224" y1="64" x2="236" y2="64" stroke="#00ddcc" stroke-width="0.5"/>
+
+  <rect x="248" y="20" width="28" height="60" rx="2" fill="#060e0e" stroke="#1e3030" stroke-width="0.5"/>
+  <ellipse cx="262" cy="36" rx="8" ry="8" fill="#040c0c" stroke="#00ddcc" stroke-width="0.8"/>
+  <ellipse cx="262" cy="36" rx="3" ry="4" fill="none" stroke="#00ddcc" stroke-width="0.8"/>
+  <line x1="256" y1="42" x2="268" y2="42" stroke="#00ddcc" stroke-width="0.8"/>
+  <ellipse cx="262" cy="58" rx="8" ry="8" fill="#040c0c" stroke="#1e3030" stroke-width="0.8"/>
+  <ellipse cx="262" cy="58" rx="3" ry="4" fill="none" stroke="#00ddcc" stroke-width="0.5"/>
+  <line x1="256" y1="64" x2="268" y2="64" stroke="#00ddcc" stroke-width="0.5"/>
+
+  <rect x="280" y="20" width="28" height="60" rx="2" fill="#060e0e" stroke="#1e3030" stroke-width="0.5"/>
+  <ellipse cx="294" cy="36" rx="8" ry="8" fill="#040c0c" stroke="#00ddcc" stroke-width="0.8"/>
+  <ellipse cx="294" cy="36" rx="3" ry="4" fill="none" stroke="#00ddcc" stroke-width="0.8"/>
+  <line x1="288" y1="42" x2="300" y2="42" stroke="#00ddcc" stroke-width="0.8"/>
+  <ellipse cx="294" cy="58" rx="8" ry="8" fill="#040c0c" stroke="#1e3030" stroke-width="0.8"/>
+  <ellipse cx="294" cy="58" rx="3" ry="4" fill="none" stroke="#00ddcc" stroke-width="0.5"/>
+  <line x1="288" y1="64" x2="300" y2="64" stroke="#00ddcc" stroke-width="0.5"/>
+
+  <rect x="312" y="20" width="28" height="60" rx="2" fill="#060e0e" stroke="#1e3030" stroke-width="0.5"/>
+  <ellipse cx="326" cy="36" rx="8" ry="8" fill="#040c0c" stroke="#00ddcc" stroke-width="0.8"/>
+  <ellipse cx="326" cy="36" rx="3" ry="4" fill="none" stroke="#00ddcc" stroke-width="0.8"/>
+  <line x1="320" y1="42" x2="332" y2="42" stroke="#00ddcc" stroke-width="0.8"/>
+  <ellipse cx="326" cy="58" rx="8" ry="8" fill="#040c0c" stroke="#1e3030" stroke-width="0.8"/>
+  <ellipse cx="326" cy="58" rx="3" ry="4" fill="none" stroke="#00ddcc" stroke-width="0.5"/>
+  <line x1="320" y1="64" x2="332" y2="64" stroke="#00ddcc" stroke-width="0.5"/>
+
+  <rect x="344" y="20" width="28" height="60" rx="2" fill="#060e0e" stroke="#1e3030" stroke-width="0.5"/>
+  <ellipse cx="358" cy="36" rx="8" ry="8" fill="#040c0c" stroke="#00ddcc" stroke-width="0.8"/>
+  <ellipse cx="358" cy="36" rx="3" ry="4" fill="none" stroke="#00ddcc" stroke-width="0.8"/>
+  <line x1="352" y1="42" x2="364" y2="42" stroke="#00ddcc" stroke-width="0.8"/>
+  <ellipse cx="358" cy="58" rx="8" ry="8" fill="#040c0c" stroke="#1e3030" stroke-width="0.8"/>
+  <ellipse cx="358" cy="58" rx="3" ry="4" fill="none" stroke="#00ddcc" stroke-width="0.5"/>
+  <line x1="352" y1="64" x2="364" y2="64" stroke="#00ddcc" stroke-width="0.5"/>
+  <!-- Network port -->
+  <rect x="385" y="38" width="18" height="14" rx="1" fill="#060e0e" stroke="#1e3030" stroke-width="0.5"/>
+  <text x="386" y="60" fill="#607878" font-family="Arial,sans-serif" font-size="6">NET</text>
+  <!-- LED indicators -->
+  <circle cx="415" cy="35" r="4" fill="#00cc44"/>
+  <circle cx="430" cy="35" r="4" fill="#ffaa00" opacity="0.5"/>
+  <text x="412" y="50" fill="#607878" font-family="Arial,sans-serif" font-size="6">PWR  ALM</text>
+  <!-- Vents -->
+  <rect x="450" y="20" width="90" height="60" rx="2" fill="#040c0c" stroke="#162828" stroke-width="0.5"/>
+  <rect x="456" y="26" width="2" height="48" rx="1" fill="#1e3030"/>
+  <rect x="462" y="26" width="2" height="48" rx="1" fill="#1e3030"/>
+  <rect x="468" y="26" width="2" height="48" rx="1" fill="#1e3030"/>
+  <rect x="474" y="26" width="2" height="48" rx="1" fill="#1e3030"/>
+  <rect x="480" y="26" width="2" height="48" rx="1" fill="#1e3030"/>
+  <rect x="486" y="26" width="2" height="48" rx="1" fill="#1e3030"/>
+  <rect x="492" y="26" width="2" height="48" rx="1" fill="#1e3030"/>
+  <rect x="498" y="26" width="2" height="48" rx="1" fill="#1e3030"/>
+  <rect x="504" y="26" width="2" height="48" rx="1" fill="#1e3030"/>
+  <rect x="510" y="26" width="2" height="48" rx="1" fill="#1e3030"/>
+  <rect x="516" y="26" width="2" height="48" rx="1" fill="#1e3030"/>
+  <rect x="522" y="26" width="2" height="48" rx="1" fill="#1e3030"/>
+  <rect x="528" y="26" width="2" height="48" rx="1" fill="#1e3030"/>
+  <!-- Accent -->
+  <rect x="22" y="0" width="532" height="2" fill="#00ddcc" opacity="0.5"/>
+</svg>

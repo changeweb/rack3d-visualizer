@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 210">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1c1010"/>
+      <stop offset="100%" stop-color="#0e0808"/>
+    </linearGradient>
+    <linearGradient id="ear" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#281818"/>
+      <stop offset="100%" stop-color="#181010"/>
+    </linearGradient>
+  </defs>
+  <rect width="576" height="210" fill="url(#bg)"/>
+  <rect width="576" height="2" fill="#301818"/>
+  <rect y="208" width="576" height="2" fill="#301818"/>
+  <rect width="22" height="210" fill="url(#ear)"/>
+  <rect x="554" width="22" height="210" fill="url(#ear)"/>
+  <circle cx="11" cy="30" r="6" fill="#111" stroke="#301818" stroke-width="1"/>
+  <circle cx="11" cy="105" r="6" fill="#111" stroke="#301818" stroke-width="1"/>
+  <circle cx="11" cy="180" r="6" fill="#111" stroke="#301818" stroke-width="1"/>
+  <circle cx="565" cy="30" r="6" fill="#111" stroke="#301818" stroke-width="1"/>
+  <circle cx="565" cy="105" r="6" fill="#111" stroke="#301818" stroke-width="1"/>
+  <circle cx="565" cy="180" r="6" fill="#111" stroke="#301818" stroke-width="1"/>
+  <!-- Palo Alto logo area -->
+  <rect x="26" y="18" width="140" height="50" rx="2" fill="#0e0808" stroke="#281818" stroke-width="0.5"/>
+  <text x="34" y="38" fill="#ff3344" font-family="Arial,sans-serif" font-size="11" font-weight="bold">PALO ALTO</text>
+  <text x="34" y="52" fill="#ff3344" font-family="Arial,sans-serif" font-size="9">NETWORKS</text>
+  <text x="34" y="66" fill="#c0a0a0" font-family="Arial,sans-serif" font-size="8">PA-3220</text>
+  <!-- Power button -->
+  <circle cx="42" cy="105" r="16" fill="#0a0606" stroke="#ff3344" stroke-width="2"/>
+  <circle cx="42" cy="105" r="8" fill="#ff3344" opacity="0.9"/>
+  <!-- Status indicators -->
+  <rect x="68" y="88" width="10" height="10" rx="2" fill="#00cc44"/>
+  <rect x="82" y="88" width="10" height="10" rx="2" fill="#ffaa00" opacity="0.4"/>
+  <rect x="96" y="88" width="10" height="10" rx="2" fill="#ff4444" opacity="0.3"/>
+  <text x="68" y="108" fill="#7a5050" font-family="Arial,sans-serif" font-size="7">PWR  HA  FAULT</text>
+  <!-- Interface section top row -->
+  <rect x="26" y="78" width="520" height="60" rx="3" fill="#0a0606" stroke="#281818" stroke-width="0.5"/>
+  <text x="36" y="94" fill="#ff3344" font-family="Arial,sans-serif" font-size="8">Management / Data Plane Interfaces</text>
+  <!-- Ports row 1 -->
+  <rect x="36" y="100" width="22" height="14" rx="1" fill="#060404" stroke="#281818" stroke-width="0.5"/>
+  <rect x="62" y="100" width="22" height="14" rx="1" fill="#060404" stroke="#281818" stroke-width="0.5"/>
+  <rect x="88" y="100" width="22" height="14" rx="1" fill="#060404" stroke="#281818" stroke-width="0.5"/>
+  <rect x="114" y="100" width="22" height="14" rx="1" fill="#060404" stroke="#281818" stroke-width="0.5"/>
+  <rect x="140" y="100" width="22" height="14" rx="1" fill="#060404" stroke="#281818" stroke-width="0.5"/>
+  <rect x="166" y="100" width="22" height="14" rx="1" fill="#060404" stroke="#281818" stroke-width="0.5"/>
+  <rect x="192" y="100" width="22" height="14" rx="1" fill="#060404" stroke="#281818" stroke-width="0.5"/>
+  <rect x="218" y="100" width="22" height="14" rx="1" fill="#060404" stroke="#281818" stroke-width="0.5"/>
+  <!-- SFP ports -->
+  <rect x="252" y="100" width="22" height="14" rx="1" fill="#060404" stroke="#ff3344" stroke-width="0.8"/>
+  <rect x="278" y="100" width="22" height="14" rx="1" fill="#060404" stroke="#ff3344" stroke-width="0.8"/>
+  <rect x="304" y="100" width="22" height="14" rx="1" fill="#060404" stroke="#ff3344" stroke-width="0.8"/>
+  <rect x="330" y="100" width="22" height="14" rx="1" fill="#060404" stroke="#ff3344" stroke-width="0.8"/>
+  <!-- Port LEDs -->
+  <circle cx="47" cy="116" r="2" fill="#00cc44" opacity="0.85"/>
+  <circle cx="73" cy="116" r="2" fill="#00cc44" opacity="0.85"/>
+  <circle cx="99" cy="116" r="2" fill="#00cc44" opacity="0.85"/>
+  <circle cx="125" cy="116" r="2" fill="#00cc44" opacity="0.85"/>
+  <circle cx="151" cy="116" r="2" fill="#00cc44" opacity="0.85"/>
+  <circle cx="177" cy="116" r="2" fill="#ffaa00" opacity="0.6"/>
+  <circle cx="203" cy="116" r="2" fill="#00cc44" opacity="0.85"/>
+  <circle cx="229" cy="116" r="2" fill="#00cc44" opacity="0.85"/>
+  <circle cx="263" cy="116" r="2" fill="#00cc44" opacity="0.85"/>
+  <circle cx="289" cy="116" r="2" fill="#00cc44" opacity="0.85"/>
+  <circle cx="315" cy="116" r="2" fill="#ff4444" opacity="0.5"/>
+  <circle cx="341" cy="116" r="2" fill="#00cc44" opacity="0.85"/>
+  <!-- MGMT + Console -->
+  <line x1="365" y1="82" x2="365" y2="132" stroke="#281818" stroke-width="1"/>
+  <rect x="375" y="100" width="22" height="14" rx="1" fill="#060404" stroke="#281818" stroke-width="0.5"/>
+  <text x="375" y="120" fill="#7a5050" font-family="Arial,sans-serif" font-size="6">MGT</text>
+  <rect x="402" y="100" width="16" height="14" rx="1" fill="#060404" stroke="#281818" stroke-width="0.5"/>
+  <text x="403" y="120" fill="#7a5050" font-family="Arial,sans-serif" font-size="6">CON</text>
+  <!-- USB -->
+  <rect x="425" y="103" width="14" height="9" rx="1" fill="#060404" stroke="#281818" stroke-width="0.5"/>
+  <text x="424" y="120" fill="#7a5050" font-family="Arial,sans-serif" font-size="6">USB</text>
+  <!-- Vents -->
+  <rect x="450" y="84" width="90" height="44" rx="2" fill="#060404" stroke="#1e0e0e" stroke-width="0.5"/>
+  <rect x="456" y="90" width="3" height="32" rx="1" fill="#281818"/>
+  <rect x="463" y="90" width="3" height="32" rx="1" fill="#281818"/>
+  <rect x="470" y="90" width="3" height="32" rx="1" fill="#281818"/>
+  <rect x="477" y="90" width="3" height="32" rx="1" fill="#281818"/>
+  <rect x="484" y="90" width="3" height="32" rx="1" fill="#281818"/>
+  <rect x="491" y="90" width="3" height="32" rx="1" fill="#281818"/>
+  <rect x="498" y="90" width="3" height="32" rx="1" fill="#281818"/>
+  <rect x="505" y="90" width="3" height="32" rx="1" fill="#281818"/>
+  <rect x="512" y="90" width="3" height="32" rx="1" fill="#281818"/>
+  <rect x="519" y="90" width="3" height="32" rx="1" fill="#281818"/>
+  <rect x="526" y="90" width="3" height="32" rx="1" fill="#281818"/>
+  <!-- Threat intelligence display -->
+  <rect x="26" y="148" width="520" height="50" rx="3" fill="#080404" stroke="#281818" stroke-width="0.5"/>
+  <rect x="36" y="156" width="200" height="35" rx="2" fill="#040202" stroke="#ff3344" stroke-width="0.5"/>
+  <text x="42" y="170" fill="#ff3344" font-family="'Courier New',monospace" font-size="7">THREAT PREVENTION</text>
+  <text x="42" y="182" fill="#ff3344" font-family="'Courier New',monospace" font-size="7">Status: ACTIVE</text>
+  <text x="42" y="186" fill="#c04040" font-family="'Courier New',monospace" font-size="6">Blocked: 1.2M sessions</text>
+  <!-- Right side vents -->
+  <rect x="260" y="156" width="280" height="35" rx="2" fill="#060404" stroke="#1e0e0e" stroke-width="0.5"/>
+  <rect x="268" y="162" width="3" height="22" rx="1" fill="#281818"/>
+  <rect x="275" y="162" width="3" height="22" rx="1" fill="#281818"/>
+  <rect x="282" y="162" width="3" height="22" rx="1" fill="#281818"/>
+  <rect x="289" y="162" width="3" height="22" rx="1" fill="#281818"/>
+  <rect x="296" y="162" width="3" height="22" rx="1" fill="#281818"/>
+  <rect x="303" y="162" width="3" height="22" rx="1" fill="#281818"/>
+  <rect x="310" y="162" width="3" height="22" rx="1" fill="#281818"/>
+  <!-- Accent -->
+  <rect x="22" y="0" width="532" height="2.5" fill="#ff3344" opacity="0.5"/>
+</svg>

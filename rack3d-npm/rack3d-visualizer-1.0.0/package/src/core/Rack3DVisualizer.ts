@@ -1314,7 +1314,7 @@ export class Rack3DVisualizer {
       this._ren.render(this._scene, this._cam)
 
       if (camChange || selChange || fpsMoving || transformDrag) this._updateLabels()
-      this._updateCompass()
+      if (camChange || fpsMoving) this._updateCompass()
       if (camChange || fpsMoving) this._updateAxisGizmo()
       if (this._showMinimap && (camChange || fpsMoving || selChange)) this._updateMinimap()
       if (topoAnimating) this._stepTopologyParticles()
@@ -1491,9 +1491,10 @@ export class Rack3DVisualizer {
 
     // Position readout in header
     const posEl = document.getElementById(this._id + '-minimap-pos')
-    if (posEl) posEl.textContent = this._ctrl.mode === 'fps'
-      ? `${Math.round(this._ctrl.pos.x)}, ${Math.round(this._ctrl.pos.z)}`
-      : ''
+    if (posEl) {
+      const posStr = this._ctrl.mode === 'fps' ? `${Math.round(this._ctrl.pos.x)}, ${Math.round(this._ctrl.pos.z)}` : ''
+      if (posEl.textContent !== posStr) posEl.textContent = posStr
+    }
   }
 
   toggleMinimap(): void {

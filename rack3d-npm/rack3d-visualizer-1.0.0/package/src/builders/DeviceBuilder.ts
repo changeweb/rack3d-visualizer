@@ -111,7 +111,7 @@ export class DeviceBuilder {
         side: this.THREE.BackSide
       })
       const imgPlane = new this.THREE.Mesh(new this.THREE.PlaneGeometry(faceW, faceH), imgMat)
-      imgPlane.position.set(xOff, y, -hd + POST + 0.11)
+      imgPlane.position.set(xOff, y, -hd + POST + 0.04)
       imgPlane.userData.rk = 'devimage'
       imgPlane.userData.deviceId = device.id
       imgPlane.userData.rackId = entry.id
@@ -127,7 +127,7 @@ export class DeviceBuilder {
         side: this.THREE.FrontSide
       })
       const rearPlane = new this.THREE.Mesh(new this.THREE.PlaneGeometry(faceW, faceH), rearMat)
-      rearPlane.position.set(xOff, y, hd - POST - 0.11)
+      rearPlane.position.set(xOff, y, hd - POST - 0.02)
       rearPlane.userData.rk = 'devimage'
       rearPlane.userData.deviceId = device.id
       rearPlane.userData.rackId = entry.id
@@ -270,7 +270,24 @@ export class DeviceBuilder {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   _loadTextureAsync(url: string, material: any, planeAspect = 1): void {
-    if (/\.svg$/i.test(url)) return
+    if (/\.svg$/i.test(url)) {
+      const img = new Image()
+      img.onload = () => {
+        const W = 512
+        const H = Math.round(512 / planeAspect)
+        const canvas = document.createElement('canvas')
+        canvas.width = W
+        canvas.height = H
+        canvas.getContext('2d')!.drawImage(img, 0, 0, W, H)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const tex = new (this.THREE as any).CanvasTexture(canvas)
+        tex.encoding = 3001
+        material.map = tex
+        material.needsUpdate = true
+      }
+      img.src = url
+      return
+    }
     const loader = new this.THREE.TextureLoader()
     loader.load(
       url,

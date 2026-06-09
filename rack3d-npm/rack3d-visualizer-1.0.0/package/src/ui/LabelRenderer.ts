@@ -38,6 +38,7 @@ export class LabelRenderer {
     const hasDetail = detailLines.length > 0;
 
     const d = document.createElement('div');
+    d.style.willChange = 'transform';
     d.className = `r3-label side-${side}`;
     d.id = self._id + '-lbl-' + dev.id;
     d.innerHTML = `
@@ -149,15 +150,11 @@ export class LabelRenderer {
       const isSelected = rack && rack.id === self._selRackId;
       const visible = isSelected && rack.showLabels !== false && vp.z > 0 && vp.z < 1;
 
-      d.style.top    = sy + 'px';
-      d.style.transform = 'translateY(-50%)';
-      if (entry.side === 'left') {
-        d.style.left  = sx + 'px';
-        d.style.right = 'auto';
-      } else {
-        d.style.left  = 'auto';
-        d.style.right = (W - sx) + 'px';
-      }
+      const tx = entry.side === 'left' ? sx : sx - W;
+      d.style.transform = `translate(${tx}px, calc(${sy}px - 50%))`;
+      d.style.left  = entry.side === 'left' ? '0' : 'auto';
+      d.style.right = entry.side === 'right' ? '0' : 'auto';
+      d.style.top   = '0';
       d.style.opacity = visible ? '1' : '0';
       d.style.zIndex  = id === self._selId ? '10' : '5';
     });

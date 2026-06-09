@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 100">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#14101a"/>
+      <stop offset="100%" stop-color="#0a080e"/>
+    </linearGradient>
+    <linearGradient id="ear" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#201828"/>
+      <stop offset="100%" stop-color="#141018"/>
+    </linearGradient>
+  </defs>
+  <rect width="576" height="100" fill="url(#bg)"/>
+  <rect width="576" height="1.5" fill="#28183a"/>
+  <rect y="98.5" width="576" height="1.5" fill="#28183a"/>
+  <rect width="22" height="100" fill="url(#ear)"/>
+  <rect x="554" width="22" height="100" fill="url(#ear)"/>
+  <circle cx="11" cy="25" r="5" fill="#111" stroke="#28183a" stroke-width="1"/>
+  <circle cx="11" cy="75" r="5" fill="#111" stroke="#28183a" stroke-width="1"/>
+  <circle cx="565" cy="25" r="5" fill="#111" stroke="#28183a" stroke-width="1"/>
+  <circle cx="565" cy="75" r="5" fill="#111" stroke="#28183a" stroke-width="1"/>
+  <!-- F5 Brand -->
+  <text x="30" y="30" fill="#cc44ff" font-family="Arial,sans-serif" font-size="14" font-weight="bold">F5</text>
+  <text x="30" y="44" fill="#9030cc" font-family="Arial,sans-serif" font-size="8">BIG-IP 2000s</text>
+  <text x="30" y="56" fill="#7a5099" font-family="Arial,sans-serif" font-size="7">Load Balancer</text>
+  <!-- Power LED -->
+  <circle cx="38" cy="75" r="6" fill="#00cc44"/>
+  <text x="28" y="90" fill="#7a5099" font-family="Arial,sans-serif" font-size="6">PWR</text>
+  <!-- Status display -->
+  <rect x="54" y="55" width="80" height="32" rx="2" fill="#080610" stroke="#cc44ff" stroke-width="0.8"/>
+  <text x="60" y="67" fill="#cc44ff" font-family="'Courier New',monospace" font-size="7">ACTIVE</text>
+  <text x="60" y="79" fill="#9030cc" font-family="'Courier New',monospace" font-size="6">CPS: 142K</text>
+  <!-- Management port -->
+  <rect x="144" y="18" width="22" height="14" rx="1" fill="#0a0810" stroke="#cc44ff" stroke-width="0.8"/>
+  <rect x="144" y="35" width="22" height="14" rx="1" fill="#0a0810" stroke="#cc44ff" stroke-width="0.8"/>
+  <text x="144" y="58" fill="#7a5099" font-family="Arial,sans-serif" font-size="6">MGMT</text>
+  <!-- Data plane ports section -->
+  <rect x="176" y="15" width="320" height="70" rx="3" fill="#080610" stroke="#201828" stroke-width="0.5"/>
+  <text x="186" y="30" fill="#9030cc" font-family="Arial,sans-serif" font-size="7">Data Plane — SFP+ / 1G</text>
+  <!-- 8 SFP ports row 1 -->
+  <rect x="186" y="34" width="22" height="14" rx="1" fill="#060410" stroke="#cc44ff" stroke-width="0.8"/>
+  <rect x="212" y="34" width="22" height="14" rx="1" fill="#060410" stroke="#cc44ff" stroke-width="0.8"/>
+  <rect x="238" y="34" width="22" height="14" rx="1" fill="#060410" stroke="#cc44ff" stroke-width="0.8"/>
+  <rect x="264" y="34" width="22" height="14" rx="1" fill="#060410" stroke="#cc44ff" stroke-width="0.8"/>
+  <rect x="290" y="34" width="22" height="14" rx="1" fill="#060410" stroke="#cc44ff" stroke-width="0.8"/>
+  <rect x="316" y="34" width="22" height="14" rx="1" fill="#060410" stroke="#cc44ff" stroke-width="0.8"/>
+  <rect x="342" y="34" width="22" height="14" rx="1" fill="#060410" stroke="#cc44ff" stroke-width="0.8"/>
+  <rect x="368" y="34" width="22" height="14" rx="1" fill="#060410" stroke="#cc44ff" stroke-width="0.8"/>
+  <!-- LEDs row 1 -->
+  <circle cx="197" cy="50" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="223" cy="50" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="249" cy="50" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="275" cy="50" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="301" cy="50" r="2.5" fill="#ffaa00" opacity="0.7"/>
+  <circle cx="327" cy="50" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="353" cy="50" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="379" cy="50" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <!-- 8 more SFP ports row 2 -->
+  <rect x="186" y="56" width="22" height="14" rx="1" fill="#060410" stroke="#201828" stroke-width="0.5"/>
+  <rect x="212" y="56" width="22" height="14" rx="1" fill="#060410" stroke="#201828" stroke-width="0.5"/>
+  <rect x="238" y="56" width="22" height="14" rx="1" fill="#060410" stroke="#201828" stroke-width="0.5"/>
+  <rect x="264" y="56" width="22" height="14" rx="1" fill="#060410" stroke="#201828" stroke-width="0.5"/>
+  <rect x="290" y="56" width="22" height="14" rx="1" fill="#060410" stroke="#201828" stroke-width="0.5"/>
+  <rect x="316" y="56" width="22" height="14" rx="1" fill="#060410" stroke="#201828" stroke-width="0.5"/>
+  <rect x="342" y="56" width="22" height="14" rx="1" fill="#060410" stroke="#201828" stroke-width="0.5"/>
+  <rect x="368" y="56" width="22" height="14" rx="1" fill="#060410" stroke="#201828" stroke-width="0.5"/>
+  <!-- LEDs row 2 -->
+  <circle cx="197" cy="72" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="223" cy="72" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="249" cy="72" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="275" cy="72" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="301" cy="72" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="327" cy="72" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="353" cy="72" r="2.5" fill="#ffaa00" opacity="0.5"/>
+  <circle cx="379" cy="72" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <!-- 100G ports -->
+  <rect x="400" y="34" width="30" height="36" rx="2" fill="#060410" stroke="#cc44ff" stroke-width="1"/>
+  <text x="404" y="47" fill="#cc44ff" font-family="Arial,sans-serif" font-size="6">100G</text>
+  <text x="404" y="57" fill="#cc44ff" font-family="Arial,sans-serif" font-size="6">QSFP</text>
+  <circle cx="415" cy="63" r="3" fill="#00cc44" opacity="0.9"/>
+  <!-- Vents right -->
+  <rect x="506" y="15" width="60" height="70" rx="2" fill="#060410" stroke="#140c18" stroke-width="0.5"/>
+  <rect x="512" y="21" width="2" height="58" rx="1" fill="#201828"/>
+  <rect x="518" y="21" width="2" height="58" rx="1" fill="#201828"/>
+  <rect x="524" y="21" width="2" height="58" rx="1" fill="#201828"/>
+  <rect x="530" y="21" width="2" height="58" rx="1" fill="#201828"/>
+  <rect x="536" y="21" width="2" height="58" rx="1" fill="#201828"/>
+  <rect x="542" y="21" width="2" height="58" rx="1" fill="#201828"/>
+  <!-- Accent -->
+  <rect x="22" y="0" width="532" height="2" fill="#cc44ff" opacity="0.5"/>
+</svg>

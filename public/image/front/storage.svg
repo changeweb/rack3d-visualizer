@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 300">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#14101c"/>
+      <stop offset="100%" stop-color="#0c0810"/>
+    </linearGradient>
+    <linearGradient id="ear" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#201828"/>
+      <stop offset="100%" stop-color="#141020"/>
+    </linearGradient>
+    <linearGradient id="bay" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1428"/>
+      <stop offset="100%" stop-color="#0e0c18"/>
+    </linearGradient>
+  </defs>
+  <rect width="576" height="300" fill="url(#bg)"/>
+  <rect width="576" height="2" fill="#281838"/>
+  <rect y="298" width="576" height="2" fill="#281838"/>
+  <rect width="22" height="300" fill="url(#ear)"/>
+  <rect x="554" width="22" height="300" fill="url(#ear)"/>
+  <circle cx="11" cy="40" r="6" fill="#111" stroke="#281838" stroke-width="1"/>
+  <circle cx="11" cy="150" r="6" fill="#111" stroke="#281838" stroke-width="1"/>
+  <circle cx="11" cy="260" r="6" fill="#111" stroke="#281838" stroke-width="1"/>
+  <circle cx="565" cy="40" r="6" fill="#111" stroke="#281838" stroke-width="1"/>
+  <circle cx="565" cy="150" r="6" fill="#111" stroke="#281838" stroke-width="1"/>
+  <circle cx="565" cy="260" r="6" fill="#111" stroke="#281838" stroke-width="1"/>
+  <!-- Synology brand area -->
+  <rect x="26" y="15" width="130" height="55" rx="2" fill="#0e0c18" stroke="#201828" stroke-width="0.5"/>
+  <text x="34" y="38" fill="#9966ff" font-family="Arial,sans-serif" font-size="12" font-weight="bold">Synology</text>
+  <text x="34" y="54" fill="#8060cc" font-family="Arial,sans-serif" font-size="9">RackStation</text>
+  <text x="34" y="66" fill="#7a6499" font-family="Arial,sans-serif" font-size="8">RS3617xs+</text>
+  <!-- Power button -->
+  <circle cx="42" cy="130" r="16" fill="#0a0814" stroke="#9966ff" stroke-width="2"/>
+  <circle cx="42" cy="130" r="8" fill="#9966ff" opacity="0.85"/>
+  <!-- Status LEDs -->
+  <rect x="68" y="116" width="10" height="10" rx="2" fill="#00cc44"/>
+  <rect x="82" y="116" width="10" height="10" rx="2" fill="#00cc44"/>
+  <rect x="96" y="116" width="10" height="10" rx="2" fill="#9966ff" opacity="0.6"/>
+  <text x="68" y="136" fill="#604880" font-family="Arial,sans-serif" font-size="6">PWR STA LAN</text>
+  <!-- Drive bays - 12 drives in 2 rows of 6 -->
+  <!-- Row 1 -->
+  <rect x="26" y="80" width="520" height="90" rx="3" fill="#0a0810" stroke="#201828" stroke-width="0.5"/>
+  <text x="36" y="96" fill="#9966ff" font-family="Arial,sans-serif" font-size="8">Drive Bays 1-6</text>
+  <!-- Bay 1 -->
+  <rect x="36" y="100" width="72" height="62" rx="2" fill="url(#bay)" stroke="#281838" stroke-width="1"/>
+  <rect x="40" y="104" width="64" height="50" rx="1" fill="#0c0a16" stroke="#201828" stroke-width="0.5"/>
+  <circle cx="96" cy="156" r="3" fill="#00cc44" opacity="0.9"/>
+  <text x="42" y="118" fill="#604880" font-family="Arial,sans-serif" font-size="7">1</text>
+  <text x="42" y="130" fill="#7a6499" font-family="Arial,sans-serif" font-size="6">8TB SAS</text>
+  <!-- Bay 2 -->
+  <rect x="115" y="100" width="72" height="62" rx="2" fill="url(#bay)" stroke="#281838" stroke-width="1"/>
+  <rect x="119" y="104" width="64" height="50" rx="1" fill="#0c0a16" stroke="#201828" stroke-width="0.5"/>
+  <circle cx="175" cy="156" r="3" fill="#00cc44" opacity="0.9"/>
+  <text x="121" y="118" fill="#604880" font-family="Arial,sans-serif" font-size="7">2</text>
+  <text x="121" y="130" fill="#7a6499" font-family="Arial,sans-serif" font-size="6">8TB SAS</text>
+  <!-- Bay 3 -->
+  <rect x="194" y="100" width="72" height="62" rx="2" fill="url(#bay)" stroke="#281838" stroke-width="1"/>
+  <rect x="198" y="104" width="64" height="50" rx="1" fill="#0c0a16" stroke="#201828" stroke-width="0.5"/>
+  <circle cx="254" cy="156" r="3" fill="#00cc44" opacity="0.9"/>
+  <text x="200" y="118" fill="#604880" font-family="Arial,sans-serif" font-size="7">3</text>
+  <text x="200" y="130" fill="#7a6499" font-family="Arial,sans-serif" font-size="6">8TB SAS</text>
+  <!-- Bay 4 -->
+  <rect x="273" y="100" width="72" height="62" rx="2" fill="url(#bay)" stroke="#281838" stroke-width="1"/>
+  <rect x="277" y="104" width="64" height="50" rx="1" fill="#0c0a16" stroke="#201828" stroke-width="0.5"/>
+  <circle cx="333" cy="156" r="3" fill="#00cc44" opacity="0.9"/>
+  <text x="279" y="118" fill="#604880" font-family="Arial,sans-serif" font-size="7">4</text>
+  <text x="279" y="130" fill="#7a6499" font-family="Arial,sans-serif" font-size="6">8TB SAS</text>
+  <!-- Bay 5 -->
+  <rect x="352" y="100" width="72" height="62" rx="2" fill="url(#bay)" stroke="#281838" stroke-width="1"/>
+  <rect x="356" y="104" width="64" height="50" rx="1" fill="#0c0a16" stroke="#201828" stroke-width="0.5"/>
+  <circle cx="412" cy="156" r="3" fill="#00cc44" opacity="0.9"/>
+  <text x="358" y="118" fill="#604880" font-family="Arial,sans-serif" font-size="7">5</text>
+  <text x="358" y="130" fill="#7a6499" font-family="Arial,sans-serif" font-size="6">8TB SAS</text>
+  <!-- Bay 6 -->
+  <rect x="431" y="100" width="72" height="62" rx="2" fill="url(#bay)" stroke="#281838" stroke-width="1"/>
+  <rect x="435" y="104" width="64" height="50" rx="1" fill="#0c0a16" stroke="#201828" stroke-width="0.5"/>
+  <circle cx="491" cy="156" r="3" fill="#9966ff" opacity="0.7"/>
+  <text x="437" y="118" fill="#604880" font-family="Arial,sans-serif" font-size="7">6</text>
+  <text x="437" y="130" fill="#7a6499" font-family="Arial,sans-serif" font-size="6">DEGRADED</text>
+  <!-- Row 2: bays 7-12 -->
+  <rect x="26" y="178" width="520" height="90" rx="3" fill="#0a0810" stroke="#201828" stroke-width="0.5"/>
+  <text x="36" y="194" fill="#9966ff" font-family="Arial,sans-serif" font-size="8">Drive Bays 7-12</text>
+  <!-- Bay 7 -->
+  <rect x="36" y="198" width="72" height="62" rx="2" fill="url(#bay)" stroke="#281838" stroke-width="1"/>
+  <rect x="40" y="202" width="64" height="50" rx="1" fill="#0c0a16" stroke="#201828" stroke-width="0.5"/>
+  <circle cx="96" cy="254" r="3" fill="#00cc44" opacity="0.9"/>
+  <text x="42" y="216" fill="#604880" font-family="Arial,sans-serif" font-size="7">7</text>
+  <text x="42" y="228" fill="#7a6499" font-family="Arial,sans-serif" font-size="6">8TB SAS</text>
+  <!-- Bay 8 -->
+  <rect x="115" y="198" width="72" height="62" rx="2" fill="url(#bay)" stroke="#281838" stroke-width="1"/>
+  <rect x="119" y="202" width="64" height="50" rx="1" fill="#0c0a16" stroke="#201828" stroke-width="0.5"/>
+  <circle cx="175" cy="254" r="3" fill="#00cc44" opacity="0.9"/>
+  <text x="121" y="216" fill="#604880" font-family="Arial,sans-serif" font-size="7">8</text>
+  <text x="121" y="228" fill="#7a6499" font-family="Arial,sans-serif" font-size="6">8TB SAS</text>
+  <!-- Bay 9 -->
+  <rect x="194" y="198" width="72" height="62" rx="2" fill="url(#bay)" stroke="#281838" stroke-width="1"/>
+  <rect x="198" y="202" width="64" height="50" rx="1" fill="#0c0a16" stroke="#201828" stroke-width="0.5"/>
+  <circle cx="254" cy="254" r="3" fill="#00cc44" opacity="0.9"/>
+  <text x="200" y="216" fill="#604880" font-family="Arial,sans-serif" font-size="7">9</text>
+  <text x="200" y="228" fill="#7a6499" font-family="Arial,sans-serif" font-size="6">8TB SAS</text>
+  <!-- Bay 10 -->
+  <rect x="273" y="198" width="72" height="62" rx="2" fill="url(#bay)" stroke="#281838" stroke-width="1"/>
+  <rect x="277" y="202" width="64" height="50" rx="1" fill="#0c0a16" stroke="#201828" stroke-width="0.5"/>
+  <circle cx="333" cy="254" r="3" fill="#00cc44" opacity="0.9"/>
+  <text x="279" y="216" fill="#604880" font-family="Arial,sans-serif" font-size="7">10</text>
+  <text x="279" y="228" fill="#7a6499" font-family="Arial,sans-serif" font-size="6">8TB SAS</text>
+  <!-- Bay 11 -->
+  <rect x="352" y="198" width="72" height="62" rx="2" fill="url(#bay)" stroke="#281838" stroke-width="1"/>
+  <rect x="356" y="202" width="64" height="50" rx="1" fill="#0c0a16" stroke="#201828" stroke-width="0.5"/>
+  <circle cx="412" cy="254" r="3" fill="#00cc44" opacity="0.9"/>
+  <text x="358" y="216" fill="#604880" font-family="Arial,sans-serif" font-size="7">11</text>
+  <text x="358" y="228" fill="#7a6499" font-family="Arial,sans-serif" font-size="6">8TB SAS</text>
+  <!-- Bay 12 -->
+  <rect x="431" y="198" width="72" height="62" rx="2" fill="url(#bay)" stroke="#281838" stroke-width="1"/>
+  <rect x="435" y="202" width="64" height="50" rx="1" fill="#0c0a16" stroke="#201828" stroke-width="0.5"/>
+  <circle cx="491" cy="254" r="3" fill="#00cc44" opacity="0.9"/>
+  <text x="437" y="216" fill="#604880" font-family="Arial,sans-serif" font-size="7">12</text>
+  <text x="437" y="228" fill="#7a6499" font-family="Arial,sans-serif" font-size="6">8TB SAS</text>
+  <!-- Accent -->
+  <rect x="22" y="0" width="532" height="2.5" fill="#9966ff" opacity="0.5"/>
+</svg>

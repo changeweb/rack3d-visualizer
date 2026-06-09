@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 100">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#161616"/>
+      <stop offset="100%" stop-color="#0c0c0c"/>
+    </linearGradient>
+    <linearGradient id="ear" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#222222"/>
+      <stop offset="100%" stop-color="#141414"/>
+    </linearGradient>
+  </defs>
+  <rect width="576" height="100" fill="url(#bg)"/>
+  <rect width="576" height="1.5" fill="#282828"/>
+  <rect y="98.5" width="576" height="1.5" fill="#282828"/>
+  <rect width="22" height="100" fill="url(#ear)"/>
+  <rect x="554" width="22" height="100" fill="url(#ear)"/>
+  <circle cx="11" cy="25" r="5" fill="#111" stroke="#282828" stroke-width="1"/>
+  <circle cx="11" cy="75" r="5" fill="#111" stroke="#282828" stroke-width="1"/>
+  <circle cx="565" cy="25" r="5" fill="#111" stroke="#282828" stroke-width="1"/>
+  <circle cx="565" cy="75" r="5" fill="#111" stroke="#282828" stroke-width="1"/>
+  <!-- Brand -->
+  <text x="30" y="32" fill="#aaaaaa" font-family="Arial,sans-serif" font-size="9" font-weight="bold">LEVITON</text>
+  <text x="30" y="44" fill="#888888" font-family="Arial,sans-serif" font-size="7">5G702-24B · Cat6A</text>
+  <!-- 24 ports in 2 rows of 12 -->
+  <!-- Label bar -->
+  <rect x="116" y="14" width="380" height="12" rx="1" fill="#0e0e0e" stroke="#222" stroke-width="0.5"/>
+  <text x="122" y="23" fill="#888888" font-family="Arial,sans-serif" font-size="6" letter-spacing="7.2">1  2  3  4  5  6  7  8  9  10 11 12</text>
+  <!-- Row 1: ports 1-12 -->
+  <rect x="116" y="28" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="145" y="28" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="174" y="28" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="203" y="28" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="232" y="28" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="261" y="28" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="290" y="28" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="319" y="28" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="348" y="28" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="377" y="28" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="406" y="28" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="435" y="28" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <!-- Port labels row 2 -->
+  <rect x="116" y="52" width="380" height="12" rx="1" fill="#0e0e0e" stroke="#222" stroke-width="0.5"/>
+  <text x="122" y="61" fill="#888888" font-family="Arial,sans-serif" font-size="6" letter-spacing="6">13 14 15 16 17 18 19 20 21 22 23 24</text>
+  <!-- Row 2: ports 13-24 -->
+  <rect x="116" y="66" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="145" y="66" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="174" y="66" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="203" y="66" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="232" y="66" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="261" y="66" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="290" y="66" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="319" y="66" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="348" y="66" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="377" y="66" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="406" y="66" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <rect x="435" y="66" width="26" height="20" rx="1" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <!-- Cable guide bar -->
+  <rect x="464" y="15" width="78" height="70" rx="2" fill="#0c0c0c" stroke="#282828" stroke-width="0.5"/>
+  <text x="468" y="30" fill="#666" font-family="Arial,sans-serif" font-size="7">CABLE</text>
+  <text x="468" y="40" fill="#666" font-family="Arial,sans-serif" font-size="7">MGMT</text>
+  <rect x="470" y="44" width="60" height="8" rx="1" fill="#141414" stroke="#282828" stroke-width="0.5"/>
+  <rect x="470" y="56" width="60" height="8" rx="1" fill="#141414" stroke="#282828" stroke-width="0.5"/>
+  <rect x="470" y="68" width="60" height="8" rx="1" fill="#141414" stroke="#282828" stroke-width="0.5"/>
+  <!-- Accent -->
+  <rect x="22" y="0" width="532" height="2" fill="#888888" opacity="0.4"/>
+</svg>

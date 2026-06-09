@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 300">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1408"/>
+      <stop offset="100%" stop-color="#0c0a06"/>
+    </linearGradient>
+    <linearGradient id="ear" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#28200e"/>
+      <stop offset="100%" stop-color="#181408"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#001a08"/>
+      <stop offset="100%" stop-color="#000e04"/>
+    </linearGradient>
+  </defs>
+  <rect width="576" height="300" fill="url(#bg)"/>
+  <rect width="576" height="2" fill="#2a2010"/>
+  <rect y="298" width="576" height="2" fill="#2a2010"/>
+  <rect width="22" height="300" fill="url(#ear)"/>
+  <rect x="554" width="22" height="300" fill="url(#ear)"/>
+  <circle cx="11" cy="40" r="6" fill="#111" stroke="#2a2010" stroke-width="1"/>
+  <circle cx="11" cy="150" r="6" fill="#111" stroke="#2a2010" stroke-width="1"/>
+  <circle cx="11" cy="260" r="6" fill="#111" stroke="#2a2010" stroke-width="1"/>
+  <circle cx="565" cy="40" r="6" fill="#111" stroke="#2a2010" stroke-width="1"/>
+  <circle cx="565" cy="150" r="6" fill="#111" stroke="#2a2010" stroke-width="1"/>
+  <circle cx="565" cy="260" r="6" fill="#111" stroke="#2a2010" stroke-width="1"/>
+  <!-- APC Brand -->
+  <text x="32" y="38" fill="#ff8800" font-family="Arial,sans-serif" font-size="14" font-weight="bold" letter-spacing="2">APC</text>
+  <text x="32" y="54" fill="#cc7000" font-family="Arial,sans-serif" font-size="9">by Schneider Electric</text>
+  <text x="32" y="68" fill="#a07040" font-family="Arial,sans-serif" font-size="8">Smart-UPS 3000VA LCD</text>
+  <!-- LCD Display panel -->
+  <rect x="26" y="80" width="310" height="120" rx="4" fill="#0a0806" stroke="#ff8800" stroke-width="1.5"/>
+  <rect x="34" y="88" width="294" height="104" rx="3" fill="url(#screen)" stroke="#00aa44" stroke-width="0.8"/>
+  <!-- Battery icon -->
+  <rect x="44" y="98" width="40" height="20" rx="2" fill="none" stroke="#00cc44" stroke-width="1.5"/>
+  <rect x="84" y="102" width="4" height="12" rx="1" fill="#00cc44"/>
+  <rect x="46" y="100" width="28" height="16" rx="1" fill="#00cc44" opacity="0.8"/>
+  <text x="44" y="132" fill="#00cc44" font-family="'Courier New',monospace" font-size="7">BATTERY: 100%</text>
+  <!-- Runtime -->
+  <text x="44" y="146" fill="#00cc44" font-family="'Courier New',monospace" font-size="7">RUNTIME: 14:32</text>
+  <!-- Load meter -->
+  <text x="44" y="160" fill="#00cc44" font-family="'Courier New',monospace" font-size="7">LOAD: 45%</text>
+  <rect x="44" y="163" width="150" height="6" rx="1" fill="#001808" stroke="#00aa44" stroke-width="0.5"/>
+  <rect x="44" y="163" width="68" height="6" rx="1" fill="#00cc44" opacity="0.8"/>
+  <!-- Input/Output voltage -->
+  <text x="44" y="180" fill="#00cc44" font-family="'Courier New',monospace" font-size="7">IN: 120V  OUT: 120V</text>
+  <!-- Right side display -->
+  <rect x="200" y="98" width="120" height="84" rx="2" fill="none" stroke="#00aa44" stroke-width="0.5"/>
+  <text x="206" y="114" fill="#00cc44" font-family="'Courier New',monospace" font-size="7">Status</text>
+  <text x="206" y="126" fill="#00cc44" font-family="'Courier New',monospace" font-size="8" font-weight="bold">ONLINE</text>
+  <text x="206" y="142" fill="#00cc44" font-family="'Courier New',monospace" font-size="7">Freq: 60Hz</text>
+  <text x="206" y="154" fill="#00cc44" font-family="'Courier New',monospace" font-size="7">Temp: 25°C</text>
+  <text x="206" y="166" fill="#00cc44" font-family="'Courier New',monospace" font-size="7">Self Test OK</text>
+  <!-- Control buttons -->
+  <rect x="346" y="80" width="200" height="120" rx="4" fill="#0a0806" stroke="#2a2010" stroke-width="0.5"/>
+  <text x="356" y="96" fill="#cc7000" font-family="Arial,sans-serif" font-size="8">CONTROLS</text>
+  <!-- Power button large -->
+  <circle cx="380" cy="135" r="22" fill="#080604" stroke="#ff8800" stroke-width="2"/>
+  <circle cx="380" cy="135" r="12" fill="#ff8800" opacity="0.85"/>
+  <line x1="380" y1="125" x2="380" y2="135" stroke="#fff" stroke-width="2"/>
+  <text x="363" y="167" fill="#cc7000" font-family="Arial,sans-serif" font-size="7">POWER ON/OFF</text>
+  <!-- Test button -->
+  <rect x="420" y="118" width="50" height="22" rx="3" fill="#080604" stroke="#ff8800" stroke-width="1"/>
+  <text x="426" y="133" fill="#ff8800" font-family="Arial,sans-serif" font-size="8">TEST</text>
+  <!-- Mute button -->
+  <rect x="420" y="148" width="50" height="22" rx="3" fill="#080604" stroke="#2a2010" stroke-width="1"/>
+  <text x="427" y="163" fill="#cc7000" font-family="Arial,sans-serif" font-size="7">MUTE</text>
+  <!-- LED indicators -->
+  <rect x="26" y="210" width="520" height="40" rx="3" fill="#0a0806" stroke="#2a2010" stroke-width="0.5"/>
+  <circle cx="56" cy="230" r="7" fill="#00cc44"/>
+  <text x="46" y="248" fill="#cc7000" font-family="Arial,sans-serif" font-size="7" text-anchor="middle">ON LINE</text>
+  <circle cx="106" cy="230" r="7" fill="#00cc44" opacity="0.2"/>
+  <text x="106" y="248" fill="#cc7000" font-family="Arial,sans-serif" font-size="7" text-anchor="middle">ON BATT</text>
+  <circle cx="156" cy="230" r="7" fill="#00cc44" opacity="0.2"/>
+  <text x="160" y="248" fill="#cc7000" font-family="Arial,sans-serif" font-size="7" text-anchor="middle">REPLACE</text>
+  <circle cx="216" cy="230" r="7" fill="#00cc44" opacity="0.2"/>
+  <text x="216" y="248" fill="#cc7000" font-family="Arial,sans-serif" font-size="7" text-anchor="middle">OVERLOAD</text>
+  <circle cx="266" cy="230" r="7" fill="#00cc44"/>
+  <text x="266" y="248" fill="#cc7000" font-family="Arial,sans-serif" font-size="7" text-anchor="middle">AVR TRIM</text>
+  <!-- Outlet section -->
+  <rect x="26" y="258" width="520" height="32" rx="3" fill="#0a0806" stroke="#2a2010" stroke-width="0.5"/>
+  <text x="36" y="272" fill="#cc7000" font-family="Arial,sans-serif" font-size="7">Battery Backup Outlets</text>
+  <rect x="36" y="276" width="18" height="10" rx="2" fill="#060504" stroke="#ff8800" stroke-width="0.5"/>
+  <rect x="60" y="276" width="18" height="10" rx="2" fill="#060504" stroke="#ff8800" stroke-width="0.5"/>
+  <rect x="84" y="276" width="18" height="10" rx="2" fill="#060504" stroke="#ff8800" stroke-width="0.5"/>
+  <rect x="108" y="276" width="18" height="10" rx="2" fill="#060504" stroke="#ff8800" stroke-width="0.5"/>
+  <rect x="132" y="276" width="18" height="10" rx="2" fill="#060504" stroke="#ff8800" stroke-width="0.5"/>
+  <rect x="156" y="276" width="18" height="10" rx="2" fill="#060504" stroke="#ff8800" stroke-width="0.5"/>
+  <rect x="180" y="276" width="18" height="10" rx="2" fill="#060504" stroke="#2a2010" stroke-width="0.5"/>
+  <rect x="204" y="276" width="18" height="10" rx="2" fill="#060504" stroke="#2a2010" stroke-width="0.5"/>
+  <text x="240" y="284" fill="#7a6040" font-family="Arial,sans-serif" font-size="7">Surge Only</text>
+  <rect x="260" y="276" width="18" height="10" rx="2" fill="#060504" stroke="#2a2010" stroke-width="0.5"/>
+  <rect x="284" y="276" width="18" height="10" rx="2" fill="#060504" stroke="#2a2010" stroke-width="0.5"/>
+  <!-- Accent -->
+  <rect x="22" y="0" width="532" height="2.5" fill="#ff8800" opacity="0.5"/>
+</svg>

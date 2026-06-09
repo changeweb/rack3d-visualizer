@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 100">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#101418"/>
+      <stop offset="100%" stop-color="#080c10"/>
+    </linearGradient>
+    <linearGradient id="ear" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1a2028"/>
+      <stop offset="100%" stop-color="#101418"/>
+    </linearGradient>
+  </defs>
+  <rect width="576" height="100" fill="url(#bg)"/>
+  <rect width="576" height="1.5" fill="#1e2838"/>
+  <rect y="98.5" width="576" height="1.5" fill="#1e2838"/>
+  <rect width="22" height="100" fill="url(#ear)"/>
+  <rect x="554" width="22" height="100" fill="url(#ear)"/>
+  <circle cx="11" cy="25" r="5" fill="#111" stroke="#1e2838" stroke-width="1"/>
+  <circle cx="11" cy="75" r="5" fill="#111" stroke="#1e2838" stroke-width="1"/>
+  <circle cx="565" cy="25" r="5" fill="#111" stroke="#1e2838" stroke-width="1"/>
+  <circle cx="565" cy="75" r="5" fill="#111" stroke="#1e2838" stroke-width="1"/>
+  <!-- ATEN Brand -->
+  <text x="30" y="32" fill="#44aaff" font-family="Arial,sans-serif" font-size="11" font-weight="bold" letter-spacing="1">ATEN</text>
+  <text x="30" y="46" fill="#80a8c8" font-family="Arial,sans-serif" font-size="8">KM1116VA</text>
+  <!-- LCD display showing selected port -->
+  <rect x="28" y="55" width="70" height="30" rx="2" fill="#050810" stroke="#44aaff" stroke-width="0.8"/>
+  <text x="33" y="67" fill="#44aaff" font-family="'Courier New',monospace" font-size="7">PORT</text>
+  <text x="33" y="79" fill="#44aaff" font-family="'Courier New',monospace" font-size="10" font-weight="bold">03</text>
+  <!-- Push button -->
+  <rect x="108" y="60" width="20" height="16" rx="3" fill="#0a0e14" stroke="#44aaff" stroke-width="1"/>
+  <text x="112" y="72" fill="#44aaff" font-family="Arial,sans-serif" font-size="7">SEL</text>
+  <!-- Reset button -->
+  <rect x="134" y="60" width="20" height="16" rx="3" fill="#0a0e14" stroke="#1e2838" stroke-width="1"/>
+  <text x="137" y="72" fill="#607888" font-family="Arial,sans-serif" font-size="7">RST</text>
+  <!-- Server ports (16) -->
+  <text x="165" y="22" fill="#607888" font-family="Arial,sans-serif" font-size="7">Server Ports (16 × KVM)</text>
+  <!-- Row 1: 8 ports -->
+  <rect x="165" y="26" width="20" height="18" rx="1" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <rect x="188" y="26" width="20" height="18" rx="1" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <rect x="211" y="26" width="20" height="18" rx="1" fill="#060a0e" stroke="#44aaff" stroke-width="1"/>
+  <rect x="234" y="26" width="20" height="18" rx="1" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <rect x="257" y="26" width="20" height="18" rx="1" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <rect x="280" y="26" width="20" height="18" rx="1" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <rect x="303" y="26" width="20" height="18" rx="1" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <rect x="326" y="26" width="20" height="18" rx="1" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <!-- LEDs row 1 -->
+  <circle cx="175" cy="46" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="198" cy="46" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="221" cy="46" r="2.5" fill="#44aaff" opacity="1"/>
+  <circle cx="244" cy="46" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="267" cy="46" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="290" cy="46" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="313" cy="46" r="2.5" fill="#ffaa00" opacity="0.5"/>
+  <circle cx="336" cy="46" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <!-- Port labels -->
+  <text x="166" y="57" fill="#607888" font-family="Arial,sans-serif" font-size="5">01  02  03  04  05  06  07  08</text>
+  <!-- Row 2: 8 ports -->
+  <rect x="165" y="62" width="20" height="18" rx="1" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <rect x="188" y="62" width="20" height="18" rx="1" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <rect x="211" y="62" width="20" height="18" rx="1" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <rect x="234" y="62" width="20" height="18" rx="1" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <rect x="257" y="62" width="20" height="18" rx="1" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <rect x="280" y="62" width="20" height="18" rx="1" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <rect x="303" y="62" width="20" height="18" rx="1" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <rect x="326" y="62" width="20" height="18" rx="1" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <!-- LEDs row 2 -->
+  <circle cx="175" cy="82" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="198" cy="82" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="221" cy="82" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="244" cy="82" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="267" cy="82" r="2.5" fill="#ffaa00" opacity="0.4"/>
+  <circle cx="290" cy="82" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="313" cy="82" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <circle cx="336" cy="82" r="2.5" fill="#00cc44" opacity="0.9"/>
+  <text x="166" y="93" fill="#607888" font-family="Arial,sans-serif" font-size="5">09  10  11  12  13  14  15  16</text>
+  <!-- Console ports section -->
+  <line x1="359" y1="12" x2="359" y2="88" stroke="#1e2838" stroke-width="1"/>
+  <text x="366" y="24" fill="#607888" font-family="Arial,sans-serif" font-size="7">Console</text>
+  <!-- USB/KB/Mouse ports -->
+  <rect x="366" y="28" width="18" height="14" rx="1" fill="#060a0e" stroke="#44aaff" stroke-width="0.8"/>
+  <text x="368" y="38" fill="#44aaff" font-family="Arial,sans-serif" font-size="6">KB</text>
+  <rect x="388" y="28" width="18" height="14" rx="1" fill="#060a0e" stroke="#44aaff" stroke-width="0.8"/>
+  <text x="390" y="38" fill="#44aaff" font-family="Arial,sans-serif" font-size="6">MS</text>
+  <!-- DVI port -->
+  <rect x="366" y="48" width="32" height="18" rx="1" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <text x="371" y="60" fill="#607888" font-family="Arial,sans-serif" font-size="7">DVI</text>
+  <!-- Audio -->
+  <circle cx="418" cy="38" r="7" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <circle cx="418" cy="58" r="7" fill="#060a0e" stroke="#1e2838" stroke-width="0.5"/>
+  <text x="412" y="78" fill="#607888" font-family="Arial,sans-serif" font-size="5">SPK MIC</text>
+  <!-- Daisy chain ports -->
+  <text x="440" y="24" fill="#607888" font-family="Arial,sans-serif" font-size="7">Cascade</text>
+  <rect x="440" y="28" width="22" height="14" rx="1" fill="#060a0e" stroke="#44aaff" stroke-width="0.8"/>
+  <rect x="466" y="28" width="22" height="14" rx="1" fill="#060a0e" stroke="#44aaff" stroke-width="0.8"/>
+  <text x="440" y="50" fill="#607888" font-family="Arial,sans-serif" font-size="6">IN    OUT</text>
+  <!-- Vents -->
+  <rect x="498" y="15" width="46" height="70" rx="2" fill="#060a0e" stroke="#141820" stroke-width="0.5"/>
+  <rect x="504" y="20" width="2" height="60" rx="1" fill="#1e2838"/>
+  <rect x="510" y="20" width="2" height="60" rx="1" fill="#1e2838"/>
+  <rect x="516" y="20" width="2" height="60" rx="1" fill="#1e2838"/>
+  <rect x="522" y="20" width="2" height="60" rx="1" fill="#1e2838"/>
+  <rect x="528" y="20" width="2" height="60" rx="1" fill="#1e2838"/>
+  <rect x="534" y="20" width="2" height="60" rx="1" fill="#1e2838"/>
+  <!-- Accent -->
+  <rect x="22" y="0" width="532" height="2" fill="#44aaff" opacity="0.5"/>
+</svg>

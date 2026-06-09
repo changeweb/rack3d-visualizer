@@ -289,7 +289,7 @@ export class CssBuilder {
 #${scope} .r3-ph-tab-btn:hover { opacity:1; color:var(--r3-accent); }
 
 /* ── PROFILE DROPDOWN ── */
-#${scope} .r3-profile-dd-wrap { position:relative; }
+#${scope} .r3-profile-dd-wrap { position:relative; display:flex; align-items:center; }
 #${scope} .r3-profile-dd {
   position:absolute; top:calc(100% + 4px); right:0; z-index:10000;
   background:var(--r3-panel); border:1px solid var(--r3-border); border-radius:4px;
