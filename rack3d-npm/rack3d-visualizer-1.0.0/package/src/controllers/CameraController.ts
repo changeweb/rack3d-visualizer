@@ -99,7 +99,7 @@ export class CameraController {
       let toYaw = fa
       const fromYaw = self._ctrl.yaw
       let diff = toYaw - fromYaw
-      while (diff > Math.PI)  diff -= 2 * Math.PI
+      while (diff > Math.PI) diff -= 2 * Math.PI
       while (diff < -Math.PI) diff += 2 * Math.PI
       toYaw = fromYaw + diff
       self._flyTween = {
@@ -115,7 +115,7 @@ export class CameraController {
       let toAz = Math.atan2(camX, camZ)
       const fromAz = self._ctrl.az
       let diff = toAz - fromAz
-      while (diff > Math.PI)  diff -= 2 * Math.PI
+      while (diff > Math.PI) diff -= 2 * Math.PI
       while (diff < -Math.PI) diff += 2 * Math.PI
       toAz = fromAz + diff
       const toR = Math.max(Math.sqrt(camX * camX + camZ * camZ), (self._opts.camera.minDistance ?? 4))
@@ -216,12 +216,12 @@ export class CameraController {
       self._ctrl.pos.x = tw.fromPos.x + (tw.toPos.x - tw.fromPos.x) * t
       self._ctrl.pos.y = tw.fromPos.y + (tw.toPos.y - tw.fromPos.y) * t
       self._ctrl.pos.z = tw.fromPos.z + (tw.toPos.z - tw.fromPos.z) * t
-      self._ctrl.yaw   = tw.fromYaw + (tw.toYaw - tw.fromYaw) * t
+      self._ctrl.yaw = tw.fromYaw + (tw.toYaw - tw.fromYaw) * t
       self._ctrl.pitch = tw.fromPitch + (tw.toPitch - tw.fromPitch) * t
     } else {
       self._ctrl.az = tw.fromAz + (tw.toAz - tw.fromAz) * t
       self._ctrl.el = tw.fromEl + (tw.toEl - tw.fromEl) * t
-      self._ctrl.r  = tw.fromR  + (tw.toR  - tw.fromR)  * t
+      self._ctrl.r = tw.fromR + (tw.toR - tw.fromR) * t
     }
     if (raw >= 1) tw.active = false
   }
@@ -243,7 +243,7 @@ export class CameraController {
       self._ctrl.pitch = -0.08
     }
     if (b) b.textContent = '⊹ FPS'
-    if (tip) tip.textContent = '🖱 Drag to rotate · WS walk · A/D or ← → rotate · Click ⊹FPS again to lock mouse'
+    if (tip) tip.textContent = '🖱 Drag to rotate · WS walk · Q/E ↑↓ up-down · A/D or ← → rotate · Click ⊹FPS again to lock mouse'
     this.posCamera()
   }
 }
