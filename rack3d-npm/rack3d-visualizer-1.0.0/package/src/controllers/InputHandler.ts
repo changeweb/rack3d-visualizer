@@ -1,4 +1,5 @@
 import type { IVisualizer } from '../types/visualizer'
+import { CAM_TIPS } from '../constants'
 
 export class InputHandler {
   private viz: IVisualizer
@@ -122,13 +123,11 @@ export class InputHandler {
       if (self._ctrl.pointerLocked) {
         cv.style.cursor = 'none'
         if (b) b.textContent = '🔓 UNLOCK'
-        if (tip) tip.textContent = 'Mouse locked · WS walk · A/D or ← → rotate · Q/E up/down · Click to select · ESC to release'
+        if (tip) tip.textContent = CAM_TIPS.fpsLocked
       } else {
         cv.style.cursor = 'crosshair'
         if (b) b.textContent = self._ctrl.mode === 'fps' ? '⊹ FPS' : '⊕ ORBIT'
-        if (tip) tip.textContent = self._ctrl.mode === 'fps'
-          ? '🖱 Drag to rotate · WS walk · A/D or ← → rotate · Click ⊹FPS button to lock mouse'
-          : '🖱 Drag to orbit · Scroll to zoom · Click to select'
+        if (tip) tip.textContent = self._ctrl.mode === 'fps' ? CAM_TIPS.fps : CAM_TIPS.orbit
       }
     }
     document.addEventListener('pointerlockchange', onPointerLockChange)
@@ -363,44 +362,46 @@ export class InputHandler {
     const ctrlKey = e.ctrlKey || e.metaKey
 
     if (result?.type === 'device') {
-      if (ctrlKey) {
-        // Ctrl+click on device does nothing for multi-sel
-      } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rack = (self._room?.racks || []).find((r: any) => r.id === result.rackId)
+      if (rack) {
+        self._selRackId = result.rackId; self._rack = rack
+        self._selId = result.id; self._selItemId = null
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const rack = (self._room?.racks || []).find((r: any) => r.id === result.rackId)
-        if (rack) {
-          self._selRackId = result.rackId; self._rack = rack
-          self._selId = result.id; self._selItemId = null
+        const dev = (rack.devices || []).find((d: any) => d.id === self._selId)
+        if (dev) {
+          self._openEdit(dev)
+          if (self._opts.onSelect) self._opts.onSelect({ type: 'device', id: dev.id, rackId: result.rackId })
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const dev = (rack.devices || []).find((d: any) => d.id === self._selId)
-          if (dev) {
-            self._openEdit(dev)
-            if (self._opts.onSelect) self._opts.onSelect({ type: 'device', id: dev.id, rackId: result.rackId })
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ;(self._camera as any)?.flyToDevice(result.rackId, result.id)
-          }
+          if (ctrlKey) (self._camera as any)?.flyToDevice(result.rackId, result.id)
         }
       }
     } else if (result?.type === 'rack') {
       if (ctrlKey) {
         self._toggleMultiSel(result.id)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rack = (self._room?.racks || []).find((r: any) => r.id === result.id)
+        if (rack) { self._selRackId = result.id; self._rack = rack }
+        self._selId = null; self._selItemId = null; self._closeEdit()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(self._camera as any)?.flyToRack(result.id)
         return
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rack = (self._room?.racks || []).find((r: any) => r.id === result.id)
       if (rack) { self._selRackId = result.id; self._rack = rack }
       self._selId = null; self._selItemId = null; self._closeEdit()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(self._camera as any)?.flyToRack(result.id)
     } else if (result?.type === 'item') {
       if (ctrlKey) {
         self._toggleMultiSel(result.id)
+        self._selItemId = result.id
+        self._selId = null; self._closeEdit()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(self._camera as any)?.flyToItem(result.id)
         return
       }
       self._selItemId = result.id
       self._selId = null; self._closeEdit()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ;(self._camera as any)?.flyToItem(result.id)
     } else if (result?.type === 'connection') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(self as any)._selectConnection(result.id)

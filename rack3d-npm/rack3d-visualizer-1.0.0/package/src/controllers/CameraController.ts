@@ -1,4 +1,5 @@
 import type { IVisualizer } from '../types/visualizer'
+import { CAM_TIPS } from '../constants'
 
 export class CameraController {
   private viz: IVisualizer
@@ -243,7 +244,7 @@ export class CameraController {
       self._ctrl.pitch = -0.08
     }
     if (b) b.textContent = '⊹ FPS'
-    if (tip) tip.textContent = '🖱 Drag to rotate · WS walk · Q/E ↑↓ up-down · A/D or ← → rotate · Click ⊹FPS again to lock mouse'
+    if (tip) tip.textContent = CAM_TIPS.fps
     this.posCamera()
   }
 }

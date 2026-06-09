@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type IVisualizer = any // temporary — replaced by full interface when Rack3DVisualizer.ts is created
+import { CAM_TIPS } from '../constants'
 
 export class HtmlBuilder {
   constructor(private readonly viz: IVisualizer) {}
@@ -808,7 +809,7 @@ export class HtmlBuilder {
       <div class="r3-legend-body" id="${sid}-legend" style="display:none"></div>
     </div>
     <div id="${sid}-ctx-menu" class="r3-ctx-menu" style="display:none"></div>
-    <div class="r3-tip" id="${sid}-tip">${self._ctrl?.mode==='fps'?'🖱 Drag to rotate · WS walk · Q/E ↑↓ up-down · A/D or ← → rotate · Click ⊹FPS again to lock mouse':'🖱 Drag to orbit · Scroll to zoom · Click to select · Drag selected rack to move'}</div>
+    <div class="r3-tip" id="${sid}-tip">${self._ctrl?.mode==='fps'?CAM_TIPS.fps:CAM_TIPS.orbit}</div>
     <div class="r3-compass" id="${sid}-compass">
       <div class="r3-compass-ring">
         <span class="r3-compass-n" id="${sid}-compass-n">N</span>

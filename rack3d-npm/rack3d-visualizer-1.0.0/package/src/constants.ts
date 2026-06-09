@@ -36,3 +36,9 @@ export function hexToRgb(hex: string): [number, number, number] {
 export function hexStrToNum(hex: string): number {
   return parseInt(hex.replace('#', ''), 16)
 }
+
+export const CAM_TIPS = {
+  orbit:      '🖱 Drag to orbit · Scroll to zoom · Ctrl+Click to select · Drag selected rack to move',
+  fps:        '🖱 Drag to rotate · WS walk · Q/E ↑↓ up-down · A/D or ← → rotate · Ctrl+Click to fly · Click ⊹FPS again to lock mouse',
+  fpsLocked:  'Mouse locked · WS walk · A/D or ← → rotate · Q/E up/down · Ctrl+Click to select · ESC to release',
+} as const
