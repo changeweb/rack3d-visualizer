@@ -129,17 +129,103 @@ export class HtmlBuilder {
   </div>`;
   }
 
+  connectionRow(conn: Record<string, unknown>, i: number): string {
+    const self = this.viz;
+    const sid = self._id;
+    const colHex = typeof conn.color === 'string' ? conn.color : '#4499ff';
+    const u = typeof conn.utilization === 'number' ? conn.utilization : 0.3;
+    return `<div style="border:1px solid var(--r3-border,#1a2a3f);border-radius:4px;padding:5px;margin-bottom:4px">
+    <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
+      <input class="r3-inp r3-inp-xs" value="${conn.from??''}" placeholder="From ID" style="flex:1;min-width:50px" title="Device or rack ID" oninput="window._r3['${sid}']._editConnection(${i},'from',this.value)">
+      <span style="font-size:9px;color:var(--r3-dim)">→</span>
+      <input class="r3-inp r3-inp-xs" value="${conn.to??''}" placeholder="To ID" style="flex:1;min-width:50px" title="Device or rack ID" oninput="window._r3['${sid}']._editConnection(${i},'to',this.value)">
+      <button class="r3-ph-btn" style="font-size:13px;margin-left:2px" onclick="window._r3['${sid}']._removeConnection(${i})">×</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
+      <input class="r3-inp r3-inp-xs" value="${conn.label??''}" placeholder="Label" style="flex:1" oninput="window._r3['${sid}']._editConnection(${i},'label',this.value)">
+      <input class="r3-inp r3-inp-xs" value="${conn.bandwidth??'1G'}" placeholder="BW" style="width:38px" title="Bandwidth e.g. 10G" oninput="window._r3['${sid}']._editConnection(${i},'bandwidth',this.value)">
+      <input type="color" value="${colHex}" class="r3-color-pick" title="Color override" oninput="window._r3['${sid}']._editConnection(${i},'color',this.value)">
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
+      <span style="font-size:9px;color:var(--r3-dim);min-width:28px">Load</span>
+      <input class="r3-range" type="range" min="0" max="1" step="0.05" value="${u}" style="flex:1" oninput="window._r3['${sid}']._editConnection(${i},'utilization',+this.value)" title="Utilization 0–1">
+      <span style="font-size:9px;color:var(--r3-dim);min-width:26px">${Math.round(u*100)}%</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <label style="display:flex;align-items:center;gap:2px;font-size:9px;cursor:pointer">
+        <input type="checkbox"${conn.animated!==false?' checked':''} onchange="window._r3['${sid}']._editConnection(${i},'animated',this.checked)">Animate
+      </label>
+      <label style="display:flex;align-items:center;gap:2px;font-size:9px;cursor:pointer">
+        <input type="checkbox"${conn.visible!==false?' checked':''} onchange="window._r3['${sid}']._editConnection(${i},'visible',this.checked)">Vis
+      </label>
+    </div>
+  </div>`;
+  }
+
+  networkPanelBody(): string {
+    const self = this.viz;
+    const sid = self._id;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const conns = (self._room as any)?.connections || [];
+    return `<div style="margin-bottom:6px;font-size:9px;color:var(--r3-dim);line-height:1.5">
+    Connect racks or devices by ID. Use the JSON view to copy IDs, or reference from the device list above.
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+    <button class="r3-btn" style="padding:1px 7px;font-size:9px" onclick="window._r3['${sid}']._addConnection()">+ Connection</button>
+  </div>
+  <div id="${sid}-conn-list">${conns.map((c: Record<string, unknown>, i: number) => this.connectionRow(c, i)).join('')}</div>`;
+  }
+
+  zoneRow(zone: Record<string, unknown>, i: number): string {
+    const self = this.viz;
+    const sid = self._id;
+    const colorHex = typeof zone.color === 'string' ? zone.color : '#4488ff';
+    return `<div style="border:1px solid var(--r3-border,#1a2a3f);border-radius:4px;padding:5px;margin-bottom:4px">
+    <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:3px">
+      <input class="r3-inp r3-inp-xs" value="${zone.name??'Zone'}" placeholder="Name" style="flex:1;min-width:60px" oninput="window._r3['${sid}']._editZone(${i},'name',this.value)">
+      <input type="color" value="${colorHex}" class="r3-color-pick" title="Color" oninput="window._r3['${sid}']._editZone(${i},'color',this.value)">
+      <label style="display:flex;align-items:center;gap:2px;font-size:9px;cursor:pointer">
+        <input type="checkbox"${zone.visible!==false?' checked':''} onchange="window._r3['${sid}']._editZone(${i},'visible',this.checked)" title="Visible">Vis
+      </label>
+      <button class="r3-ph-btn" style="font-size:13px;margin-left:auto" onclick="window._r3['${sid}']._removeZone(${i})">×</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-bottom:3px">
+      <span style="font-size:9px;color:var(--r3-dim);min-width:20px">Pos</span>
+      <input class="r3-inp r3-inp-xs" type="number" step="1" value="${zone.x??0}" title="X" style="width:42px" oninput="window._r3['${sid}']._editZone(${i},'x',+this.value)">
+      <input class="r3-inp r3-inp-xs" type="number" step="1" value="${zone.z??0}" title="Z" style="width:42px" oninput="window._r3['${sid}']._editZone(${i},'z',+this.value)">
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-bottom:3px">
+      <span style="font-size:9px;color:var(--r3-dim);min-width:20px">Size</span>
+      <input class="r3-inp r3-inp-xs" type="number" step="1" min="1" value="${zone.width??10}" title="Width" style="width:42px" oninput="window._r3['${sid}']._editZone(${i},'width',+this.value)">
+      <input class="r3-inp r3-inp-xs" type="number" step="1" min="1" value="${zone.depth??10}" title="Depth" style="width:42px" oninput="window._r3['${sid}']._editZone(${i},'depth',+this.value)">
+      <span style="font-size:9px;color:var(--r3-dim)">W×D</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-bottom:3px">
+      <span style="font-size:9px;color:var(--r3-dim);min-width:40px">Fill</span>
+      <input class="r3-range" type="range" min="0" max="0.6" step="0.02" value="${zone.opacity??0.18}" style="flex:1" oninput="window._r3['${sid}']._editZone(${i},'opacity',+this.value)">
+    </div>
+    <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap">
+      <span style="font-size:9px;color:var(--r3-dim);min-width:40px">WallH</span>
+      <input class="r3-inp r3-inp-xs" type="number" step="0.5" min="0" value="${zone.wallHeight??0}" title="Wall height (0=none)" style="width:48px" oninput="window._r3['${sid}']._editZone(${i},'wallHeight',+this.value)">
+      <span style="font-size:9px;color:var(--r3-dim)">m</span>
+    </div>
+  </div>`;
+  }
+
   roomPanelBody(): string {
     const self = this.viz;
     const sid = self._id;
     const ro  = self._opts.room;
     const walls   = self._room?.room_walls   || [];
     const pillars = self._room?.room_pillars || [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const zones   = (self._room as any)?.zones || [];
     return `<div class="r3-tab-bar">
     <button class="r3-tab active" id="${sid}-rtab-racks"   onclick="window._r3['${sid}']._switchRoomTab('racks')">Racks</button>
     <button class="r3-tab"        id="${sid}-rtab-layout"  onclick="window._r3['${sid}']._switchRoomTab('layout')">Layout</button>
     <button class="r3-tab"        id="${sid}-rtab-walls"   onclick="window._r3['${sid}']._switchRoomTab('walls')">Walls</button>
     <button class="r3-tab"        id="${sid}-rtab-pillars" onclick="window._r3['${sid}']._switchRoomTab('pillars')">Pillars</button>
+    <button class="r3-tab"        id="${sid}-rtab-zones"   onclick="window._r3['${sid}']._switchRoomTab('zones')">Zones</button>
   </div>
 
   <div id="${sid}-rtab-body-racks">
@@ -232,6 +318,14 @@ export class HtmlBuilder {
       <button class="r3-btn" style="padding:1px 6px;font-size:9px" onclick="window._r3['${sid}']._addPillar()">+ Pillar</button>
     </div>
     <div id="${sid}-pillars-list">${pillars.map((p: Record<string, unknown>, i: number) => this.pillarRow(p, i)).join('')}</div>
+  </div>
+
+  <div id="${sid}-rtab-body-zones" style="display:none">
+    <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px">
+      <span style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--r3-dim);flex:1">Zones</span>
+      <button class="r3-btn" style="padding:1px 6px;font-size:9px" onclick="window._r3['${sid}']._addZone()">+ Zone</button>
+    </div>
+    <div id="${sid}-zones-list">${zones.map((z: Record<string, unknown>, i: number) => this.zoneRow(z, i)).join('')}</div>
   </div>`;
   }
 
@@ -400,6 +494,7 @@ export class HtmlBuilder {
   <div id="${sid}-edt-body-properties">
     <div class="r3-rw"><span class="r3-lbl">Name</span><input class="r3-inp" id="${sid}-en" oninput="window._r3['${sid}']._ed('name',this.value)"></div>
     <div class="r3-rw"><span class="r3-lbl">Start U</span><input class="r3-inp" type="number" min="1" id="${sid}-es" oninput="window._r3['${sid}']._ed('startUnit',+this.value)"></div>
+    <div class="r3-rw" id="${sid}-emodel-row" style="display:none"><span class="r3-lbl">Model</span><span id="${sid}-emodel" style="font-family:'Share Tech Mono',monospace;font-size:10px;opacity:.75;padding:4px 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px"></span></div>
     <div id="${sid}-einfo" style="margin-top:6px;padding:5px 7px;border:1px solid var(--r3-border);border-radius:2px;font-family:'Share Tech Mono',monospace;font-size:10px;opacity:.7;line-height:1.6"></div>
   </div>
 
@@ -611,6 +706,9 @@ export class HtmlBuilder {
     <div class="r3-sep"></div>
     <button class="r3-btn" id="${sid}-btnMove"   onclick="window._r3['${sid}']._setTransformMode('move')"   title="Move items in 3D (drag to reposition)">✥ MOVE</button>
     <button class="r3-btn" id="${sid}-btnRotate" onclick="window._r3['${sid}']._setTransformMode('rotate')" title="Rotate items in 3D (drag left/right)">↻ ROTATE</button>
+    <button class="r3-btn" id="${sid}-btnAisle"    onclick="window._r3['${sid}'].toggleAisles()"   title="Toggle hot/cold aisle overlay">❄ AISLE</button>
+    <button class="r3-btn on" id="${sid}-btnMinimap" onclick="window._r3['${sid}'].toggleMinimap()"  title="Toggle 2D minimap overlay">⊞ MAP</button>
+    <button class="r3-btn on" id="${sid}-btnTopo"    onclick="window._r3['${sid}'].toggleTopology()" title="Toggle network topology lines">⬡ TOPO</button>
     <div class="r3-sep"></div>
     <select class="r3-inp" id="${sid}-theme-sel" title="Theme"
             onchange="window._r3['${sid}']._onThemeChange(this.value)"
@@ -633,6 +731,7 @@ export class HtmlBuilder {
     ${this.panelHtml('env','Lighting',this.envPanelBody())}
     ${this.panelHtml('catalog','Catalog',this.catalogPanelBody())}
     ${this.panelHtml('catalogEdit','Catalog Item',`<div id="${sid}-cat-edit-wrap"></div>`,{hidden:true})}
+    ${this.panelHtml('network','Network',this.networkPanelBody())}
   </div>`;
 
     const canvasHtml = `
@@ -644,6 +743,16 @@ export class HtmlBuilder {
     <div class="r3-zoom-btns">
       <button class="r3-zoom-btn" onclick="window._r3['${sid}'].zoomIn()">＋</button>
       <button class="r3-zoom-btn" onclick="window._r3['${sid}'].zoomOut()">－</button>
+    </div>
+    <div class="r3-minimap-wrap" id="${sid}-minimap-wrap" style="display:flex">
+      <div class="r3-minimap-hdr">
+        <span>⊞ MAP</span>
+        <span class="r3-minimap-pos" id="${sid}-minimap-pos"></span>
+      </div>
+      <canvas class="r3-minimap" id="${sid}-minimap" width="180" height="140"
+        title="Click to teleport camera to location"
+        onclick="window._r3['${sid}']._onMinimapClick(event)"></canvas>
+      <div class="r3-minimap-hint">Click to teleport</div>
     </div>
     <div class="r3-legend-overlay">
       <button class="r3-legend-toggle-btn" onclick="window._r3['${sid}']._toggleLegend()">⬡ Types</button>

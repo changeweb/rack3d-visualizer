@@ -723,6 +723,28 @@ const ROOM_DATA = {
       ],
     },
   ],
+
+  zones: [
+    { id: 'z-prod-a', name: 'Prod Row A', color: '#3b82f6', x: 0,   z: -10, width: 72, depth: 14, opacity: 0.12 },
+    { id: 'z-prod-d', name: 'Prod Row D', color: '#6366f1', x: 0,   z: -26, width: 92, depth: 14, opacity: 0.12 },
+    { id: 'z-prod-e', name: 'Prod Row E', color: '#8b5cf6', x: -8,  z: -42, width: 38, depth: 12, opacity: 0.12 },
+    { id: 'z-mgmt',   name: 'Management', color: '#10b981', x: -28, z: 11,  width: 32, depth: 22, opacity: 0.12 },
+  ],
+
+  connections: [
+    { id: 'cn-1',  from: 'a1-d1',   to: 'a1-d2',   label: 'WAN→FW',        bandwidth: '10G', utilization: 0.72, animated: true },
+    { id: 'cn-2',  from: 'a1-d2',   to: 'a1-d4',   label: 'FW→Core-SW1',   bandwidth: '10G', utilization: 0.58, animated: true },
+    { id: 'cn-3',  from: 'a1-d4',   to: 'a3-d2',   label: 'Core-SW1→SW2',  bandwidth: '40G', utilization: 0.41, animated: true },
+    { id: 'cn-4',  from: 'a3-d1',   to: 'a3-d2',   label: 'FW-B→Core-SW2', bandwidth: '10G', utilization: 0.35, animated: true },
+    { id: 'cn-5',  from: 'a1-d4',   to: 'a4-d1',   label: 'SW1→Dist-SW3',  bandwidth: '10G', utilization: 0.62, animated: true },
+    { id: 'cn-6',  from: 'a3-d2',   to: 'a5-d1',   label: 'SW2→Store-SW4', bandwidth: '10G', utilization: 0.29, animated: true },
+    { id: 'cn-7',  from: 'a2-d1',   to: 'a2-d2',   label: 'LB→App04',      bandwidth: '1G',  utilization: 0.88, animated: true },
+    { id: 'cn-8',  from: 'a7-d1',   to: 'a7-d4',   label: 'LB2→Web06',     bandwidth: '1G',  utilization: 0.95, animated: true },
+    { id: 'cn-9',  from: 'a1-d8',   to: 'a2-d5',   label: 'DB→Replica',    bandwidth: '10G', utilization: 0.53, animated: true },
+    { id: 'cn-10', from: 'rack-a1', to: 'rack-d1',  label: 'A→D uplink',    bandwidth: '40G', utilization: 0.44, animated: true },
+    { id: 'cn-11', from: 'rack-a3', to: 'rack-d5',  label: 'A3→D5 link',    bandwidth: '10G', utilization: 0.31, animated: true },
+    { id: 'cn-12', from: 'c1-d1',   to: 'wl-d1',   label: 'Mgmt→OOB',      bandwidth: '1G',  utilization: 0.12, animated: false },
+  ],
 };
 
 function RoomInstance({ data, theme = 'light' }) {

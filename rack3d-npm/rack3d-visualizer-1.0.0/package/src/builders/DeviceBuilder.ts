@@ -60,7 +60,16 @@ export class DeviceBuilder {
     const rgb = hexToRgb(rawCol)
 
     const bodyCol = new this.THREE.Color(...rgb.map((c: number) => c * 0.12 + 0.02) as [number, number, number])
-    const bodyMat = this.materialFactory.createBodyMaterial(device.type, bodyCol)
+    const hasBodyTex = !!(device.textureUrl || device.normalMapUrl || device.roughnessMapUrl)
+    const bodyMat = hasBodyTex
+      ? this.materialFactory.createBodyMaterial(device.type, bodyCol).clone()
+      : this.materialFactory.createBodyMaterial(device.type, bodyCol)
+    if (device.textureUrl) {
+      bodyMat.color.set(0xffffff)
+      this._loadBodyTextureAsync(device.textureUrl, bodyMat, 'map')
+    }
+    if (device.normalMapUrl) this._loadBodyTextureAsync(device.normalMapUrl, bodyMat, 'normalMap')
+    if (device.roughnessMapUrl) this._loadBodyTextureAsync(device.roughnessMapUrl, bodyMat, 'roughnessMap')
     const body = new this.THREE.Mesh(new this.THREE.BoxGeometry(dw, dh, dd), bodyMat)
     body.userData.rk = 'dev'
     body.userData.deviceId = device.id
@@ -102,15 +111,13 @@ export class DeviceBuilder {
         side: this.THREE.BackSide
       })
       const imgPlane = new this.THREE.Mesh(new this.THREE.PlaneGeometry(faceW, faceH), imgMat)
-      imgPlane.position.set(xOff, y, -hd + 0.04)
+      imgPlane.position.set(xOff, y, -hd + POST + 0.11)
       imgPlane.userData.rk = 'devimage'
       imgPlane.userData.deviceId = device.id
       imgPlane.userData.rackId = entry.id
-      imgPlane.renderOrder = 999
-      imgPlane.material.depthTest = false
       imgPlane.scale.x = -1
       group.add(imgPlane)
-      this._loadTextureAsync(device.imageUrl, imgMat)
+      this._loadTextureAsync(device.imageUrl, imgMat, faceW / faceH)
     }
 
     if (device.imageUrlRear) {
@@ -120,14 +127,12 @@ export class DeviceBuilder {
         side: this.THREE.FrontSide
       })
       const rearPlane = new this.THREE.Mesh(new this.THREE.PlaneGeometry(faceW, faceH), rearMat)
-      rearPlane.position.set(xOff, y, hd - 0.04)
+      rearPlane.position.set(xOff, y, hd - POST - 0.11)
       rearPlane.userData.rk = 'devimage'
       rearPlane.userData.deviceId = device.id
       rearPlane.userData.rackId = entry.id
-      rearPlane.renderOrder = 999
-      rearPlane.material.depthTest = false
       group.add(rearPlane)
-      this._loadTextureAsync(device.imageUrlRear, rearMat)
+      this._loadTextureAsync(device.imageUrlRear, rearMat, faceW / faceH)
     }
 
     const stripMat = this.materialFactory.createStripMaterial(rawHex)
@@ -264,12 +269,23 @@ export class DeviceBuilder {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  _loadTextureAsync(url: string, material: any): void {
+  _loadTextureAsync(url: string, material: any, planeAspect = 1): void {
+    if (/\.svg$/i.test(url)) return
     const loader = new this.THREE.TextureLoader()
     loader.load(
       url,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (tex: any) => {
+        const imgW = tex.image.naturalWidth || tex.image.width || 1
+        const imgH = tex.image.naturalHeight || tex.image.height || 1
+        const imgAspect = imgW / imgH
+        if (imgAspect > planeAspect) {
+          tex.repeat.set(planeAspect / imgAspect, 1)
+          tex.offset.set((1 - planeAspect / imgAspect) / 2, 0)
+        } else {
+          tex.repeat.set(1, imgAspect / planeAspect)
+          tex.offset.set(0, (1 - imgAspect / planeAspect) / 2)
+        }
         tex.encoding = 3001
         material.map = tex
         material.needsUpdate = true
@@ -277,6 +293,25 @@ export class DeviceBuilder {
       undefined,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (err: any) => console.warn('[Rack3D] Could not load device image:', url, err)
+    )
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _loadBodyTextureAsync(url: string, material: any, slot: 'map' | 'normalMap' | 'roughnessMap'): void {
+    if (/\.svg$/i.test(url)) return
+    const loader = new this.THREE.TextureLoader()
+    loader.load(
+      url,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (tex: any) => {
+        tex.wrapS = tex.wrapT = this.THREE.RepeatWrapping
+        tex.encoding = slot === 'map' ? 3001 : 3000
+        material[slot] = tex
+        material.needsUpdate = true
+      },
+      undefined,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (err: any) => console.warn('[Rack3D] Could not load device texture:', url, err)
     )
   }
 }

@@ -47,7 +47,11 @@ export interface Device {
   halfWidth?: HalfWidth
   imageUrl?: string
   imageUrlRear?: string
+  textureUrl?: string
+  normalMapUrl?: string
+  roughnessMapUrl?: string
   catalogId?: string
+  model?: string
   fields?: DeviceField[]
   vms?: VM[]
 }
@@ -78,7 +82,11 @@ export interface CatalogItem {
   watts: number
   imageUrl?: string
   imageUrlRear?: string
+  textureUrl?: string
+  normalMapUrl?: string
+  roughnessMapUrl?: string
   halfWidth?: HalfWidth
+  model?: string
 }
 
 export interface RoomItem {
@@ -135,6 +143,31 @@ export interface Layout {
   rowSpacing: number
 }
 
+export interface Zone {
+  id: string
+  name: string
+  color: string
+  x: number
+  z: number
+  width: number
+  depth: number
+  opacity?: number
+  wallHeight?: number
+  visible?: boolean
+}
+
+export interface Connection {
+  id: string
+  from: string
+  to: string
+  label?: string
+  bandwidth?: string
+  utilization?: number
+  color?: string
+  animated?: boolean
+  visible?: boolean
+}
+
 export interface RoomData {
   name?: string
   layout?: Layout
@@ -143,6 +176,8 @@ export interface RoomData {
   room_items?: RoomItem[]
   room_walls?: Wall[]
   room_pillars?: Pillar[]
+  zones?: Zone[]
+  connections?: Connection[]
   groups?: Group[]
 }
 

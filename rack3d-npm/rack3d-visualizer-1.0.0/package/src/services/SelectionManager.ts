@@ -1,5 +1,5 @@
 interface SelectionResult {
-  type: 'device' | 'rack' | 'item'
+  type: 'device' | 'rack' | 'item' | 'connection'
   id: string
   rackId?: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,6 +35,7 @@ export class SelectionManager {
     this.camera = camera
     this.THREE = THREE
     this.raycaster = new THREE.Raycaster()
+    this.raycaster.params.Line = { threshold: 0.4 }
     this.mouse = new THREE.Vector2()
     this.selectedDeviceId = null
     this.selectedRackId = null
@@ -94,6 +95,12 @@ export class SelectionManager {
       let o = itemHit.object
       while (o && !o.userData?.itemId) o = o.parent
       return { type: 'item', id: o.userData.itemId, object: itemHit.object }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const connHit = intersects.find((h: any) => h.object.userData?.connId)
+    if (connHit) {
+      return { type: 'connection', id: connHit.object.userData.connId, object: connHit.object }
     }
 
     return null

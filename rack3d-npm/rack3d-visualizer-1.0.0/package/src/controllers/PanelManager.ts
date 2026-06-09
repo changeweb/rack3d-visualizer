@@ -172,7 +172,7 @@ export class PanelManager {
 
   switchRoomTab(tabId: string): void {
     const self = this.viz
-    ;['racks', 'layout', 'walls', 'pillars'].forEach((t: string) => {
+    ;['racks', 'layout', 'walls', 'pillars', 'zones'].forEach((t: string) => {
       const btn = document.getElementById(self._id + '-rtab-' + t)
       const body = document.getElementById(self._id + '-rtab-body-' + t)
       const on = t === tabId

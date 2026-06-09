@@ -228,6 +228,13 @@ export class CssBuilder {
   font-size:9px; padding:1px 5px; border-radius:1px; border:1px solid;
   font-family:'Share Tech Mono',monospace;
 }
+#${scope} .r3-fly-btn {
+  display:none; background:transparent; border:1px solid var(--r3-border); color:var(--r3-dim);
+  border-radius:2px; cursor:pointer; font-size:10px; padding:1px 4px; line-height:1; flex-shrink:0;
+  transition:color .15s, border-color .15s;
+}
+#${scope} .r3-fly-btn:hover { color:var(--r3-accent); border-color:var(--r3-accent); }
+#${scope} .r3-rack-item:hover .r3-fly-btn { display:block; }
 
 /* ── RIGHT SIDEBAR ── */
 #${scope} .r3-sb-right {
@@ -348,6 +355,35 @@ export class CssBuilder {
 #${scope} .r3-zoom-btns { position:absolute; bottom:44px; right:12px; display:flex; flex-direction:column; gap:4px; z-index:6; }
 #${scope} .r3-zoom-btn  { width:30px; height:30px; background:var(--r3-panel); border:1px solid var(--r3-border); color:var(--r3-text); border-radius:4px; cursor:pointer; font-size:18px; line-height:1; display:flex; align-items:center; justify-content:center; transition:all .2s; }
 #${scope} .r3-zoom-btn:hover { border-color:var(--r3-accent); color:var(--r3-accent); background:${c.accent}11; }
+
+/* ── MINIMAP ── */
+#${scope} .r3-minimap-wrap {
+  position:absolute; bottom:10px; right:50px; z-index:6;
+  display:flex; flex-direction:column; align-items:stretch;
+  border:1px solid ${c.accent}44; border-radius:5px; overflow:hidden;
+  box-shadow:0 4px 18px rgba(0,0,0,0.55);
+}
+#${scope} .r3-minimap-hdr {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:3px 8px;
+  background:${c.panel}f0; border-bottom:1px solid var(--r3-border);
+  font-family:'Share Tech Mono',monospace; font-size:9px; letter-spacing:1px;
+  color:var(--r3-accent); user-select:none;
+}
+#${scope} .r3-minimap-pos { color:var(--r3-text); opacity:0.55; font-size:8px; }
+#${scope} .r3-minimap {
+  border:none; border-radius:0; display:block;
+  background:${c.bg}dd; backdrop-filter:blur(4px);
+  cursor:crosshair; opacity:0.92; transition:opacity .2s;
+}
+#${scope} .r3-minimap:hover { opacity:1; }
+#${scope} .r3-minimap-hint {
+  text-align:center; padding:2px 0 3px;
+  font-family:'Share Tech Mono',monospace; font-size:8px; letter-spacing:0.5px;
+  color:var(--r3-accent); opacity:0.5;
+  background:${c.panel}f0; border-top:1px solid var(--r3-border);
+  user-select:none; pointer-events:none;
+}
 
 /* ── AXIS GIZMO ── */
 #${scope} .r3-axis-gizmo {

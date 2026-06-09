@@ -15,6 +15,7 @@ export class CatalogController {
         dev.watts        = item.watts;
         dev.imageUrl     = item.imageUrl     || '';
         dev.imageUrlRear = item.imageUrlRear || '';
+        dev.model        = item.model        || '';
         if (item.halfWidth) dev.halfWidth = item.halfWidth; else delete dev.halfWidth;
       });
     });
@@ -128,6 +129,7 @@ export class CatalogController {
     if (dev) {
       dev.imageUrl     = item.imageUrl     || '';
       dev.imageUrlRear = item.imageUrlRear || '';
+      dev.model        = item.model        || '';
       dev.catalogId    = catId;
     }
     return dev;
@@ -147,7 +149,7 @@ export class CatalogController {
   addCatalogItem(): void {
     const self = this.viz;
     if (!self._room) return;
-    const newItem = { id:'cat-'+Date.now(), name:'New Device', type:'server', heightUnits:1, watts:200, imageUrl:'', imageUrlRear:'' };
+    const newItem = { id:'cat-'+Date.now(), name:'New Device', type:'server', heightUnits:1, watts:200, imageUrl:'', imageUrlRear:'', model:'' };
     if (!Array.isArray(self._room.catalog)) self._room.catalog = [];
     self._room.catalog.push(newItem);
     self._selCatId = newItem.id;
@@ -190,6 +192,7 @@ export class CatalogController {
     form.innerHTML = `
     <div class="r3-pl" style="margin-bottom:5px">Catalog Item</div>
     <div class="r3-rw"><span class="r3-lbl">Name</span><input class="r3-inp" id="${self._id}-cen" value="${item.name}"></div>
+    <div class="r3-rw"><span class="r3-lbl">Model</span><input class="r3-inp" id="${self._id}-cemdl" placeholder="e.g. Dell PowerEdge R650" value="${item.model||''}"></div>
     <div class="r3-rw"><span class="r3-lbl">Type</span><select class="r3-inp" id="${self._id}-cet">${typeOptions}</select></div>
     <div class="r3-rw"><span class="r3-lbl">Height U</span><input class="r3-inp" type="number" min="1" max="12" id="${self._id}-ceh" value="${item.heightUnits}"></div>
     <div class="r3-rw"><span class="r3-lbl">Watts</span><input class="r3-inp" type="number" id="${self._id}-cew" value="${item.watts}"></div>
@@ -200,7 +203,7 @@ export class CatalogController {
         <option value="right" ${item.halfWidth==='right'?'selected':''}>Half — Right</option>
       </select>
     </div>
-    <div class="r3-rw"><span class="r3-lbl">Front Img</span><input class="r3-inp" id="${self._id}-ceimg"  placeholder="URL" value="${item.imageUrl||''}"></div>
+    <div class="r3-rw"><span class="r3-lbl">Front Img</span><input class="r3-inp" id="${self._id}-ceimg"  placeholder="URL or /image/front/..." value="${item.imageUrl||''}"></div>
     <div class="r3-rw"><span class="r3-lbl">Rear Img</span><input class="r3-inp" id="${self._id}-ceimgr" placeholder="URL" value="${item.imageUrlRear||''}"></div>
     <div style="display:flex;gap:5px;margin-top:8px">
       <button class="r3-btn on" id="${self._id}-cat-save" style="flex:1">✓ Save</button>
@@ -212,6 +215,7 @@ export class CatalogController {
     document.getElementById(self._id + '-cat-save')!.addEventListener('click', () => {
       const get = (sfx: string) => (document.getElementById(self._id + '-c' + sfx) as HTMLInputElement | null)?.value;
       item.name = get('en') || item.name;
+      item.model = get('emdl') ?? item.model ?? '';
       item.type = get('et') || item.type;
       item.heightUnits = parseInt(get('eh') ?? '', 10) || item.heightUnits;
       item.watts = parseInt(get('ew') ?? '', 10) || 0;

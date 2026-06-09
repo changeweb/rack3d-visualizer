@@ -39,18 +39,18 @@ declare global {
 let _instanceCount = 0
 
 const DEFAULT_CATALOG: CatalogItem[] = [
-  { id: 'cat-sv1', name: 'Server 1U', type: 'server', heightUnits: 1, watts: 300, imageUrl: '', imageUrlRear: '' },
-  { id: 'cat-sv2', name: 'Server 2U', type: 'server', heightUnits: 2, watts: 620, imageUrl: '', imageUrlRear: '' },
-  { id: 'cat-sw', name: 'Switch 48p', type: 'switch', heightUnits: 1, watts: 180, imageUrl: '', imageUrlRear: '' },
-  { id: 'cat-rt', name: 'Router', type: 'router', heightUnits: 2, watts: 450, imageUrl: '', imageUrlRear: '' },
-  { id: 'cat-fw', name: 'Firewall', type: 'firewall', heightUnits: 2, watts: 320, imageUrl: '', imageUrlRear: '' },
-  { id: 'cat-st', name: 'NAS Storage', type: 'storage', heightUnits: 3, watts: 290, imageUrl: '', imageUrlRear: '' },
-  { id: 'cat-pdu', name: 'PDU', type: 'pdu', heightUnits: 1, watts: 30, imageUrl: '', imageUrlRear: '' },
-  { id: 'cat-pat', name: 'Patch Panel', type: 'patch', heightUnits: 1, watts: 0, imageUrl: '', imageUrlRear: '' },
-  { id: 'cat-ups', name: 'UPS Unit', type: 'ups', heightUnits: 3, watts: 180, imageUrl: '', imageUrlRear: '' },
-  { id: 'cat-kvm', name: 'KVM Switch', type: 'kvm', heightUnits: 1, watts: 45, imageUrl: '', imageUrlRear: '' },
-  { id: 'cat-lb', name: 'Load Balancer', type: 'loadbal', heightUnits: 1, watts: 200, imageUrl: '', imageUrlRear: '' },
-  { id: 'cat-sec', name: 'IDS Sensor', type: 'security', heightUnits: 1, watts: 95, imageUrl: '', imageUrlRear: '' },
+  { id: 'cat-sv1', name: 'Server 1U',      type: 'server',   heightUnits: 1, watts: 300, model: 'Dell PowerEdge R650',       imageUrl: '/image/front/server-1u.svg',      imageUrlRear: '' },
+  { id: 'cat-sv2', name: 'Server 2U',      type: 'server',   heightUnits: 2, watts: 620, model: 'HPE ProLiant DL380 Gen10',   imageUrl: '/image/front/server-2u.svg',      imageUrlRear: '' },
+  { id: 'cat-sw',  name: 'Switch 48p',     type: 'switch',   heightUnits: 1, watts: 180, model: 'Cisco Catalyst 2960-X-48',   imageUrl: '/image/front/switch.svg',         imageUrlRear: '' },
+  { id: 'cat-rt',  name: 'Router',         type: 'router',   heightUnits: 2, watts: 450, model: 'Cisco ASR 1001-X',           imageUrl: '/image/front/router.svg',         imageUrlRear: '' },
+  { id: 'cat-fw',  name: 'Firewall',       type: 'firewall', heightUnits: 2, watts: 320, model: 'Palo Alto PA-3220',           imageUrl: '/image/front/firewall.svg',       imageUrlRear: '' },
+  { id: 'cat-st',  name: 'NAS Storage',    type: 'storage',  heightUnits: 3, watts: 290, model: 'Synology RS3617xs+',          imageUrl: '/image/front/storage.svg',        imageUrlRear: '' },
+  { id: 'cat-pdu', name: 'PDU',            type: 'pdu',      heightUnits: 1, watts: 30,  model: 'APC AP8853',                  imageUrl: '/image/front/pdu.svg',            imageUrlRear: '' },
+  { id: 'cat-pat', name: 'Patch Panel',    type: 'patch',    heightUnits: 1, watts: 0,   model: 'Leviton 5G702-24B',           imageUrl: '/image/front/patch-panel.svg',    imageUrlRear: '' },
+  { id: 'cat-ups', name: 'UPS Unit',       type: 'ups',      heightUnits: 3, watts: 180, model: 'APC Smart-UPS 3000VA',        imageUrl: '/image/front/ups.svg',            imageUrlRear: '' },
+  { id: 'cat-kvm', name: 'KVM Switch',     type: 'kvm',      heightUnits: 1, watts: 45,  model: 'ATEN KM1116VA',               imageUrl: '/image/front/kvm.svg',            imageUrlRear: '' },
+  { id: 'cat-lb',  name: 'Load Balancer',  type: 'loadbal',  heightUnits: 1, watts: 200, model: 'F5 BIG-IP 2000s',             imageUrl: '/image/front/load-balancer.svg',  imageUrlRear: '' },
+  { id: 'cat-sec', name: 'IDS Sensor',     type: 'security', heightUnits: 1, watts: 95,  model: 'Snort IDS 3.0',               imageUrl: '/image/front/security.svg',       imageUrlRear: '' },
 ]
 
 export class Rack3DVisualizer {
@@ -107,6 +107,19 @@ export class Rack3DVisualizer {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   _rotateDragState: any = null
   _transformMode: string | null = null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _flyTween: any = null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _aisleGroup: any = null
+  _zoneGroup: any = null
+  _netGroup: any = null
+  _netParticles: any[] = []
+  _netLabels: any[] = []
+  _netMaterials: any[] = []
+  _selConnId: string | null = null
+  _showAisles: boolean = false
+  _showMinimap: boolean = true
+  _showTopology: boolean = true
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   _catQuery: string = ''
 
@@ -256,6 +269,8 @@ export class Rack3DVisualizer {
     this._refresh()
     this._renderWalls()
     this._renderPillars()
+    this._renderZones()
+    this._renderConnections()
     if (this._scene) this._buildRack()
     if (this._mode === '2d') this._render2D()
     return this
@@ -343,6 +358,16 @@ export class Rack3DVisualizer {
 
   toggleCameraMode(): void {
     this._camera.toggleCameraMode()
+  }
+
+  flyToRack(rackId: string): this {
+    this._camera.flyToRack(rackId)
+    return this
+  }
+
+  flyBack(): this {
+    this._camera.flyBack()
+    return this
   }
 
   copyJson(): void {
@@ -628,6 +653,7 @@ export class Rack3DVisualizer {
     window.addEventListener('resize', this._onResize)
     this._input.bindCameraControls(cv)
     this._startLoop()
+    if (this._showMinimap) requestAnimationFrame(() => this._updateMinimap())
   }
 
   _boot2D(): void {
@@ -674,6 +700,10 @@ export class Rack3DVisualizer {
     })
     this._groupHighlightRings = []
     this._groups.groupHighlightRings = []
+    if (this._aisleGroup) {
+      this._scene?.remove(this._aisleGroup)
+      this._aisleGroup = null
+    }
   }
 
   _buildRack(): void {
@@ -705,6 +735,436 @@ export class Rack3DVisualizer {
     this._buildRoomItems()
     this._renderRoomItems()
     this._buildGroupHighlights()
+    this._buildAisles()
+    this._buildZones()
+    this._buildTopology()
+  }
+
+  _buildAisles(): void {
+    if (this._aisleGroup) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this._aisleGroup.traverse((obj: any) => {
+        if (obj.geometry) obj.geometry.dispose()
+        if (obj.material) obj.material.dispose()
+      })
+      this._scene?.remove(this._aisleGroup)
+      this._aisleGroup = null
+    }
+    if (!this._scene || !this._room?.racks?.length) return
+
+    const T = this._T3
+    const rw = this._opts.rack.width
+    const hd = this._opts.rack.depth / 2
+    const aisleDepth = 5.0
+    const aisleOffset = hd + aisleDepth / 2
+    const planeW = rw + 2.0
+
+    const coldMat = new T.MeshBasicMaterial({ color: 0x00aaff, transparent: true, opacity: 0.22, depthWrite: false, side: T.DoubleSide })
+    const hotMat  = new T.MeshBasicMaterial({ color: 0xff4400, transparent: true, opacity: 0.22, depthWrite: false, side: T.DoubleSide })
+    const coldGeo = new T.PlaneGeometry(planeW, aisleDepth)
+    const hotGeo  = new T.PlaneGeometry(planeW, aisleDepth)
+
+    const group = new T.Group()
+    group.visible = this._showAisles
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this._room.racks!.forEach((rack: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rg = this._rackGroups[rack.id] as any
+      if (!rg) return
+      const rx: number = rg.position.x
+      const rz: number = rg.position.z
+      const fa: number = rack.facingAngle ?? 0
+
+      const cold = new T.Mesh(coldGeo, coldMat)
+      cold.rotation.x = -Math.PI / 2
+      cold.rotation.y = fa
+      cold.position.set(rx - Math.sin(fa) * aisleOffset, 0.02, rz - Math.cos(fa) * aisleOffset)
+      group.add(cold)
+
+      const hot = new T.Mesh(hotGeo, hotMat)
+      hot.rotation.x = -Math.PI / 2
+      hot.rotation.y = fa
+      hot.position.set(rx + Math.sin(fa) * aisleOffset, 0.02, rz + Math.cos(fa) * aisleOffset)
+      group.add(hot)
+    })
+
+    this._scene.add(group)
+    this._aisleGroup = group
+  }
+
+  toggleAisles(): void {
+    this._showAisles = !this._showAisles
+    if (this._aisleGroup) this._aisleGroup.visible = this._showAisles
+    const btn = document.getElementById(this._id + '-btnAisle')
+    if (btn) btn.className = 'r3-btn' + (this._showAisles ? ' on' : '')
+    this._shadowMapDirty = true
+  }
+
+  _buildZones(): void {
+    if (this._zoneGroup) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this._zoneGroup.traverse((obj: any) => {
+        if (obj.isMesh || obj.isLine || obj.isSprite) {
+          obj.geometry?.dispose()
+          if (obj.material?.map) obj.material.map.dispose()
+          obj.material?.dispose()
+        }
+      })
+      this._scene?.remove(this._zoneGroup)
+      this._zoneGroup = null
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const zones: any[] = (this._room as any)?.zones
+    if (!zones?.length) return
+
+    const T = this._T3
+    const group = new T.Group()
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    zones.forEach((zone: any) => {
+      if (zone.visible === false) return
+      const col = typeof zone.color === 'string' ? zone.color : '#4488ff'
+      const colNum = parseInt(col.replace('#', ''), 16)
+      const opacity: number = zone.opacity ?? 0.18
+      const wallH: number = zone.wallHeight ?? 0
+
+      // Floor overlay
+      const floorGeo = new T.PlaneGeometry(zone.width, zone.depth)
+      const floorMat = new T.MeshBasicMaterial({
+        color: colNum, transparent: true, opacity, depthWrite: false, side: T.DoubleSide
+      })
+      const floor = new T.Mesh(floorGeo, floorMat)
+      floor.rotation.x = -Math.PI / 2
+      floor.position.set(zone.x, 0.015, zone.z)
+      group.add(floor)
+
+      // Perimeter border line
+      const hw = zone.width / 2, hd = zone.depth / 2
+      const pts = [
+        new T.Vector3(-hw, 0, -hd), new T.Vector3(hw, 0, -hd),
+        new T.Vector3(hw, 0, hd), new T.Vector3(-hw, 0, hd),
+        new T.Vector3(-hw, 0, -hd),
+      ]
+      const lineGeo = new T.BufferGeometry().setFromPoints(pts)
+      const lineMat = new T.LineBasicMaterial({ color: colNum, transparent: true, opacity: 0.65 })
+      const line = new T.Line(lineGeo, lineMat)
+      line.position.set(zone.x, 0.025, zone.z)
+      group.add(line)
+
+      // Perimeter walls (when wallHeight > 0)
+      if (wallH > 0) {
+        const wallMat = new T.MeshBasicMaterial({
+          color: colNum, transparent: true, opacity: 0.22, depthWrite: false, side: T.DoubleSide
+        })
+        const addWall = (w: number, h: number, d: number, ox: number, oz: number) => {
+          const wg = new T.BoxGeometry(w, h, d)
+          const wm = wallMat.clone()
+          const mesh = new T.Mesh(wg, wm)
+          mesh.position.set(zone.x + ox, h / 2, zone.z + oz)
+          group.add(mesh)
+        }
+        addWall(zone.width, wallH, 0.08, 0, -zone.depth / 2)
+        addWall(zone.width, wallH, 0.08, 0,  zone.depth / 2)
+        addWall(0.08, wallH, zone.depth, -zone.width / 2, 0)
+        addWall(0.08, wallH, zone.depth,  zone.width / 2, 0)
+      }
+
+      // Name label (Sprite with canvas texture)
+      const labelY = wallH > 0 ? wallH + 0.5 : 1.5
+      const lc = document.createElement('canvas')
+      lc.width = 256; lc.height = 48
+      const ctx = lc.getContext('2d')!
+      const textW = (() => { ctx.font = 'bold 18px monospace'; return ctx.measureText(zone.name).width })()
+      const bw = Math.min(textW + 20, 250)
+      const bx = (256 - bw) / 2
+      ctx.fillStyle = col + '44'
+      ctx.fillRect(bx, 6, bw, 36)
+      ctx.strokeStyle = col + 'aa'
+      ctx.lineWidth = 1.5
+      ctx.strokeRect(bx, 6, bw, 36)
+      ctx.font = 'bold 18px monospace'
+      ctx.fillStyle = col
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(zone.name, 128, 24)
+      const tex = new T.CanvasTexture(lc)
+      const smat = new T.SpriteMaterial({ map: tex, transparent: true, opacity: 0.9, depthWrite: false })
+      const sprite = new T.Sprite(smat)
+      sprite.position.set(zone.x, labelY, zone.z)
+      sprite.scale.set(5.33, 1.0, 1)
+      group.add(sprite)
+    })
+
+    this._scene.add(group)
+    this._zoneGroup = group
+  }
+
+  _renderZones(): void {
+    const el = document.getElementById(this._id + '-zones-list')
+    if (!el) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    el.innerHTML = ((this._room as any)?.zones || []).map((z: any, i: number) => this._html.zoneRow(z as Record<string, unknown>, i)).join('')
+  }
+
+  _addZone(): void {
+    if (!this._room) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!Array.isArray((this._room as any).zones)) (this._room as any).zones = []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(this._room as any).zones.push({
+      id: 'zone-' + Date.now(),
+      name: 'Zone ' + ((this._room as any).zones.length + 1),
+      color: '#4488ff',
+      x: 0, z: 2,
+      width: 10, depth: 8,
+      opacity: 0.18, wallHeight: 0, visible: true
+    })
+    this._buildZones()
+    this._renderZones()
+    if (this._opts.onChange) this._opts.onChange(this.getData()!)
+  }
+
+  _editZone(idx: number, field: string, value: unknown): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const zone = (this._room as any)?.zones?.[idx]
+    if (!zone) return
+    zone[field] = value
+    this._buildZones()
+    if (this._opts.onChange) this._opts.onChange(this.getData()!)
+  }
+
+  _removeZone(idx: number): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(this._room as any)?.zones?.splice(idx, 1)
+    this._buildZones()
+    this._renderZones()
+    if (this._opts.onChange) this._opts.onChange(this.getData()!)
+  }
+
+  _utilColor(u: number, override?: string): number {
+    if (override) return parseInt(override.replace('#', ''), 16)
+    const c = Math.max(0, Math.min(1, u))
+    let r, g
+    if (c < 0.5) { r = Math.round(c * 2 * 255); g = 200 }
+    else { r = 255; g = Math.round((1 - (c - 0.5) * 2) * 200) }
+    return (r << 16) | (g << 8)
+  }
+
+  updateConnectionUtil(connId: string, newUtil: number): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const entry = this._netMaterials.find((m: any) => m.id === connId)
+    if (!entry) return
+    entry.util = newUtil
+    entry.mat.color.setHex(this._utilColor(newUtil))
+  }
+
+  _buildTopology(): void {
+    if (this._netGroup) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this._netGroup.traverse((obj: any) => {
+        if (obj.isLine) { obj.geometry?.dispose(); obj.material?.dispose() }
+        if (obj.isSprite) { obj.material?.map?.dispose(); obj.material?.dispose() }
+      })
+      this._scene?.remove(this._netGroup)
+    }
+    this._netGroup = null
+    this._netParticles = []
+    this._netLabels = []
+    this._netMaterials = []
+    this._selConnId = null
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const conns: any[] = (this._room as any)?.connections
+    if (!conns?.length) return
+
+    const T = this._T3
+    const group = new T.Group()
+    group.visible = this._showTopology
+
+    const floorY = 0.05
+    const hd = this._opts.rack.depth / 2
+    const cableBack = 3.5
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const resolveEndpoint = (id: string): { pos: any, fa: number, rackId: string | null, isDevice: boolean } | null => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const dm = (this._devMeshes as any)?.[id]
+      if (dm) {
+        const v = new T.Vector3()
+        dm.getWorldPosition(v)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rack = (this._room.racks || []).find((r: any) => (r.devices || []).some((d: any) => d.id === id))
+        const fa: number = (rack as any)?.facingAngle ?? 0
+        v.x += Math.sin(fa) * hd
+        v.z += Math.cos(fa) * hd
+        return { pos: v, fa, rackId: (rack as any)?.id ?? null, isDevice: true }
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rg = (this._rackGroups as any)?.[id]
+      if (rg) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rack = (this._room.racks || []).find((r: any) => r.id === id)
+        const fa: number = (rack as any)?.facingAngle ?? 0
+        const v = rg.position.clone()
+        v.x += Math.sin(fa) * hd
+        v.z += Math.cos(fa) * hd
+        v.y = floorY
+        return { pos: v, fa, rackId: id, isDevice: false }
+      }
+      return null
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const makeLabel = (conn: any, midPt: any): any => {
+      const canvas = document.createElement('canvas')
+      canvas.width = 256; canvas.height = 72
+      const ctx = canvas.getContext('2d')!
+      ctx.fillStyle = 'rgba(8,16,32,0.92)'
+      ctx.fillRect(2, 2, 252, 68)
+      ctx.strokeStyle = '#4488ffaa'
+      ctx.lineWidth = 1.5
+      ctx.strokeRect(2, 2, 252, 68)
+      ctx.fillStyle = '#88ccff'
+      ctx.font = 'bold 20px monospace'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(conn.label || conn.id, 128, 22)
+      ctx.fillStyle = '#99ddcc'
+      ctx.font = '15px monospace'
+      const pct = Math.round((conn.utilization ?? 0) * 100)
+      ctx.fillText(`${conn.bandwidth || ''} · ${pct}%`, 128, 50)
+      const tex = new T.CanvasTexture(canvas)
+      const mat = new T.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false })
+      const sprite = new T.Sprite(mat)
+      sprite.scale.set(3.0, 0.85, 1)
+      sprite.position.copy(midPt)
+      sprite.position.y += 1.5
+      sprite.visible = true
+      sprite.userData.isConnLabel = true
+      group.add(sprite)
+      return sprite
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    conns.forEach((conn: any) => {
+      if (conn.visible === false) return
+      const ra = resolveEndpoint(conn.from)
+      const rb = resolveEndpoint(conn.to)
+      if (!ra || !rb) return
+
+      const a = ra.pos, b = rb.pos
+      const u: number = conn.utilization ?? 0.5
+      const colNum = this._utilColor(u, conn.color)
+
+      const sameRack = ra.rackId !== null && ra.rackId === rb.rackId
+
+      // Floor-level exit points behind each rack's rear face
+      const exitAFloor = new T.Vector3(
+        a.x + Math.sin(ra.fa) * cableBack,
+        floorY,
+        a.z + Math.cos(ra.fa) * cableBack
+      )
+      const exitBFloor = new T.Vector3(
+        b.x + Math.sin(rb.fa) * cableBack,
+        floorY,
+        b.z + Math.cos(rb.fa) * cableBack
+      )
+
+      // Device cables exit horizontally from rear at device height, then drop; rack cables go straight to floor
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const startPts: any[] = ra.isDevice
+        ? [a, new T.Vector3(exitAFloor.x, a.y, exitAFloor.z), exitAFloor]
+        : [a, exitAFloor]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const endPts: any[] = rb.isDevice
+        ? [exitBFloor, new T.Vector3(exitBFloor.x, b.y, exitBFloor.z), b]
+        : [exitBFloor, b]
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let pts: any[]
+      if (sameRack) {
+        pts = [...startPts, ...endPts]
+      } else {
+        const corner = new T.Vector3(exitBFloor.x, floorY, exitAFloor.z)
+        pts = [...startPts, corner, ...endPts]
+      }
+
+      const geo = new T.BufferGeometry().setFromPoints(pts)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mat = new T.LineBasicMaterial({ color: colNum, linewidth: 2, transparent: true, opacity: 0.9, depthWrite: false })
+      const line = new T.Line(geo, mat)
+      line.userData.connId = conn.id
+      group.add(line)
+
+      this._netMaterials.push({ id: conn.id, mat, util: u })
+
+      const midPt = pts[Math.floor(pts.length / 2)]
+      const sprite = makeLabel(conn, midPt)
+      this._netLabels.push({ sprite, id: conn.id })
+    })
+
+    this._scene.add(group)
+    this._netGroup = group
+  }
+
+  _selectConnection(connId: string): void {
+    this._selConnId = this._selConnId === connId ? null : connId
+  }
+
+  _stepTopologyParticles(): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this._netParticles.forEach((p: any) => {
+      p.t = (p.t + p.speed) % 1
+      p.mesh.position.copy(p.curve.getPoint(p.t))
+    })
+  }
+
+  toggleTopology(): void {
+    this._showTopology = !this._showTopology
+    if (this._netGroup) this._netGroup.visible = this._showTopology
+    const btn = document.getElementById(this._id + '-btnTopo')
+    if (btn) btn.className = 'r3-btn' + (this._showTopology ? ' on' : '')
+  }
+
+  _renderConnections(): void {
+    const el = document.getElementById(this._id + '-conn-list')
+    if (!el) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    el.innerHTML = ((this._room as any)?.connections || []).map((c: any, i: number) => this._html.connectionRow(c as Record<string, unknown>, i)).join('')
+  }
+
+  _addConnection(): void {
+    if (!this._room) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!Array.isArray((this._room as any).connections)) (this._room as any).connections = []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(this._room as any).connections.push({
+      id: 'conn-' + Date.now(),
+      from: '', to: '',
+      label: '', bandwidth: '1G',
+      utilization: 0.3, animated: true, visible: true
+    })
+    this._buildTopology()
+    this._renderConnections()
+    if (this._opts.onChange) this._opts.onChange(this.getData()!)
+  }
+
+  _editConnection(idx: number, field: string, value: unknown): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const conn = (this._room as any)?.connections?.[idx]
+    if (!conn) return
+    conn[field] = value
+    this._buildTopology()
+    if (this._opts.onChange) this._opts.onChange(this.getData()!)
+  }
+
+  _removeConnection(idx: number): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(this._room as any)?.connections?.splice(idx, 1)
+    this._buildTopology()
+    this._renderConnections()
+    if (this._opts.onChange) this._opts.onChange(this.getData()!)
   }
 
   _buildRoomItems(): void {
@@ -755,6 +1215,8 @@ export class Rack3DVisualizer {
         const spd = this._ctrl.moveSpeed * (fast ? 2.5 : 1)
         const rotSpd = 0.04
         const fwdX = Math.sin(yaw), fwdZ = Math.cos(yaw)
+        const anyMove = keys['KeyW'] || keys['KeyS'] || keys['KeyA'] || keys['KeyD'] || keys['KeyQ'] || keys['KeyE'] || keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight']
+        if (anyMove && this._flyTween?.active) this._flyTween.active = false
         if (keys['KeyW'] || keys['ArrowUp']) { pos.x += fwdX * spd * dt; pos.z += fwdZ * spd * dt }
         if (keys['KeyS'] || keys['ArrowDown']) { pos.x -= fwdX * spd * dt; pos.z -= fwdZ * spd * dt }
         if (keys['KeyA'] || keys['ArrowLeft']) { this._ctrl.yaw -= rotSpd * dt }
@@ -772,13 +1234,18 @@ export class Rack3DVisualizer {
         this._ctrl.az += this._opts.view.autoRotateSpeed
       }
 
+      if (this._flyTween?.active) {
+        this._camera.stepFlyTween(now)
+      }
+
       const selChange = this._selId !== lastSelId || this._selRackId !== lastSelRackId || this._selItemId !== lastSelItemId
       const camChange = this._ctrl.az !== lastAz || this._ctrl.el !== lastEl || this._ctrl.r !== lastR
         || this._ctrl.pos.x !== lastPosX || this._ctrl.pos.y !== lastPosY || this._ctrl.pos.z !== lastPosZ
         || this._ctrl.yaw !== lastYaw || this._ctrl.pitch !== lastPitch
       const fpsMoving = this._ctrl.mode === 'fps' && Object.values(this._ctrl.keys).some(Boolean)
       const transformDrag = !!(this._rackDragState?.active || this._itemDragState?.active || this._rotateDragState?.active)
-      const dirty = this._ctrl.drag || fpsMoving || this._opts.view.autoRotate || selChange || camChange || transformDrag
+      const topoAnimating = this._showTopology && this._netParticles.length > 0
+      const dirty = this._ctrl.drag || fpsMoving || this._opts.view.autoRotate || selChange || camChange || transformDrag || !!(this._flyTween?.active) || topoAnimating
 
       if (camChange || fpsMoving) this._posCamera()
 
@@ -830,6 +1297,8 @@ export class Rack3DVisualizer {
       if (camChange || selChange || fpsMoving || transformDrag) this._updateLabels()
       this._updateCompass()
       if (camChange || fpsMoving) this._updateAxisGizmo()
+      if (this._showMinimap && (camChange || fpsMoving || selChange)) this._updateMinimap()
+      if (topoAnimating) this._stepTopologyParticles()
     }
     requestAnimationFrame(loop)
   }
@@ -878,6 +1347,158 @@ export class Rack3DVisualizer {
       ctx.fillStyle = a.color; ctx.font = 'bold 9px monospace'
       ctx.fillText(a.label, a.x2d + (a.x2d - cx) * 0.28, a.y2d + (a.y2d - cy) * 0.28 + 3)
     })
+  }
+
+  _updateMinimap(): void {
+    const canvas = document.getElementById(this._id + '-minimap') as HTMLCanvasElement | null
+    if (!canvas || !this._room) return
+    const ctx = canvas.getContext('2d')!
+    const CW = 180, CH = 140, pad = 4
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const W: number = (this._opts.room as any).width || 26
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const D: number = (this._opts.room as any).depth || 20
+    const sceneZ = 2
+
+    const wx2c = (wx: number) => pad + (wx + W / 2) / W * (CW - 2 * pad)
+    const wz2c = (wz: number) => pad + (wz - (sceneZ - D / 2)) / D * (CH - 2 * pad)
+
+    ctx.clearRect(0, 0, CW, CH)
+    ctx.fillStyle = 'rgba(20,30,40,0.9)'
+    ctx.fillRect(pad, pad, CW - 2 * pad, CH - 2 * pad)
+
+    // Grid
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tileSize: number = (this._opts.room as any).tileSize || 2
+    ctx.strokeStyle = 'rgba(80,120,160,0.15)'
+    ctx.lineWidth = 0.5
+    for (let gx = -W / 2; gx <= W / 2; gx += tileSize) {
+      const cx = wx2c(gx)
+      ctx.beginPath(); ctx.moveTo(cx, pad); ctx.lineTo(cx, CH - pad); ctx.stroke()
+    }
+    for (let gz = sceneZ - D / 2; gz <= sceneZ + D / 2; gz += tileSize) {
+      const cy = wz2c(gz)
+      ctx.beginPath(); ctx.moveTo(pad, cy); ctx.lineTo(CW - pad, cy); ctx.stroke()
+    }
+
+    ctx.strokeStyle = 'rgba(80,130,180,0.5)'
+    ctx.lineWidth = 1
+    ctx.strokeRect(pad, pad, CW - 2 * pad, CH - 2 * pad)
+
+    // Cardinal labels
+    ctx.font = 'bold 7px monospace'
+    ctx.fillStyle = 'rgba(100,180,255,0.4)'
+    ctx.textAlign = 'center'
+    ctx.fillText('N', CW / 2, pad + 8)
+    ctx.fillText('S', CW / 2, CH - pad - 1)
+    ctx.textAlign = 'left'
+    ctx.fillText('W', pad + 1, CH / 2 + 3)
+    ctx.textAlign = 'right'
+    ctx.fillText('E', CW - pad - 1, CH / 2 + 3)
+
+    // Zones (drawn below racks)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;((this._room as any)?.zones || []).forEach((zone: any) => {
+      if (zone.visible === false) return
+      const col = typeof zone.color === 'string' ? zone.color : '#4488ff'
+      const opacity: number = zone.opacity ?? 0.18
+      const zx = wx2c(zone.x)
+      const zy = wz2c(zone.z)
+      const zw = zone.width / W * (CW - 2 * pad)
+      const zh = zone.depth / D * (CH - 2 * pad)
+      ctx.fillStyle = col + Math.round(opacity * 255).toString(16).padStart(2, '0')
+      ctx.fillRect(zx - zw / 2, zy - zh / 2, zw, zh)
+      ctx.strokeStyle = col + 'bb'
+      ctx.lineWidth = 1
+      ctx.strokeRect(zx - zw / 2, zy - zh / 2, zw, zh)
+      ctx.font = '8px monospace'
+      ctx.fillStyle = col
+      ctx.textAlign = 'center'
+      ctx.fillText(zone.name, zx, zy - zh / 2 - 2)
+    })
+
+    // Racks
+    const rackW = this._opts.rack.width
+    const rackD = this._opts.rack.depth
+    const rw2 = rackW / W * (CW - 2 * pad) / 2
+    const rd2 = rackD / D * (CH - 2 * pad) / 2
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(this._room.racks || []).forEach((rack: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rg = this._rackGroups[rack.id] as any
+      if (!rg) return
+      const rx: number = rg.position.x
+      const rz: number = rg.position.z
+      const fa: number = rack.facingAngle ?? 0
+      const sel = rack.id === this._selRackId
+      ctx.save()
+      ctx.translate(wx2c(rx), wz2c(rz))
+      ctx.rotate(fa)
+      ctx.fillStyle = sel ? 'rgba(0,200,140,0.5)' : 'rgba(50,110,155,0.55)'
+      ctx.fillRect(-rw2, -rd2, rw2 * 2, rd2 * 2)
+      ctx.strokeStyle = sel ? '#00ff88' : 'rgba(90,170,240,0.7)'
+      ctx.lineWidth = sel ? 1.5 : 0.7
+      ctx.strokeRect(-rw2, -rd2, rw2 * 2, rd2 * 2)
+      // Front face indicator
+      ctx.beginPath(); ctx.moveTo(-rw2, -rd2); ctx.lineTo(rw2, -rd2)
+      ctx.strokeStyle = sel ? '#00ffcc' : '#0099ff'; ctx.lineWidth = 1.5; ctx.stroke()
+      ctx.restore()
+    })
+
+    // Room items
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;((this._room as any).room_items || []).forEach((item: any) => {
+      const icx = wx2c(item.x ?? item.position?.x ?? 0)
+      const icy = wz2c(item.z ?? item.position?.z ?? 0)
+      ctx.beginPath(); ctx.arc(icx, icy, 2.5, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(255,200,80,0.75)'; ctx.fill()
+    })
+
+    // Camera marker
+    if (this._ctrl.mode === 'fps') {
+      const cpx = wx2c(this._ctrl.pos.x)
+      const cpy = wz2c(this._ctrl.pos.z)
+      const yaw = this._ctrl.yaw
+      const sz = 5
+      ctx.save()
+      ctx.translate(cpx, cpy)
+      ctx.rotate(yaw)
+      ctx.beginPath()
+      ctx.moveTo(0, sz + 2); ctx.lineTo(-sz / 2 - 1, -sz / 2); ctx.lineTo(sz / 2 + 1, -sz / 2)
+      ctx.closePath()
+      ctx.fillStyle = '#00ff88'; ctx.fill()
+      ctx.restore()
+    }
+
+    // Position readout in header
+    const posEl = document.getElementById(this._id + '-minimap-pos')
+    if (posEl) posEl.textContent = this._ctrl.mode === 'fps'
+      ? `${Math.round(this._ctrl.pos.x)}, ${Math.round(this._ctrl.pos.z)}`
+      : ''
+  }
+
+  toggleMinimap(): void {
+    this._showMinimap = !this._showMinimap
+    const wrap = document.getElementById(this._id + '-minimap-wrap')
+    const btn = document.getElementById(this._id + '-btnMinimap')
+    if (wrap) wrap.style.display = this._showMinimap ? 'flex' : 'none'
+    if (btn) btn.className = 'r3-btn' + (this._showMinimap ? ' on' : '')
+    if (this._showMinimap) this._updateMinimap()
+  }
+
+  _onMinimapClick(e: MouseEvent): void {
+    if (this._ctrl.mode !== 'fps') return
+    const canvas = e.currentTarget as HTMLCanvasElement
+    const rect = canvas.getBoundingClientRect()
+    const cx = e.clientX - rect.left
+    const cy = e.clientY - rect.top
+    const CW = 160, CH = 120, pad = 4
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const W: number = (this._opts.room as any).width || 26
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const D: number = (this._opts.room as any).depth || 20
+    this._ctrl.pos.x = (cx - pad) / (CW - 2 * pad) * W - W / 2
+    this._ctrl.pos.z = (cy - pad) / (CH - 2 * pad) * D + (2 - D / 2)
   }
 
   _onThemeChange(name: string): void {

@@ -133,7 +133,8 @@ export class SidebarController {
       d.className = 'r3-rack-item'+(isSel?' sel':'');
       d.innerHTML = `<span style="flex:1;font-weight:${isSel?700:400}">${entry.name||entry.id}</span>
       <span class="r3-rack-badge" style="color:${isSel?'var(--r3-accent)':'var(--r3-dim)'};border-color:currentColor">${entry.units||24}U</span>
-      <span class="r3-rack-badge" style="color:var(--r3-dim);border-color:var(--r3-border)">${((entry.devices as unknown[]) ||[]).length}d</span>`;
+      <span class="r3-rack-badge" style="color:var(--r3-dim);border-color:var(--r3-border)">${((entry.devices as unknown[]) ||[]).length}d</span>
+      <button class="r3-fly-btn" title="Fly to rack" onclick="event.stopPropagation();window._r3['${self._id}'].flyToRack('${entry.id}')">⇥</button>`;
       d.addEventListener('click', () => {
         self._selRackId = entry.id;
         self._rack = entry;
@@ -205,6 +206,13 @@ export class SidebarController {
       const typeLabel = self._types[dev.type as string]?.label || dev.type;
       const wLabel    = dev.halfWidth === 'left' ? 'Half-Left' : dev.halfWidth === 'right' ? 'Half-Right' : 'Full';
       infoEl.textContent = `${typeLabel} · ${dev.heightUnits}U · ${dev.watts}W · ${wLabel}`;
+    }
+    const modelEl    = document.getElementById(self._id + '-emodel');
+    const modelRow   = document.getElementById(self._id + '-emodel-row');
+    if (modelEl && modelRow) {
+      const model = dev.model as string | undefined;
+      if (model) { modelEl.textContent = model; modelRow.style.display = ''; }
+      else modelRow.style.display = 'none';
     }
     this.renderCustomFieldsEditor(dev);
   }

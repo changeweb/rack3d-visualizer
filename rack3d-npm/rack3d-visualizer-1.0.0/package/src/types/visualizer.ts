@@ -58,6 +58,8 @@ export interface IVisualizer {
   _geometryManager: any
   _ctrl: ICameraCtrl
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _flyTween: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   _onResize: (() => void) | null
   _unbindKeys: (() => void) | null
   _selGroupId: string | null

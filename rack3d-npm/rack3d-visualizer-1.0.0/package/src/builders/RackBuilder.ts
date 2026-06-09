@@ -178,6 +178,49 @@ export class RackBuilder {
       group.add(rearPanel)
     }
 
+    // Front semi-transparent mesh door (visible front-side indicator)
+    {
+      const frontDoorMat = new this.THREE.MeshStandardMaterial({
+        color: (rackTheme as any).frameColor,
+        roughness: 0.9,
+        metalness: 0.45,
+        transparent: true,
+        opacity: 0.13,
+        depthWrite: false,
+      })
+      const frontDoor = new this.THREE.Mesh(
+        new this.THREE.BoxGeometry(RW - POST * 2, H - 0.2, 0.04),
+        frontDoorMat
+      )
+      frontDoor.userData.rk = 'door'
+      frontDoor.userData.rackId = rack.id
+      frontDoor.position.set(0, my, -hd + POST * 0.55)
+      group.add(frontDoor)
+    }
+
+    // Rear cable management horizontal bars (distinctive rear indicator)
+    {
+      const cableMgmtMat = new this.THREE.MeshStandardMaterial({
+        color: 0x111d2e,
+        roughness: 0.95,
+        metalness: 0.55,
+      })
+      const barInterval = Math.max(3, Math.floor(rack.units / 6))
+      for (let i = barInterval; i < rack.units; i += barInterval) {
+        const y = 0.6 + i * UH
+        const bar = new this.THREE.Mesh(
+          new this.THREE.BoxGeometry(RW - POST * 2, 0.10, 0.24),
+          cableMgmtMat
+        )
+        bar.userData.rk = 'frame'
+        bar.userData.rackId = rack.id
+        bar.castShadow = true
+        bar.receiveShadow = true
+        bar.position.set(0, y, hd - POST * 0.55)
+        group.add(bar)
+      }
+    }
+
     if (rackOptions.showNameplate) {
       const nameplateMat = new this.THREE.MeshStandardMaterial({
         color: 0x1a2a3f,

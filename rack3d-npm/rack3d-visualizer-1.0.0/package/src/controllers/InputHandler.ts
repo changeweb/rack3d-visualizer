@@ -108,6 +108,9 @@ export class InputHandler {
       self._ctrl.lx = dragStartX = e.clientX
       self._ctrl.ly = dragStartY = e.clientY
       lockedMoveAccum = 0
+      // Cancel any in-progress fly tween when user starts dragging
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((self as any)._flyTween?.active) (self as any)._flyTween.active = false
       if (self._ctrl.mode === 'fps' && !self._ctrl.pointerLocked) cv.style.cursor = 'grabbing'
     })
 
@@ -297,6 +300,11 @@ export class InputHandler {
       if (self._ctrl.pointerLocked && ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
         e.preventDefault()
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (e.code === 'Escape' && !self._ctrl.pointerLocked && (self as any)._flyTween?.savedPos) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(self as any)._camera.flyBack()
+      }
     }
     const onKeyUp = (e: KeyboardEvent) => { self._ctrl.keys[e.code] = false }
     window.addEventListener('keydown', onKeyDown)
@@ -316,6 +324,19 @@ export class InputHandler {
       }
       self._showContextMenu(e, targetId)
     })
+    cv.addEventListener('dblclick', (e: MouseEvent) => {
+      if (self._ctrl.pointerLocked || self._transformMode || self._ctrl.mode !== 'fps') return
+      const rect = cv.getBoundingClientRect()
+      const result = self._selectionManager?.raycast(
+        e.clientX - rect.left, e.clientY - rect.top, cv.clientWidth, cv.clientHeight
+      )
+      if (result) {
+        const rackId = result.type === 'rack' ? result.id : result.rackId
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (rackId) (self as any)._camera.flyToRack(rackId)
+      }
+    })
+
     document.addEventListener('mousedown', (e: MouseEvent) => {
       const menu = document.getElementById(self._id + '-ctx-menu')
       if (menu && !menu.contains(e.target as Node)) self._hideContextMenu()
@@ -371,6 +392,10 @@ export class InputHandler {
       }
       self._selItemId = result.id
       self._selId = null; self._closeEdit()
+    } else if (result?.type === 'connection') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(self as any)._selectConnection(result.id)
+      return
     } else {
       self._selItemId = null
       self._selId = null; self._closeEdit()
