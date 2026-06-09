@@ -255,13 +255,14 @@ export class HtmlBuilder {
              oninput="window._r3['${sid}']._setLayout('cols',Math.max(1,Math.min(10,+this.value)))">
     </div>
     <div class="r3-env-row">
-      <span class="r3-lbl">Col Spacing</span>
-      <input class="r3-inp r3-env-num" type="number" min="0.1" max="30" step="0.5" value="${self._room?.layout?.colSpacing??8}"
-             oninput="window._r3['${sid}']._setLayout('colSpacing',Math.max(0.1,+this.value))">
+      <span class="r3-lbl">Side Gap</span>
+      <input class="r3-inp r3-env-num" type="number" min="0" max="20" step="0.5"
+             value="${Math.max(0,((self._room?.layout?.colSpacing??8)-self._opts.rack.width)).toFixed(1)}"
+             oninput="window._r3['${sid}']._setLayout('colSpacing',Math.max(${self._opts.rack.width},+this.value+${self._opts.rack.width}))">
       <span class="r3-val">m</span>
     </div>
     <div class="r3-env-row">
-      <span class="r3-lbl">Row Spacing</span>
+      <span class="r3-lbl">Row Gap</span>
       <input class="r3-inp r3-env-num" type="number" min="0.1" max="30" step="0.5" value="${self._room?.layout?.rowSpacing??10}"
              oninput="window._r3['${sid}']._setLayout('rowSpacing',Math.max(0.1,+this.value))">
       <span class="r3-val">m</span>
@@ -706,7 +707,7 @@ export class HtmlBuilder {
     <div class="r3-sep"></div>
     <button class="r3-btn" id="${sid}-btnMove"   onclick="window._r3['${sid}']._setTransformMode('move')"   title="Move items in 3D (drag to reposition)">✥ MOVE</button>
     <button class="r3-btn" id="${sid}-btnRotate" onclick="window._r3['${sid}']._setTransformMode('rotate')" title="Rotate items in 3D (drag left/right)">↻ ROTATE</button>
-    <button class="r3-btn" id="${sid}-btnAisle"    onclick="window._r3['${sid}'].toggleAisles()"   title="Toggle hot/cold aisle overlay">❄ AISLE</button>
+    <button class="r3-btn on" id="${sid}-btnAisle"    onclick="window._r3['${sid}'].toggleAisles()"   title="Toggle hot/cold aisle overlay">❄ AISLE</button>
     <button class="r3-btn on" id="${sid}-btnMinimap" onclick="window._r3['${sid}'].toggleMinimap()"  title="Toggle 2D minimap overlay">⊞ MAP</button>
     <button class="r3-btn on" id="${sid}-btnTopo"    onclick="window._r3['${sid}'].toggleTopology()" title="Toggle network topology lines">⬡ TOPO</button>
     <div class="r3-sep"></div>

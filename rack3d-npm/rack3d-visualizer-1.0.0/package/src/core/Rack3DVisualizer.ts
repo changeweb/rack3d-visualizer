@@ -117,7 +117,7 @@ export class Rack3DVisualizer {
   _netLabels: any[] = []
   _netMaterials: any[] = []
   _selConnId: string | null = null
-  _showAisles: boolean = false
+  _showAisles: boolean = true
   _showMinimap: boolean = true
   _showTopology: boolean = true
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

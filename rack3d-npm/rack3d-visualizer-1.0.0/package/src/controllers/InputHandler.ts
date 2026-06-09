@@ -373,7 +373,12 @@ export class InputHandler {
           self._selId = result.id; self._selItemId = null
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const dev = (rack.devices || []).find((d: any) => d.id === self._selId)
-          if (dev) { self._openEdit(dev); if (self._opts.onSelect) self._opts.onSelect({ type: 'device', id: dev.id, rackId: result.rackId }) }
+          if (dev) {
+            self._openEdit(dev)
+            if (self._opts.onSelect) self._opts.onSelect({ type: 'device', id: dev.id, rackId: result.rackId })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;(self._camera as any)?.flyToDevice(result.rackId, result.id)
+          }
         }
       }
     } else if (result?.type === 'rack') {
@@ -385,6 +390,8 @@ export class InputHandler {
       const rack = (self._room?.racks || []).find((r: any) => r.id === result.id)
       if (rack) { self._selRackId = result.id; self._rack = rack }
       self._selId = null; self._selItemId = null; self._closeEdit()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(self._camera as any)?.flyToRack(result.id)
     } else if (result?.type === 'item') {
       if (ctrlKey) {
         self._toggleMultiSel(result.id)

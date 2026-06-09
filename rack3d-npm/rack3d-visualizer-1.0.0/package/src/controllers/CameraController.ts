@@ -86,48 +86,80 @@ export class CameraController {
     this.posCamera()
   }
 
+  flyToTarget(worldX: number, worldY: number, worldZ: number, fa: number, standoff: number): void {
+    const self = this.viz
+    if (self._ctrl.mode === 'fps') {
+      const eyeY = 16
+      const toPos = {
+        x: worldX - Math.sin(fa) * standoff,
+        y: eyeY,
+        z: worldZ - Math.cos(fa) * standoff,
+      }
+      const toPitch = Math.atan2(worldY - eyeY, standoff)
+      let toYaw = fa
+      const fromYaw = self._ctrl.yaw
+      let diff = toYaw - fromYaw
+      while (diff > Math.PI)  diff -= 2 * Math.PI
+      while (diff < -Math.PI) diff += 2 * Math.PI
+      toYaw = fromYaw + diff
+      self._flyTween = {
+        active: true, startTime: -1, duration: 2000,
+        fromPos: { ...self._ctrl.pos }, fromYaw: self._ctrl.yaw, fromPitch: self._ctrl.pitch,
+        toPos, toYaw, toPitch,
+        savedPos: { ...self._ctrl.pos }, savedYaw: self._ctrl.yaw, savedPitch: self._ctrl.pitch,
+        fromAz: 0, fromEl: 0, fromR: 0, toAz: 0, toEl: 0, toR: 0,
+      }
+    } else {
+      const camX = worldX - Math.sin(fa) * standoff
+      const camZ = worldZ - Math.cos(fa) * standoff
+      let toAz = Math.atan2(camX, camZ)
+      const fromAz = self._ctrl.az
+      let diff = toAz - fromAz
+      while (diff > Math.PI)  diff -= 2 * Math.PI
+      while (diff < -Math.PI) diff += 2 * Math.PI
+      toAz = fromAz + diff
+      const toR = Math.max(Math.sqrt(camX * camX + camZ * camZ), (self._opts.camera.minDistance ?? 4))
+      self._flyTween = {
+        active: true, startTime: -1, duration: 2000,
+        fromAz, fromEl: self._ctrl.el, fromR: self._ctrl.r,
+        toAz, toEl: 0.25, toR,
+        fromPos: { x: 0, y: 0, z: 0 }, fromYaw: 0, fromPitch: 0,
+        toPos: { x: 0, y: 0, z: 0 }, toYaw: 0, toPitch: 0,
+        savedPos: null, savedYaw: 0, savedPitch: 0,
+      }
+    }
+  }
+
   flyToRack(rackId: string): boolean {
     const self = this.viz
-    if (self._ctrl.mode !== 'fps') return false
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const group = self._rackGroups[rackId] as any
     if (!group) return false
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rack = (self._room?.racks || []).find((r: any) => r.id === rackId) as any
     if (!rack) return false
-
     const fa: number = rack.facingAngle ?? 0
-    const standoff = self._opts.rack.depth / 2 + 3.5
-    const rx: number = group.position.x
-    const rz: number = group.position.z
-    const toPos = {
-      x: rx - Math.sin(fa) * standoff,
-      y: this.midY(),
-      z: rz - Math.cos(fa) * standoff,
-    }
+    const standoff = self._opts.rack.depth / 2 + 10.0
+    this.flyToTarget(group.position.x, this.midY(), group.position.z, fa, standoff)
+    return true
+  }
 
-    // Normalize delta to shortest rotation path
-    let toYaw = fa
-    const fromYaw = self._ctrl.yaw
-    let diff = toYaw - fromYaw
-    while (diff > Math.PI) diff -= 2 * Math.PI
-    while (diff < -Math.PI) diff += 2 * Math.PI
-    toYaw = fromYaw + diff
-
-    self._flyTween = {
-      active: true,
-      startTime: -1,
-      duration: 900,
-      fromPos: { ...self._ctrl.pos },
-      fromYaw: self._ctrl.yaw,
-      fromPitch: self._ctrl.pitch,
-      toPos,
-      toYaw,
-      toPitch: -0.05,
-      savedPos: { ...self._ctrl.pos },
-      savedYaw: self._ctrl.yaw,
-      savedPitch: self._ctrl.pitch,
-    }
+  flyToDevice(rackId: string, deviceId: string): boolean {
+    const self = this.viz
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const group = self._rackGroups[rackId] as any
+    if (!group) return false
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rack = (self._room?.racks || []).find((r: any) => r.id === rackId) as any
+    if (!rack) return false
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const device = (rack.devices || []).find((d: any) => d.id === deviceId) as any
+    if (!device) return false
+    const fa: number = rack.facingAngle ?? 0
+    const standoff = self._opts.rack.depth / 2 + 10.0
+    const UH: number = self._opts.rack.unitHeight
+    const devY = group.position.y + 0.6 + (device.startUnit ?? 0) * UH + ((device.heightUnits ?? 1) * UH) / 2
+    this.flyToTarget(group.position.x, devY, group.position.z, fa, standoff)
     return true
   }
 
@@ -166,11 +198,17 @@ export class CameraController {
     if (tw.startTime < 0) tw.startTime = now
     const raw = Math.min(1, (now - tw.startTime) / tw.duration)
     const t = raw * raw * (3 - 2 * raw) // smoothstep
-    self._ctrl.pos.x = tw.fromPos.x + (tw.toPos.x - tw.fromPos.x) * t
-    self._ctrl.pos.y = tw.fromPos.y + (tw.toPos.y - tw.fromPos.y) * t
-    self._ctrl.pos.z = tw.fromPos.z + (tw.toPos.z - tw.fromPos.z) * t
-    self._ctrl.yaw   = tw.fromYaw + (tw.toYaw - tw.fromYaw) * t
-    self._ctrl.pitch = tw.fromPitch + (tw.toPitch - tw.fromPitch) * t
+    if (self._ctrl.mode === 'fps') {
+      self._ctrl.pos.x = tw.fromPos.x + (tw.toPos.x - tw.fromPos.x) * t
+      self._ctrl.pos.y = tw.fromPos.y + (tw.toPos.y - tw.fromPos.y) * t
+      self._ctrl.pos.z = tw.fromPos.z + (tw.toPos.z - tw.fromPos.z) * t
+      self._ctrl.yaw   = tw.fromYaw + (tw.toYaw - tw.fromYaw) * t
+      self._ctrl.pitch = tw.fromPitch + (tw.toPitch - tw.fromPitch) * t
+    } else {
+      self._ctrl.az = tw.fromAz + (tw.toAz - tw.fromAz) * t
+      self._ctrl.el = tw.fromEl + (tw.toEl - tw.fromEl) * t
+      self._ctrl.r  = tw.fromR  + (tw.toR  - tw.fromR)  * t
+    }
     if (raw >= 1) tw.active = false
   }
 

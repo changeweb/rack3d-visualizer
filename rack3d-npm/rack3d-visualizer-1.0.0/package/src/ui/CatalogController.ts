@@ -8,11 +8,13 @@ export class CatalogController {
     const self = this.viz;
     (self._room?.racks || []).forEach((rack: Record<string, unknown>) => {
       ((rack.devices as Record<string, unknown>[]) || []).forEach((dev: Record<string, unknown>) => {
-        const matches = dev.catalogId ? dev.catalogId === item.id : dev.type === item.type;
-        if (!matches) return;
+        const matchById   = dev.catalogId && dev.catalogId === item.id
+        const matchByType = !dev.catalogId && dev.type === item.type
+        if (!matchById && !matchByType) return;
+        dev.name         = item.name;
         dev.type         = item.type;
-        dev.heightUnits  = item.heightUnits;
-        dev.watts        = item.watts;
+        dev.heightUnits  = Number(item.heightUnits) || dev.heightUnits;
+        dev.watts        = Number(item.watts) || 0;
         dev.imageUrl     = item.imageUrl     || '';
         dev.imageUrlRear = item.imageUrlRear || '';
         dev.model        = item.model        || '';
@@ -194,7 +196,7 @@ export class CatalogController {
     <div class="r3-rw"><span class="r3-lbl">Name</span><input class="r3-inp" id="${self._id}-cen" value="${item.name}"></div>
     <div class="r3-rw"><span class="r3-lbl">Model</span><input class="r3-inp" id="${self._id}-cemdl" placeholder="e.g. Dell PowerEdge R650" value="${item.model||''}"></div>
     <div class="r3-rw"><span class="r3-lbl">Type</span><select class="r3-inp" id="${self._id}-cet">${typeOptions}</select></div>
-    <div class="r3-rw"><span class="r3-lbl">Height U</span><input class="r3-inp" type="number" min="1" max="12" id="${self._id}-ceh" value="${item.heightUnits}"></div>
+    <div class="r3-rw"><span class="r3-lbl">Height U</span><input class="r3-inp" type="number" min="1" max="42" id="${self._id}-ceh" value="${item.heightUnits}"></div>
     <div class="r3-rw"><span class="r3-lbl">Watts</span><input class="r3-inp" type="number" id="${self._id}-cew" value="${item.watts}"></div>
     <div class="r3-rw"><span class="r3-lbl">Width</span>
       <select class="r3-inp" id="${self._id}-cehw">
@@ -214,11 +216,12 @@ export class CatalogController {
 
     document.getElementById(self._id + '-cat-save')!.addEventListener('click', () => {
       const get = (sfx: string) => (document.getElementById(self._id + '-c' + sfx) as HTMLInputElement | null)?.value;
-      item.name = get('en') || item.name;
-      item.model = get('emdl') ?? item.model ?? '';
-      item.type = get('et') || item.type;
-      item.heightUnits = parseInt(get('eh') ?? '', 10) || item.heightUnits;
-      item.watts = parseInt(get('ew') ?? '', 10) || 0;
+      const safeInt = (v: string | undefined, fallback: unknown) => { const n = parseInt(v ?? '', 10); return Number.isNaN(n) ? fallback : n; }
+      item.name         = get('en') || item.name;
+      item.model        = get('emdl') ?? item.model ?? '';
+      item.type         = get('et') || item.type;
+      item.heightUnits  = safeInt(get('eh'), item.heightUnits);
+      item.watts        = safeInt(get('ew'), 0);
       const hw = get('ehw');
       if (hw) item.halfWidth = hw; else delete item.halfWidth;
       item.imageUrl     = get('eimg')  ?? item.imageUrl     ?? '';
@@ -230,9 +233,9 @@ export class CatalogController {
       self._selCatId = null;
       const savePanel = document.getElementById(self._id + '-panel-wrap-catalogEdit');
       if (savePanel) savePanel.classList.add('r3-panel-hidden');
+      self._buildRack();
+      self._refresh();
       self._renderCatalog();
-      self._buildRack?.();
-      self._refresh?.();
       if (self._opts?.onChange) self._opts.onChange(self.getData());
     });
 
