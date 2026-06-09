@@ -14,12 +14,13 @@ import { GroupManager } from '../controllers/GroupManager'
 import { VMManager } from '../controllers/VMManager'
 import { TransformController } from '../controllers/TransformController'
 
-import { SidebarController } from '../ui/SidebarController'
-import { HtmlBuilder } from '../ui/HtmlBuilder'
-import { CssBuilder } from '../ui/CssBuilder'
-import { CatalogController } from '../ui/CatalogController'
-import { LabelRenderer } from '../ui/LabelRenderer'
-import { Render2DController } from '../ui/Render2DController'
+import { SidebarController } from '../controllers/SidebarController'
+import { CatalogController } from '../controllers/CatalogController'
+import { LabelRenderer } from '../controllers/LabelRenderer'
+import { Render2DController } from '../controllers/Render2DController'
+import { MinimapController } from '../controllers/MinimapController'
+import { HtmlBuilder } from '../builders/HtmlBuilder'
+import { CssBuilder } from '../builders/CssBuilder'
 import { SceneBuilder } from '../scene/SceneBuilder'
 
 import { MaterialFactory } from '../services/MaterialFactory'
@@ -137,6 +138,7 @@ export class Rack3DVisualizer {
   _html: HtmlBuilder
   _css: CssBuilder
   _catalog: CatalogController
+  _minimap: MinimapController
   _labels: LabelRenderer
   _render2d: Render2DController
   _sceneBuilder: SceneBuilder
@@ -189,6 +191,7 @@ export class Rack3DVisualizer {
     this._html = new HtmlBuilder(this)
     this._css = new CssBuilder(this)
     this._catalog = new CatalogController(this)
+    this._minimap = new MinimapController(this)
     this._labels = new LabelRenderer(this)
     this._render2d = new Render2DController(this)
     this._sceneBuilder = new SceneBuilder(this)
@@ -672,7 +675,7 @@ export class Rack3DVisualizer {
     window.addEventListener('resize', this._onResize)
     this._input.bindCameraControls(cv)
     this._startLoop()
-    if (this._showMinimap) requestAnimationFrame(() => this._updateMinimap())
+    if (this._showMinimap) requestAnimationFrame(() => this._minimap.update())
   }
 
   _boot2D(): void {
@@ -1316,7 +1319,7 @@ export class Rack3DVisualizer {
       if (camChange || selChange || fpsMoving || transformDrag) this._updateLabels()
       if (camChange || fpsMoving) this._updateCompass()
       if (camChange || fpsMoving) this._updateAxisGizmo()
-      if (this._showMinimap && (camChange || fpsMoving || selChange)) this._updateMinimap()
+      if (this._showMinimap && (camChange || fpsMoving || selChange)) this._minimap.update()
       if (topoAnimating) this._stepTopologyParticles()
     }
     requestAnimationFrame(loop)
@@ -1368,158 +1371,11 @@ export class Rack3DVisualizer {
     })
   }
 
-  _updateMinimap(): void {
-    const canvas = document.getElementById(this._id + '-minimap') as HTMLCanvasElement | null
-    if (!canvas || !this._room) return
-    const ctx = canvas.getContext('2d')!
-    const CW = 180, CH = 140, pad = 4
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const W: number = (this._opts.room as any).width || 26
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const D: number = (this._opts.room as any).depth || 20
-    const sceneZ = 2
+  _updateMinimap(): void { this._minimap.update() }
 
-    const wx2c = (wx: number) => (CW - pad) - (wx + W / 2) / W * (CW - 2 * pad)
-    const wz2c = (wz: number) => (CH - pad) - (wz - (sceneZ - D / 2)) / D * (CH - 2 * pad)
+  toggleMinimap(): void { this._minimap.toggle() }
 
-    ctx.clearRect(0, 0, CW, CH)
-    ctx.fillStyle = 'rgba(20,30,40,0.9)'
-    ctx.fillRect(pad, pad, CW - 2 * pad, CH - 2 * pad)
-
-    // Grid
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const tileSize: number = (this._opts.room as any).tileSize || 2
-    ctx.strokeStyle = 'rgba(80,120,160,0.15)'
-    ctx.lineWidth = 0.5
-    for (let gx = -W / 2; gx <= W / 2; gx += tileSize) {
-      const cx = wx2c(gx)
-      ctx.beginPath(); ctx.moveTo(cx, pad); ctx.lineTo(cx, CH - pad); ctx.stroke()
-    }
-    for (let gz = sceneZ - D / 2; gz <= sceneZ + D / 2; gz += tileSize) {
-      const cy = wz2c(gz)
-      ctx.beginPath(); ctx.moveTo(pad, cy); ctx.lineTo(CW - pad, cy); ctx.stroke()
-    }
-
-    ctx.strokeStyle = 'rgba(80,130,180,0.5)'
-    ctx.lineWidth = 1
-    ctx.strokeRect(pad, pad, CW - 2 * pad, CH - 2 * pad)
-
-    // Cardinal labels
-    ctx.font = 'bold 7px monospace'
-    ctx.fillStyle = 'rgba(100,180,255,0.4)'
-    ctx.textAlign = 'center'
-    ctx.fillText('N', CW / 2, pad + 8)
-    ctx.fillText('S', CW / 2, CH - pad - 1)
-    ctx.textAlign = 'left'
-    ctx.fillText('E', pad + 1, CH / 2 + 3)
-    ctx.textAlign = 'right'
-    ctx.fillText('W', CW - pad - 1, CH / 2 + 3)
-
-    // Zones (drawn below racks)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;((this._room as any)?.zones || []).forEach((zone: any) => {
-      if (zone.visible === false) return
-      const col = typeof zone.color === 'string' ? zone.color : '#4488ff'
-      const opacity: number = zone.opacity ?? 0.18
-      const zx = wx2c(zone.x)
-      const zy = wz2c(zone.z)
-      const zw = zone.width / W * (CW - 2 * pad)
-      const zh = zone.depth / D * (CH - 2 * pad)
-      ctx.fillStyle = col + Math.round(opacity * 255).toString(16).padStart(2, '0')
-      ctx.fillRect(zx - zw / 2, zy - zh / 2, zw, zh)
-      ctx.strokeStyle = col + 'bb'
-      ctx.lineWidth = 1
-      ctx.strokeRect(zx - zw / 2, zy - zh / 2, zw, zh)
-      ctx.font = '8px monospace'
-      ctx.fillStyle = col
-      ctx.textAlign = 'center'
-      ctx.fillText(zone.name, zx, zy - zh / 2 - 2)
-    })
-
-    // Racks
-    const rackW = this._opts.rack.width
-    const rackD = this._opts.rack.depth
-    const rw2 = rackW / W * (CW - 2 * pad) / 2
-    const rd2 = rackD / D * (CH - 2 * pad) / 2
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(this._room.racks || []).forEach((rack: any) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const rg = this._rackGroups[rack.id] as any
-      if (!rg) return
-      const rx: number = rg.position.x
-      const rz: number = rg.position.z
-      const fa: number = rack.facingAngle ?? 0
-      const sel = rack.id === this._selRackId
-      ctx.save()
-      ctx.translate(wx2c(rx), wz2c(rz))
-      ctx.rotate(fa)
-      ctx.fillStyle = sel ? 'rgba(0,200,140,0.5)' : 'rgba(50,110,155,0.55)'
-      ctx.fillRect(-rw2, -rd2, rw2 * 2, rd2 * 2)
-      ctx.strokeStyle = sel ? '#00ff88' : 'rgba(90,170,240,0.7)'
-      ctx.lineWidth = sel ? 1.5 : 0.7
-      ctx.strokeRect(-rw2, -rd2, rw2 * 2, rd2 * 2)
-      // Front face indicator
-      ctx.beginPath(); ctx.moveTo(-rw2, -rd2); ctx.lineTo(rw2, -rd2)
-      ctx.strokeStyle = sel ? '#00ffcc' : '#0099ff'; ctx.lineWidth = 1.5; ctx.stroke()
-      ctx.restore()
-    })
-
-    // Room items
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;((this._room as any).room_items || []).forEach((item: any) => {
-      const icx = wx2c(item.x ?? item.position?.x ?? 0)
-      const icy = wz2c(item.z ?? item.position?.z ?? 0)
-      ctx.beginPath(); ctx.arc(icx, icy, 2.5, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(255,200,80,0.75)'; ctx.fill()
-    })
-
-    // Camera marker
-    if (this._ctrl.mode === 'fps') {
-      const cpx = wx2c(this._ctrl.pos.x)
-      const cpy = wz2c(this._ctrl.pos.z)
-      const yaw = this._ctrl.yaw
-      const sz = 5
-      ctx.save()
-      ctx.translate(cpx, cpy)
-      ctx.rotate(yaw + Math.PI)
-      ctx.beginPath()
-      ctx.moveTo(0, sz + 2); ctx.lineTo(-sz / 2 - 1, -sz / 2); ctx.lineTo(sz / 2 + 1, -sz / 2)
-      ctx.closePath()
-      ctx.fillStyle = '#00ff88'; ctx.fill()
-      ctx.restore()
-    }
-
-    // Position readout in header
-    const posEl = document.getElementById(this._id + '-minimap-pos')
-    if (posEl) {
-      const posStr = this._ctrl.mode === 'fps' ? `${Math.round(this._ctrl.pos.x)}, ${Math.round(this._ctrl.pos.z)}` : ''
-      if (posEl.textContent !== posStr) posEl.textContent = posStr
-    }
-  }
-
-  toggleMinimap(): void {
-    this._showMinimap = !this._showMinimap
-    const wrap = document.getElementById(this._id + '-minimap-wrap')
-    const btn = document.getElementById(this._id + '-btnMinimap')
-    if (wrap) wrap.style.display = this._showMinimap ? 'flex' : 'none'
-    if (btn) btn.className = 'r3-btn' + (this._showMinimap ? ' on' : '')
-    if (this._showMinimap) this._updateMinimap()
-  }
-
-  _onMinimapClick(e: MouseEvent): void {
-    if (this._ctrl.mode !== 'fps') return
-    const canvas = e.currentTarget as HTMLCanvasElement
-    const rect = canvas.getBoundingClientRect()
-    const cx = e.clientX - rect.left
-    const cy = e.clientY - rect.top
-    const CW = 160, CH = 120, pad = 4
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const W: number = (this._opts.room as any).width || 26
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const D: number = (this._opts.room as any).depth || 20
-    this._ctrl.pos.x = W / 2 - (cx - pad) / (CW - 2 * pad) * W
-    this._ctrl.pos.z = (CH - pad - cy) / (CH - 2 * pad) * D + (2 - D / 2)
-  }
+  _onMinimapClick(e: MouseEvent): void { this._minimap.onCanvasClick(e) }
 
   _onThemeChange(name: string): void {
     this._opts.theme = name
