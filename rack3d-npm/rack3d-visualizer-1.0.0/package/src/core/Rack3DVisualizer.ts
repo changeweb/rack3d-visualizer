@@ -122,6 +122,9 @@ export class Rack3DVisualizer {
   _showTopology: boolean = true
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   _catQuery: string = ''
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _sidebarTabs: { left: any[]; right: any[] } = { left: [], right: [] }
+  _activeTab: { left: string; right: string } = { left: '', right: '' }
 
   _camera: CameraController
   _input: InputHandler
@@ -190,6 +193,10 @@ export class Rack3DVisualizer {
     this._render2d = new Render2DController(this)
     this._sceneBuilder = new SceneBuilder(this)
 
+    const initTabState = this._loadSidebarTabState()
+    this._sidebarTabs = initTabState.tabs
+    this._activeTab = initTabState.active
+
     this._injectStyles()
     this._el.id = this._id
     this._el.innerHTML = this._html.buildHTML()
@@ -197,6 +204,9 @@ export class Rack3DVisualizer {
     if (themeSel && typeof this._opts.theme === 'string') (themeSel as HTMLSelectElement).value = this._opts.theme
     this._input.bindSidebarEvents()
     this._panels.restorePanelState()
+    this._applyTabVisibility('left')
+    this._applyTabVisibility('right')
+    this._renderProfilePanel()
 
     this._loadThree(() => {
       if (this._mode === '2d') this._boot2D()
@@ -273,6 +283,15 @@ export class Rack3DVisualizer {
     this._renderConnections()
     if (this._scene) this._buildRack()
     if (this._mode === '2d') this._render2D()
+    const existingProfiles = this._getProfiles()
+    if (!existingProfiles.some((p: any) => p.id === 'default-layout')) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      const withDefault = [
+        { id: 'default-layout', name: 'Default Layout', timestamp: Date.now(), room: JSON.parse(JSON.stringify(this._room)) },
+        ...existingProfiles,
+      ]
+      this._saveProfilesStorage(withDefault)
+      this._renderProfilePanel()
+    }
     return this
   }
 
@@ -1516,9 +1535,330 @@ export class Rack3DVisualizer {
   _setLayout(field: string, value: number): void {
     if (!this._room) return
     if (!this._room.layout) this._room.layout = { rows: 1, cols: 1, colSpacing: 8, rowSpacing: 10 }
+    if ((field === 'colSpacing' || field === 'rowSpacing') && this._room.racks?.length) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const oldSpacing: number = ((this._room.layout as any)[field] ?? (field === 'colSpacing' ? 8 : 10))
+      if (oldSpacing > 0 && value !== oldSpacing) {
+        const axis = field === 'colSpacing' ? 'x' : 'z'
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const racks = this._room.racks as any[]
+        const positions = racks.map((r: any) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const g = (this._rackGroups as any)?.[r.id]
+          return (g ? g.position[axis] : (r.position?.[axis] ?? 0)) as number
+        })
+        const maxP = Math.max(...positions)
+        const minP = Math.min(...positions)
+        if (maxP !== minP) {
+          const center = (maxP + minP) / 2
+          racks.forEach((rack: any, i: number) => {
+            const newPos = center + (positions[i] - center) * (value / oldSpacing)
+            if (!rack.position) rack.position = { x: 0, y: 0, z: 0 }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;(rack.position as any)[axis] = parseFloat(newPos.toFixed(3))
+          })
+        }
+      }
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(this._room.layout as any)[field] = value
     this._buildRack()
+  }
+
+  // ─── Sidebar Tab System ──────────────────────────────────────
+  _defaultSidebarTabs(): { left: any[]; right: any[] } { // eslint-disable-line @typescript-eslint/no-explicit-any
+    return {
+      left:  [{ id: 'lt0', name: 'Tab 1', panels: ['room','env','catalog','catalogEdit','network'] }],
+      right: [{ id: 'rt0', name: 'Tab 1', panels: ['groups','roomItems','rackProps','stats','devices','editDevice','vms'] }],
+    }
+  }
+
+  _loadSidebarTabState(): { tabs: { left: any[]; right: any[] }; active: { left: string; right: string } } { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const defaultTabs = this._defaultSidebarTabs()
+    const defaultActive = { left: defaultTabs.left[0]?.id || 'lt0', right: defaultTabs.right[0]?.id || 'rt0' }
+    try {
+      const saved = localStorage.getItem('r3d-tabs-' + this._id)
+      if (saved) {
+        const raw = JSON.parse(saved)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const parsed: { left: any[]; right: any[] } = raw.tabs ?? raw // support old format
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const savedActive: { left: string; right: string } = raw.active ?? defaultActive
+        if (parsed.left?.length && parsed.right?.length) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          parsed.left.forEach((t: any) => { if (t.name === 'Main') t.name = 'Tab 1' })
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          parsed.right.forEach((t: any) => { if (t.name === 'Main') t.name = 'Tab 1' })
+          const knownL = defaultTabs.left[0].panels as string[]
+          const knownR = defaultTabs.right[0].panels as string[]
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const assignedL = parsed.left.flatMap((t: any) => t.panels as string[])
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const assignedR = parsed.right.flatMap((t: any) => t.panels as string[])
+          // Remove 'profiles' if it exists (moved to toolbar)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          parsed.left.forEach((t: any) => { t.panels = (t.panels as string[]).filter((p: string) => p !== 'profiles') })
+          knownL.filter(p => p !== 'profiles').forEach(p => { if (!assignedL.includes(p)) parsed.left[0].panels.push(p) })
+          knownR.forEach(p => { if (!assignedR.includes(p)) parsed.right[0].panels.push(p) })
+          // Validate saved active tab IDs exist
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const validLeft = parsed.left.some((t: any) => t.id === savedActive.left) ? savedActive.left : parsed.left[0].id
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const validRight = parsed.right.some((t: any) => t.id === savedActive.right) ? savedActive.right : parsed.right[0].id
+          return { tabs: parsed, active: { left: validLeft, right: validRight } }
+        }
+      }
+    } catch { /* */ }
+    return { tabs: defaultTabs, active: defaultActive }
+  }
+
+  _saveSidebarTabState(): void {
+    try {
+      localStorage.setItem('r3d-tabs-' + this._id, JSON.stringify({
+        tabs: this._sidebarTabs,
+        active: this._activeTab,
+      }))
+    } catch { /* */ }
+  }
+
+  _applyTabVisibility(side: 'left' | 'right'): void {
+    const sbEl = document.getElementById(this._id + (side === 'left' ? '-sb' : '-sbr'))
+    if (!sbEl) return
+    const tabs = this._sidebarTabs[side]
+    const activeId = this._activeTab[side]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const active = tabs.find((t: any) => t.id === activeId)
+    const activePanels = new Set((active?.panels || []) as string[])
+    sbEl.querySelectorAll('[data-panel-id]').forEach(el => {
+      const pid = (el as HTMLElement).dataset.panelId
+      if (!pid) return
+      if (activePanels.has(pid)) el.classList.remove('r3-tab-hidden')
+      else el.classList.add('r3-tab-hidden')
+    })
+  }
+
+  _renderSidebarTabBar(side: 'left' | 'right'): void {
+    const el = document.getElementById(this._id + '-sbtb-' + side)
+    if (!el) return
+    el.innerHTML = this._html.sidebarTabBarInner(side)
+  }
+
+  _switchSidebarTab(side: 'left' | 'right', tabId: string): void {
+    this._activeTab[side] = tabId
+    this._renderSidebarTabBar(side)
+    this._applyTabVisibility(side)
+  }
+
+  _addSidebarTab(side: 'left' | 'right'): void {
+    const name = prompt('New tab name:')
+    if (!name?.trim()) return
+    const id = (side === 'left' ? 'lt' : 'rt') + Date.now()
+    this._sidebarTabs[side].push({ id, name: name.trim(), panels: [] })
+    this._activeTab[side] = id
+    this._renderSidebarTabBar(side)
+    this._applyTabVisibility(side)
+    this._saveSidebarTabState()
+  }
+
+  _renameSidebarTab(side: 'left' | 'right', tabId: string, name: string): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tab = this._sidebarTabs[side].find((t: any) => t.id === tabId) as any
+    if (!tab) return
+    tab.name = name
+    this._renderSidebarTabBar(side)
+    this._saveSidebarTabState()
+  }
+
+  _deleteSidebarTab(side: 'left' | 'right', tabId: string): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tabs = this._sidebarTabs[side] as any[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tab = tabs.find((t: any) => t.id === tabId) as any
+    if (!tab) return
+    if (tab.panels.length > 0) { alert('Move all panels to another tab before deleting.'); return }
+    if (tabs.length <= 1) { alert('Cannot delete the last tab.'); return }
+    const idx = tabs.indexOf(tab)
+    tabs.splice(idx, 1)
+    this._activeTab[side] = tabs[Math.max(0, idx - 1)].id
+    this._renderSidebarTabBar(side)
+    this._applyTabVisibility(side)
+    this._saveSidebarTabState()
+  }
+
+  _movePanelToTab(side: 'left' | 'right', panelId: string, targetTabId: string): void {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this._sidebarTabs[side].forEach((t: any) => {
+      const i = (t.panels as string[]).indexOf(panelId)
+      if (i >= 0) t.panels.splice(i, 1)
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const target = this._sidebarTabs[side].find((t: any) => t.id === targetTabId) as any
+    if (target) target.panels.push(panelId)
+    this._activeTab[side] = targetTabId
+    this._renderSidebarTabBar(side)
+    this._applyTabVisibility(side)
+    this._saveSidebarTabState()
+  }
+
+  _showPanelTabMenu(panelId: string, event: MouseEvent): void {
+    document.querySelectorAll('.r3d-tab-menu').forEach(m => m.remove())
+    const side: 'left' | 'right' = this._sidebarTabs.left.some((t: any) => (t.panels as string[]).includes(panelId)) ? 'left' : 'right' // eslint-disable-line @typescript-eslint/no-explicit-any
+    const tabs = this._sidebarTabs[side] as any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const currentTabId: string = (tabs.find((t: any) => (t.panels as string[]).includes(panelId)) as any)?.id || ''
+
+    const menu = document.createElement('div')
+    menu.className = 'r3d-tab-menu'
+    menu.style.cssText = 'position:fixed;z-index:99999;background:var(--r3-panel);border:1px solid var(--r3-border);border-radius:4px;padding:4px 0;box-shadow:0 4px 16px rgba(0,0,0,.6);min-width:130px;font-family:"Share Tech Mono",monospace;font-size:10px'
+
+    const hdr = document.createElement('div')
+    hdr.style.cssText = 'padding:3px 10px 4px;font-size:9px;color:var(--r3-dim);border-bottom:1px solid var(--r3-border);margin-bottom:3px;letter-spacing:.5px'
+    hdr.textContent = 'MOVE TO TAB'
+    menu.appendChild(hdr)
+
+    let addedItems = 0
+    tabs.forEach((t: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+      if (t.id === currentTabId) return
+      const item = document.createElement('div')
+      item.style.cssText = 'padding:4px 10px;cursor:pointer;color:var(--r3-text)'
+      item.textContent = '→ ' + t.name
+      item.onmouseover = () => { item.style.background = 'var(--r3-accent)22' }
+      item.onmouseout  = () => { item.style.background = '' }
+      item.onclick = () => { this._movePanelToTab(side, panelId, t.id); menu.remove() }
+      menu.appendChild(item)
+      addedItems++
+    })
+    if (addedItems === 0) {
+      const empty = document.createElement('div')
+      empty.style.cssText = 'padding:4px 10px;color:var(--r3-dim);font-size:9px'
+      empty.textContent = 'No other tabs'
+      menu.appendChild(empty)
+    }
+
+    const sep = document.createElement('div')
+    sep.style.cssText = 'height:1px;background:var(--r3-border);margin:4px 0'
+    menu.appendChild(sep)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const currentTab = tabs.find((t: any) => t.id === currentTabId) as any
+    if (currentTab) {
+      const rename = document.createElement('div')
+      rename.style.cssText = 'padding:4px 10px;cursor:pointer;color:var(--r3-dim)'
+      rename.textContent = '✎ Rename tab'
+      rename.onclick = () => {
+        menu.remove()
+        const n = prompt('Tab name:', currentTab.name)
+        if (n?.trim()) this._renameSidebarTab(side, currentTabId, n.trim())
+      }
+      menu.appendChild(rename)
+
+      const del = document.createElement('div')
+      del.style.cssText = 'padding:4px 10px;cursor:pointer;color:var(--r3-dim)'
+      del.textContent = '× Delete tab'
+      del.onclick = () => { menu.remove(); this._deleteSidebarTab(side, currentTabId) }
+      menu.appendChild(del)
+    }
+
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+    menu.style.left = rect.left + 'px'
+    menu.style.top  = (rect.bottom + 4) + 'px'
+    document.body.appendChild(menu)
+    const close = (e: MouseEvent) => {
+      if (!menu.contains(e.target as Node)) { menu.remove(); document.removeEventListener('mousedown', close, true) }
+    }
+    setTimeout(() => document.addEventListener('mousedown', close, true), 10)
+  }
+
+  // ─── Profile System ──────────────────────────────────────────
+
+  _toggleProfileDropdown(): void {
+    const dd = document.getElementById(this._id + '-profile-dd')
+    if (!dd) return
+    const isHidden = dd.style.display === 'none'
+    dd.style.display = isHidden ? 'block' : 'none'
+    if (isHidden) {
+      this._renderProfilePanel()
+      const close = (e: MouseEvent) => {
+        const wrap = document.getElementById(this._id + '-profile-dd-wrap')
+        if (wrap && !wrap.contains(e.target as Node)) {
+          dd.style.display = 'none'
+          document.removeEventListener('mousedown', close, true)
+        }
+      }
+      setTimeout(() => document.addEventListener('mousedown', close, true), 10)
+    }
+  }
+
+  _getProfiles(): any[] { // eslint-disable-line @typescript-eslint/no-explicit-any
+    try { return JSON.parse(localStorage.getItem('r3d-profiles') || '[]') } catch { return [] }
+  }
+
+  _saveProfilesStorage(profiles: any[]): void { // eslint-disable-line @typescript-eslint/no-explicit-any
+    try { localStorage.setItem('r3d-profiles', JSON.stringify(profiles)) } catch { /* */ }
+  }
+
+  _saveProfile(): void {
+    const inp = document.getElementById(this._id + '-profile-name') as HTMLInputElement | null
+    const name = inp?.value?.trim() || ('Profile ' + new Date().toLocaleString())
+    const profiles = this._getProfiles()
+    profiles.push({ id: 'p' + Date.now(), name, timestamp: Date.now(), room: JSON.parse(JSON.stringify(this._room)) })
+    this._saveProfilesStorage(profiles)
+    if (inp) inp.value = ''
+    this._renderProfilePanel()
+  }
+
+  _loadProfile(profileId: string): void {
+    const profile = this._getProfiles().find((p: any) => p.id === profileId) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (!profile?.room) return
+    if (!confirm(`Load "${profile.name}"? This replaces the current room.`)) return
+    this.setRoomData(JSON.parse(JSON.stringify(profile.room)))
+  }
+
+  _deleteProfile(profileId: string): void {
+    this._saveProfilesStorage(this._getProfiles().filter((p: any) => p.id !== profileId)) // eslint-disable-line @typescript-eslint/no-explicit-any
+    this._renderProfilePanel()
+  }
+
+  _exportProfiles(): void {
+    const blob = new Blob([JSON.stringify(this._getProfiles(), null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url; a.download = 'rack3d-profiles.json'; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  _importProfiles(input: HTMLInputElement): void {
+    const file = input.files?.[0]; if (!file) return
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target?.result as string)
+        const imported: any[] = Array.isArray(data) ? data : [data] // eslint-disable-line @typescript-eslint/no-explicit-any
+        const existing = this._getProfiles()
+        const ids = new Set(existing.map((p: any) => p.id)) // eslint-disable-line @typescript-eslint/no-explicit-any
+        imported.forEach(p => { if (!ids.has(p.id)) existing.push(p) })
+        this._saveProfilesStorage(existing)
+        this._renderProfilePanel()
+      } catch { alert('Failed to import profiles.') }
+    }
+    reader.readAsText(file); input.value = ''
+  }
+
+  _renderProfilePanel(): void {
+    const el = document.getElementById(this._id + '-profile-list'); if (!el) return
+    const profiles = this._getProfiles()
+    if (!profiles.length) { el.innerHTML = '<div style="font-size:9px;color:var(--r3-dim);padding:4px 0">No profiles saved.</div>'; return }
+    el.innerHTML = profiles.map((p: any) => // eslint-disable-line @typescript-eslint/no-explicit-any
+      `<div class="r3-profile-item">
+        <div class="r3-profile-info">
+          <span class="r3-profile-name">${p.name}</span>
+          <span class="r3-profile-date">${new Date(p.timestamp).toLocaleString()}</span>
+        </div>
+        <div style="display:flex;gap:3px;flex-shrink:0">
+          <button class="r3-btn" style="padding:1px 6px;font-size:9px" onclick="window._r3['${this._id}']._loadProfile('${p.id}')">Load</button>
+          <button class="r3-ph-btn" style="font-size:12px" onclick="window._r3['${this._id}']._deleteProfile('${p.id}')">×</button>
+        </div>
+      </div>`
+    ).join('')
   }
 
   _setRoomName(name: string): void {

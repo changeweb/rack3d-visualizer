@@ -399,6 +399,8 @@ export class InputHandler {
       }
       self._selItemId = result.id
       self._selId = null; self._closeEdit()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(self._camera as any)?.flyToItem(result.id)
     } else if (result?.type === 'connection') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(self as any)._selectConnection(result.id)

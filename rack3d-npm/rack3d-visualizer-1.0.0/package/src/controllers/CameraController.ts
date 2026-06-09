@@ -144,6 +144,20 @@ export class CameraController {
     return true
   }
 
+  flyToItem(itemId: string): boolean {
+    const self = this.viz
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const item = ((self._room?.room_items) || []).find((i: any) => i.id === itemId) as any
+    if (!item) return false
+    const x: number = item.x ?? 0
+    const z: number = item.z ?? 0
+    const h: number = item.height ?? 4
+    const angle: number = (item.angle ?? 0) * Math.PI / 180
+    const standoff = Math.max((item.depth ?? 2) / 2 + 10, 12)
+    this.flyToTarget(x, h / 2, z, angle, standoff)
+    return true
+  }
+
   flyToDevice(rackId: string, deviceId: string): boolean {
     const self = this.viz
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

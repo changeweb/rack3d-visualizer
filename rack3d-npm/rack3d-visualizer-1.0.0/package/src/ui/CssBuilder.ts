@@ -249,6 +249,65 @@ export class CssBuilder {
 /* ── PANEL SYSTEM ── */
 #${scope} .r3-panel { border-bottom:1px solid var(--r3-border); }
 #${scope} .r3-panel.r3-panel-hidden { display:none; }
+#${scope} .r3-panel.r3-tab-hidden  { display:none !important; }
+
+/* ── SIDEBAR TAB BAR ── */
+#${scope} .r3-sbtab-bar {
+  display:flex; flex-wrap:nowrap; align-items:flex-end; gap:2px; padding:4px 6px 0;
+  border-bottom:1px solid var(--r3-border);
+  background:${c.bg}dd; position:sticky; top:0; z-index:10; flex-shrink:0; overflow-x:auto;
+}
+#${scope} .r3-sbtab-bar::-webkit-scrollbar { height:0; }
+#${scope} .r3-sbtab-item { display:flex; align-items:flex-end; flex-shrink:0; }
+#${scope} .r3-sbtab {
+  display:flex; align-items:center; gap:4px;
+  background:${c.bg}; border:1px solid var(--r3-border); border-bottom:1px solid var(--r3-border);
+  color:var(--r3-dim); border-radius:3px 3px 0 0; padding:3px 8px; cursor:pointer; font-size:9px;
+  font-family:'Share Tech Mono',monospace; letter-spacing:.5px; text-transform:uppercase;
+  transition:all .15s; white-space:nowrap; max-width:100px; position:relative;
+  margin-bottom:-1px; z-index:1;
+}
+#${scope} .r3-sbtab:hover { border-color:${c.accent}66; color:${c.accent}88; }
+#${scope} .r3-sbtab.active {
+  border-color:var(--r3-accent); border-bottom-color:var(--r3-panel);
+  color:var(--r3-accent); background:var(--r3-panel); z-index:2;
+}
+#${scope} .r3-sbtab-name { overflow:hidden; text-overflow:ellipsis; max-width:70px; }
+#${scope} .r3-sbtab-x {
+  flex-shrink:0; opacity:0; font-size:11px; line-height:1; color:var(--r3-dim);
+  padding:0 1px; transition:opacity .15s, color .15s; pointer-events:none;
+}
+#${scope} .r3-sbtab:hover .r3-sbtab-x { opacity:1; pointer-events:auto; }
+#${scope} .r3-sbtab-x:hover { color:var(--r3-red); }
+#${scope} .r3-sbtab-add {
+  background:transparent; border:1px dashed var(--r3-border); color:var(--r3-dim);
+  border-radius:3px 3px 0 0; padding:3px 7px; cursor:pointer; font-size:12px; line-height:1;
+  transition:all .15s; margin-bottom:-1px; flex-shrink:0;
+}
+#${scope} .r3-sbtab-add:hover { border-color:${c.accent}88; color:${c.accent}88; }
+#${scope} .r3-ph-tab-btn { font-size:10px; opacity:0.5; }
+#${scope} .r3-ph-tab-btn:hover { opacity:1; color:var(--r3-accent); }
+
+/* ── PROFILE DROPDOWN ── */
+#${scope} .r3-profile-dd-wrap { position:relative; }
+#${scope} .r3-profile-dd {
+  position:absolute; top:calc(100% + 4px); right:0; z-index:10000;
+  background:var(--r3-panel); border:1px solid var(--r3-border); border-radius:4px;
+  padding:10px; width:260px; box-shadow:0 8px 24px rgba(0,0,0,.6);
+}
+
+/* ── PROFILES ── */
+#${scope} .r3-profile-item {
+  display:flex; align-items:center; justify-content:space-between; gap:6px;
+  padding:5px 0; border-bottom:1px solid var(--r3-border);
+}
+#${scope} .r3-profile-item:last-child { border-bottom:none; }
+#${scope} .r3-profile-info { display:flex; flex-direction:column; gap:1px; min-width:0; flex:1; overflow:hidden; }
+#${scope} .r3-profile-name {
+  font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--r3-text);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+#${scope} .r3-profile-date { font-size:8px; color:var(--r3-dim); }
 #${scope} .r3-ph {
   display:flex; align-items:center; gap:6px; padding:5px 8px;
   background:var(--r3-panel); cursor:default; user-select:none;

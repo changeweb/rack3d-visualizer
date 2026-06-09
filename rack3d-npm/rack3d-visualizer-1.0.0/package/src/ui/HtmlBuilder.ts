@@ -15,10 +15,52 @@ export class HtmlBuilder {
          ondrop="window._r3['${sid}']._onPanelDropPanel(event,'${id}')">
       <span class="r3-ph-drag">⠿</span>
       <span class="r3-ph-title">${title}</span>
+      <button class="r3-ph-btn r3-ph-tab-btn" title="Move to tab" onclick="window._r3['${sid}']._showPanelTabMenu('${id}',event)">⇥</button>
       <button class="r3-ph-btn" title="Collapse" onclick="window._r3['${sid}']._togglePanel('${id}')">▾</button>
     </div>
     <div class="r3-pb" id="${sid}-panel-${id}">${body}</div>
     <div class="r3-pb-resize" onmousedown="window._r3['${sid}']._onPanelResizeStart(event,'${id}')"></div>
+  </div>`;
+  }
+
+  sidebarTabBarInner(side: 'left' | 'right'): string {
+    const self = this.viz;
+    const sid = self._id;
+    const tabs: any[] = self._sidebarTabs[side] || []; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const active: string = self._activeTab[side] || '';
+    return tabs.map((t: any) => // eslint-disable-line @typescript-eslint/no-explicit-any
+      `<div class="r3-sbtab-item">
+        <button class="r3-sbtab${t.id === active ? ' active' : ''}" id="${sid}-sbtab-${t.id}"
+                onclick="window._r3['${sid}']._switchSidebarTab('${side}','${t.id}')"
+                ondblclick="window._r3['${sid}']._renameSidebarTab('${side}','${t.id}',prompt('Rename tab:','${t.name}')||'${t.name}')"
+                title="${t.name}">
+          <span class="r3-sbtab-name">${t.name}</span>
+          <span class="r3-sbtab-x" title="Delete tab" onclick="event.stopPropagation();window._r3['${sid}']._deleteSidebarTab('${side}','${t.id}')">×</span>
+        </button>
+      </div>`
+    ).join('') +
+    `<button class="r3-sbtab-add" onclick="window._r3['${sid}']._addSidebarTab('${side}')" title="Add tab">+</button>`
+  }
+
+  sidebarTabBarHtml(side: 'left' | 'right'): string {
+    const self = this.viz;
+    const sid = self._id;
+    return `<div class="r3-sbtab-bar" id="${sid}-sbtb-${side}">${this.sidebarTabBarInner(side)}</div>`
+  }
+
+  profilePanelBody(): string {
+    const self = this.viz;
+    const sid = self._id;
+    return `<div style="display:flex;gap:4px;margin-bottom:6px">
+    <input class="r3-inp" id="${sid}-profile-name" placeholder="Profile name…" style="flex:1">
+    <button class="r3-btn on" style="padding:1px 8px;font-size:9px;white-space:nowrap" onclick="window._r3['${sid}']._saveProfile()">⬆ Save</button>
+  </div>
+  <div id="${sid}-profile-list"><div style="font-size:9px;color:var(--r3-dim);padding:4px 0">No profiles saved.</div></div>
+  <div style="margin-top:8px;display:flex;gap:4px;border-top:1px solid var(--r3-border);padding-top:6px">
+    <button class="r3-btn" style="flex:1;font-size:9px;padding:2px 0" onclick="window._r3['${sid}']._exportProfiles()">↓ Export</button>
+    <label class="r3-btn" style="flex:1;font-size:9px;padding:2px 0;cursor:pointer;text-align:center">↑ Import
+      <input type="file" accept=".json" style="display:none" onchange="window._r3['${sid}']._importProfiles(this)">
+    </label>
   </div>`;
   }
 
@@ -263,8 +305,9 @@ export class HtmlBuilder {
     </div>
     <div class="r3-env-row">
       <span class="r3-lbl">Row Gap</span>
-      <input class="r3-inp r3-env-num" type="number" min="0.1" max="30" step="0.5" value="${self._room?.layout?.rowSpacing??10}"
-             oninput="window._r3['${sid}']._setLayout('rowSpacing',Math.max(0.1,+this.value))">
+      <input class="r3-inp r3-env-num" type="number" min="0" max="30" step="0.5"
+             value="${Math.max(0,((self._room?.layout?.rowSpacing??10)-self._opts.rack.depth)).toFixed(1)}"
+             oninput="window._r3['${sid}']._setLayout('rowSpacing',Math.max(${self._opts.rack.depth},+this.value+${self._opts.rack.depth}))">
       <span class="r3-val">m</span>
     </div>
     <div class="r3-env-sec">Room</div>
@@ -721,6 +764,10 @@ export class HtmlBuilder {
       <option value="matrix">Matrix</option>
     </select>
     ${v.allowJsonEdit?`<button class="r3-btn" id="${sid}-btnJ" onclick="window._r3['${sid}'].toggleJson()">{ } JSON</button>`:''}
+    <div class="r3-profile-dd-wrap" id="${sid}-profile-dd-wrap">
+      <button class="r3-btn" id="${sid}-btnProfile" onclick="window._r3['${sid}']._toggleProfileDropdown()" title="Saved Profiles">⊛ PROFILES</button>
+      <div class="r3-profile-dd" id="${sid}-profile-dd" style="display:none">${this.profilePanelBody()}</div>
+    </div>
     <button class="r3-btn" id="${sid}-btnHelp" onclick="window._r3['${sid}'].toggleHelp()" title="Help &amp; About">? HELP</button>
   </div>`;
 
@@ -728,6 +775,7 @@ export class HtmlBuilder {
   <div class="r3-sb" id="${sid}-sb" style="width:${lW}px;min-width:${lW}px;display:${showL?'flex':'none'}"
        ondragover="event.preventDefault()"
        ondrop="window._r3['${sid}']._onPanelDropSidebar(event,'left')">
+    ${this.sidebarTabBarHtml('left')}
     ${this.panelHtml('room','Room',this.roomPanelBody())}
     ${this.panelHtml('env','Lighting',this.envPanelBody())}
     ${this.panelHtml('catalog','Catalog',this.catalogPanelBody())}
@@ -801,6 +849,7 @@ export class HtmlBuilder {
   <div class="r3-sb r3-sb-right" id="${sid}-sbr" style="width:${rW}px;min-width:${rW}px;display:${showR?'flex':'none'}"
        ondragover="event.preventDefault()"
        ondrop="window._r3['${sid}']._onPanelDropSidebar(event,'right')">
+    ${this.sidebarTabBarHtml('right')}
     ${this.panelHtml('groups','Groups',this.groupsPanelBody())}
     ${this.panelHtml('roomItems','Room Items',this.roomItemsPanelBody())}
     ${this.panelHtml('rackProps','Rack Properties',this.rackPropsPanelBody())}

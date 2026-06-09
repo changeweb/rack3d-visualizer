@@ -100,11 +100,30 @@ export class PanelManager {
     const panelId = event.dataTransfer!.getData('text/plain')
     const panel = document.querySelector(`#${self._id} [data-panel-id="${panelId}"]`)
     if (!panel) return
-    const targetSb = document.getElementById(sidebar === 'left' ? self._id + '-sb' : self._id + '-sbr')
+    const targetSide = sidebar as 'left' | 'right'
+    const sourceSide: 'left' | 'right' = targetSide === 'left' ? 'right' : 'left'
+    const targetSb = document.getElementById(targetSide === 'left' ? self._id + '-sb' : self._id + '-sbr')
     if (!targetSb) return
     targetSb.appendChild(panel)
     document.querySelectorAll(`#${self._id} .r3-panel-drop-before`).forEach((el: Element) => el.classList.remove('r3-panel-drop-before'))
+
+    // Keep _sidebarTabs in sync: remove from source side, add to active tab of target side
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(self._sidebarTabs[sourceSide] as any[]).forEach((t: any) => {
+      const i = (t.panels as string[]).indexOf(panelId)
+      if (i >= 0) t.panels.splice(i, 1)
+    })
+    const activeTargetTabId: string = self._activeTab[targetSide]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const targetTab = (self._sidebarTabs[targetSide] as any[]).find((t: any) => t.id === activeTargetTabId)
+    if (targetTab && !(targetTab.panels as string[]).includes(panelId)) {
+      targetTab.panels.push(panelId)
+    }
+
     this.savePanelState()
+    self._saveSidebarTabState()
+    self._applyTabVisibility('left')
+    self._applyTabVisibility('right')
   }
 
   onPanelResizeStart(e: MouseEvent, panelId: string): void {
