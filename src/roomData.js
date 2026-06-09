@@ -529,7 +529,7 @@ export const ROOM_DATA = {
     // ── Row E – 5× 42U racks (z=-42) ────────────────────────────
     {
       id: 'rack-e1', name: 'PROD-19', units: 42,
-      position: { x: -28, z: -42 }, facingAngle: 0,
+      position: { x: 28, z: 10 }, facingAngle: 0,
       rackTemp: 36, pduCapacity: 6000, pduLoad: 4500,
       devices: [
         { id: 'e1-d1',  name: 'Spine Switch 1', type: 'switch',   startUnit: 1,  heightUnits: 1, watts: 195 },
@@ -550,7 +550,7 @@ export const ROOM_DATA = {
     },
     {
       id: 'rack-e2', name: 'PROD-20', units: 42,
-      position: { x: -20, z: -42 }, facingAngle: 0,
+      position: { x: 20, z: 10 }, facingAngle: 0,
       rackTemp: 31, pduCapacity: 6000, pduLoad: 3900,
       devices: [
         { id: 'e2-d1',  name: 'Access Switch E',type: 'switch',   startUnit: 1,  heightUnits: 1, watts: 175 },
@@ -573,7 +573,7 @@ export const ROOM_DATA = {
     },
     {
       id: 'rack-e3', name: 'PROD-21', units: 42,
-      position: { x: -12, z: -42 }, facingAngle: 0,
+      position: { x: 12, z: 10 }, facingAngle: 0,
       rackTemp: 38, pduCapacity: 6000, pduLoad: 4800,
       devices: [
         { id: 'e3-d1',  name: 'Switch 8',       type: 'switch',   startUnit: 1,  heightUnits: 1, watts: 175 },
@@ -595,7 +595,7 @@ export const ROOM_DATA = {
     },
     {
       id: 'rack-e4', name: 'PROD-22', units: 42,
-      position: { x: -4, z: -42 }, facingAngle: 0,
+      position: { x: 36, z: 10 }, facingAngle: 0,
       rackTemp: 30, pduCapacity: 6000, pduLoad: 3700,
       devices: [
         { id: 'e4-d1',  name: 'Dev Switch',     type: 'switch',   startUnit: 1,  heightUnits: 1, watts: 175 },
@@ -617,7 +617,7 @@ export const ROOM_DATA = {
     },
     {
       id: 'rack-e5', name: 'PROD-23', units: 42,
-      position: { x: 4, z: -42 }, facingAngle: 0,
+      position: { x: 42, z: 10 }, facingAngle: 0,
       rackTemp: 32, pduCapacity: 6000, pduLoad: 4100,
       devices: [
         { id: 'e5-d1',  name: 'Distrib Switch', type: 'switch',   startUnit: 1,  heightUnits: 1, watts: 195 },
@@ -723,7 +723,7 @@ export const ROOM_DATA = {
   zones: [
     { id: 'z-prod-a', name: 'Prod Row A', color: '#3b82f6', x: 0,   z: -10, width: 72, depth: 14, opacity: 0.12 },
     { id: 'z-prod-d', name: 'Prod Row D', color: '#6366f1', x: 0,   z: -26, width: 92, depth: 14, opacity: 0.12 },
-    { id: 'z-prod-e', name: 'Prod Row E', color: '#8b5cf6', x: -8,  z: -42, width: 38, depth: 12, opacity: 0.12 },
+    { id: 'z-prod-e', name: 'Prod Row E', color: '#8b5cf6', x: 28,  z: 10, width: 38, depth: 12, opacity: 0.12 },
     { id: 'z-mgmt',   name: 'Management', color: '#10b981', x: -28, z: 11,  width: 32, depth: 22, opacity: 0.12 },
   ],
 

@@ -1379,8 +1379,8 @@ export class Rack3DVisualizer {
     const D: number = (this._opts.room as any).depth || 20
     const sceneZ = 2
 
-    const wx2c = (wx: number) => pad + (wx + W / 2) / W * (CW - 2 * pad)
-    const wz2c = (wz: number) => pad + (wz - (sceneZ - D / 2)) / D * (CH - 2 * pad)
+    const wx2c = (wx: number) => (CW - pad) - (wx + W / 2) / W * (CW - 2 * pad)
+    const wz2c = (wz: number) => (CH - pad) - (wz - (sceneZ - D / 2)) / D * (CH - 2 * pad)
 
     ctx.clearRect(0, 0, CW, CH)
     ctx.fillStyle = 'rgba(20,30,40,0.9)'
@@ -1411,9 +1411,9 @@ export class Rack3DVisualizer {
     ctx.fillText('N', CW / 2, pad + 8)
     ctx.fillText('S', CW / 2, CH - pad - 1)
     ctx.textAlign = 'left'
-    ctx.fillText('W', pad + 1, CH / 2 + 3)
+    ctx.fillText('E', pad + 1, CH / 2 + 3)
     ctx.textAlign = 'right'
-    ctx.fillText('E', CW - pad - 1, CH / 2 + 3)
+    ctx.fillText('W', CW - pad - 1, CH / 2 + 3)
 
     // Zones (drawn below racks)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1481,7 +1481,7 @@ export class Rack3DVisualizer {
       const sz = 5
       ctx.save()
       ctx.translate(cpx, cpy)
-      ctx.rotate(yaw)
+      ctx.rotate(yaw + Math.PI)
       ctx.beginPath()
       ctx.moveTo(0, sz + 2); ctx.lineTo(-sz / 2 - 1, -sz / 2); ctx.lineTo(sz / 2 + 1, -sz / 2)
       ctx.closePath()
@@ -1517,8 +1517,8 @@ export class Rack3DVisualizer {
     const W: number = (this._opts.room as any).width || 26
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const D: number = (this._opts.room as any).depth || 20
-    this._ctrl.pos.x = (cx - pad) / (CW - 2 * pad) * W - W / 2
-    this._ctrl.pos.z = (cy - pad) / (CH - 2 * pad) * D + (2 - D / 2)
+    this._ctrl.pos.x = W / 2 - (cx - pad) / (CW - 2 * pad) * W
+    this._ctrl.pos.z = (CH - pad - cy) / (CH - 2 * pad) * D + (2 - D / 2)
   }
 
   _onThemeChange(name: string): void {

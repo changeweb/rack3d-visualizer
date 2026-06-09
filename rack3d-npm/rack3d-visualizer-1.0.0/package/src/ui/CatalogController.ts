@@ -206,13 +206,40 @@ export class CatalogController {
       </select>
     </div>
     <div class="r3-rw"><span class="r3-lbl">Front Img</span><input class="r3-inp" id="${self._id}-ceimg"  placeholder="URL or /image/front/..." value="${item.imageUrl||''}"></div>
+    <div id="${self._id}-ceimg-preview" style="display:${item.imageUrl?'flex':'none'};justify-content:center;margin:4px 0 2px;border:1px solid rgba(255,255,255,.08);border-radius:3px;overflow:hidden;background:#111;min-height:40px;align-items:center">
+      <img src="${item.imageUrl||''}" style="max-width:100%;max-height:80px;object-fit:contain;display:block" onerror="this.parentElement.style.display='none'">
+    </div>
     <div class="r3-rw"><span class="r3-lbl">Rear Img</span><input class="r3-inp" id="${self._id}-ceimgr" placeholder="URL" value="${item.imageUrlRear||''}"></div>
+    <div id="${self._id}-ceimgr-preview" style="display:${item.imageUrlRear?'flex':'none'};justify-content:center;margin:4px 0 2px;border:1px solid rgba(255,255,255,.08);border-radius:3px;overflow:hidden;background:#111;min-height:40px;align-items:center">
+      <img src="${item.imageUrlRear||''}" style="max-width:100%;max-height:80px;object-fit:contain;display:block" onerror="this.parentElement.style.display='none'">
+    </div>
     <div style="display:flex;gap:5px;margin-top:8px">
       <button class="r3-btn on" id="${self._id}-cat-save" style="flex:1">✓ Save</button>
       <button class="r3-btn" id="${self._id}-cat-cancel" style="flex:1">✕ Cancel</button>
     </div>`;
 
     wrap.appendChild(form);
+
+    const wireImgPreview = (inputId: string, previewId: string) => {
+      const input = document.getElementById(inputId) as HTMLInputElement | null;
+      const preview = document.getElementById(previewId);
+      if (!input || !preview) return;
+      input.addEventListener('input', () => {
+        const url = input.value.trim();
+        const img = preview.querySelector('img') as HTMLImageElement;
+        if (url) {
+          img.src = url;
+          img.onerror = () => { preview.style.display = 'none'; };
+          img.onload  = () => { preview.style.display = 'flex'; };
+          preview.style.display = 'flex';
+        } else {
+          preview.style.display = 'none';
+          img.src = '';
+        }
+      });
+    };
+    wireImgPreview(self._id + '-ceimg',  self._id + '-ceimg-preview');
+    wireImgPreview(self._id + '-ceimgr', self._id + '-ceimgr-preview');
 
     document.getElementById(self._id + '-cat-save')!.addEventListener('click', () => {
       const get = (sfx: string) => (document.getElementById(self._id + '-c' + sfx) as HTMLInputElement | null)?.value;
