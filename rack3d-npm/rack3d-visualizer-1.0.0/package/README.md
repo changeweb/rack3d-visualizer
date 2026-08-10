@@ -9,7 +9,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-ready-d2a8ff?style=flat-square)
 
 
-![rack-3d](/rack3d-npm/rack3d-visualizer-1.0.0/package/rack-3d.png)
+![rack-3d](https://github.com/changeweb/rack3d-visualizer/raw/hasib/feature/rack-modification/rack3d-npm/rack3d-visualizer-1.0.0/package/rack-3d.png)
 
 ---
 
