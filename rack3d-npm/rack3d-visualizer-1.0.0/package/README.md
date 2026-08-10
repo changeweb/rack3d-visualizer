@@ -8,6 +8,9 @@
 ![Three.js](https://img.shields.io/badge/three.js-r128%2B-ffaa00?style=flat-square)
 ![TypeScript](https://img.shields.io/badge/TypeScript-ready-d2a8ff?style=flat-square)
 
+
+![rack-3d](/rack3d-npm/rack3d-visualizer-1.0.0/package/rack-3d.png)
+
 ---
 
 ## Features
@@ -87,6 +90,10 @@ pnpm add rack3d-visualizer three
 ---
 
 ## Quickstart
+
+## React App Example
+
+Package implementation example is given in the React app in the [https://github.com/changeweb/rack3d-visualizer](https://github.com/changeweb/rack3d-visualizer) Github repository.
 
 ### Vanilla JS (ESM)
 
