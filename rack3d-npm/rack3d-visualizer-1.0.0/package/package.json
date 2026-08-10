@@ -1,6 +1,7 @@
 {
   "name": "rack3d-visualizer",
   "version": "1.0.0",
+  "author": "Hasib Mahmud",
   "description": "A fully featured 3D/2D server rack visualizer — JSON-driven, themeable, drag-and-drop, datacenter environment, five built-in themes.",
   "type": "module",
   "main": "dist/rack3d-visualizer.cjs.js",
@@ -38,7 +39,6 @@
     "server-room",
     "webgl"
   ],
-  "author": "rack3d-visualizer contributors",
   "license": "MIT",
   "peerDependencies": {
     "three": ">=0.128.0"
